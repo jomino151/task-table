@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "task-table/task-table",
+  "version": "0.1.0",
+  "title": "task-Table",
+  "category": "text",
+  "icon": "table",
+  "description": "Creates a dynamic table to communicate task to multis.",
+  "example": {},
+  "supports": {
+    "html": false
+  },
+  "textdomain": "task-table",
+  "editorScript": "file:./index.js",
+  "editorStyle": "file:./index.css",
+  "style": "file:./style-index.css",
+  "render": "file:./render.php",
+  "viewScript": "file:./view.js"
+}
