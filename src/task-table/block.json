@@ -11,6 +11,12 @@
 	"supports": {
 		"html": false
 	},
+	"attributes": {
+    	"rows": {
+        	"type": "array",
+        	"default": []
+    	}
+	},	
 	"textdomain": "task-table",
 	"editorScript": "file:./index.js",
 	"editorStyle": "file:./index.css",

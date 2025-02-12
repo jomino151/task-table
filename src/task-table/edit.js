@@ -1,38 +1,104 @@
-/**
- * Retrieves the translation of text.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-i18n/
- */
-import { __ } from '@wordpress/i18n';
+import { useBlockProps, RichText } from '@wordpress/block-editor';
+import { Button } from '@wordpress/components';
 
-/**
- * React hook that is used to mark the block wrapper element.
- * It provides all the necessary props like the class name.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/packages/packages-block-editor/#useblockprops
- */
-import { useBlockProps } from '@wordpress/block-editor';
+const Edit = ({ attributes, setAttributes }) => {
+    const { rows = [] } = attributes;
 
-/**
- * Lets webpack process CSS, SASS or SCSS files referenced in JavaScript files.
- * Those files can contain any CSS code that gets applied to the editor.
- *
- * @see https://www.npmjs.com/package/@wordpress/scripts#using-css
- */
-import './editor.scss';
+    const addRow = () => {
+        const newRows = [...rows, { 
+            wasAngefragt: '', 
+            kontext: '', 
+            nameHochschule: '', 
+            tnAnzahl: '', 
+            zeitpunkt: '', 
+            auftragdetails: '',
+            werMacht: '' // This will be filled dynamically when someone signs up
+        }];
+        setAttributes({ rows: newRows });
+    };
 
-/**
- * The edit function describes the structure of your block in the context of the
- * editor. This represents what the editor will render when the block is used.
- *
- * @see https://developer.wordpress.org/block-editor/reference-guides/block-api/block-edit-save/#edit
- *
- * @return {Element} Element to render.
- */
-export default function Edit() {
-	return (
-		<p { ...useBlockProps() }>
-			{ __( 'task-Table – hello from the editor!', 'task-table' ) }
-		</p>
-	);
-}
+    const updateRow = (index, field, value) => {
+        const newRows = [...rows];
+        newRows[index][field] = value;
+        setAttributes({ rows: newRows });
+    };
+
+    return (
+        <div { ...useBlockProps() }>
+            <table className="event-table-editor">
+                <thead>
+                    <tr>
+                        <th>Was ist angefragt?</th>
+                        <th>Kontext</th>
+                        <th>Name der Hochschule</th>
+                        <th>Vorauss. TN-Anzahl</th>
+                        <th>Anvisierter Zeitpunkt</th>
+                        <th>Auftragdetails</th>
+                        <th>Wer macht's?</th> {/* Moved to the end */}
+                    </tr>
+                </thead>
+                <tbody>
+                    {rows.map((row, index) => (
+                        <tr key={index}>
+                            <td>
+                                <RichText
+                                    value={row.wasAngefragt}
+                                    onChange={(value) => updateRow(index, 'wasAngefragt', value)}
+                                    placeholder="Was ist angefragt?"
+                                />
+                            </td>
+                            <td>
+                                <RichText
+                                    value={row.kontext}
+                                    onChange={(value) => updateRow(index, 'kontext', value)}
+                                    placeholder="Kontext"
+                                />
+                            </td>
+                            <td>
+                                <RichText
+                                    value={row.nameHochschule}
+                                    onChange={(value) => updateRow(index, 'nameHochschule', value)}
+                                    placeholder="Name der Hochschule"
+                                />
+                            </td>
+                            <td>
+                                <RichText
+                                    value={row.tnAnzahl}
+                                    onChange={(value) => updateRow(index, 'tnAnzahl', value)}
+                                    placeholder="Vorauss. TN-Anzahl"
+                                />
+                            </td>
+                            <td>
+                                <RichText
+                                    value={row.zeitpunkt}
+                                    onChange={(value) => updateRow(index, 'zeitpunkt', value)}
+                                    placeholder="Anvisierter Zeitpunkt"
+                                />
+                            </td>
+                            <td>
+                                <RichText
+                                    value={row.auftragdetails}
+                                    onChange={(value) => updateRow(index, 'auftragdetails', value)}
+                                    placeholder="Auftragdetails"
+                                />
+                            </td>
+                            <td>
+                                {/* Read-only field for "Wer macht's?" */}
+                                <div>{row.werMacht}</div>
+                                {/* Placeholder for the "Sign Up" button in the editor */}
+                                <Button disabled variant="secondary">
+                                    Sign Up (Preview)
+                                </Button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+            <Button onClick={addRow} variant="primary" className="add-row-button">
+                Add Row
+            </Button>
+        </div>
+    );
+};
+
+export default Edit;

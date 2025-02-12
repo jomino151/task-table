@@ -1,16 +1,50 @@
 /*!**************************************************************************************************************************************************************************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js??ruleSet[1].rules[4].use[1]!./node_modules/postcss-loader/dist/cjs.js??ruleSet[1].rules[4].use[2]!./node_modules/sass-loader/dist/cjs.js??ruleSet[1].rules[4].use[3]!./src/task-table/style.scss ***!
   \**************************************************************************************************************************************************************************************************************************************************/
-/**
- * The following styles get applied both on the front of your site
- * and in the editor.
- *
- * Replace them with your own styles or remove the file completely.
- */
 .wp-block-task-table-task-table {
-  background-color: #21759b;
-  color: #fff;
-  padding: 2px;
+  grid-column: 2/12;
+  margin: 2rem 0;
+  overflow-x: auto;
+}
+.wp-block-task-table-task-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.wp-block-task-table-task-table th, .wp-block-task-table-task-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e1e1e1;
+}
+.wp-block-task-table-task-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #2c3338;
+}
+.wp-block-task-table-task-table tr:hover {
+  background-color: #f8f9fa;
+}
+.wp-block-task-table-task-table .event-signup {
+  background-color: #007cba;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+.wp-block-task-table-task-table .event-signup:hover {
+  background-color: #006ba1;
+}
+@media (max-width: 768px) {
+  .wp-block-task-table-task-table {
+    grid-column: 1/-1;
+    margin: 1rem;
+  }
+  .wp-block-task-table-task-table table {
+    min-width: 600px;
+  }
 }
 
 /*# sourceMappingURL=style-index.css.map*/
