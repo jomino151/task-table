@@ -4,8 +4,14 @@ import { Button } from '@wordpress/components';
 const Edit = ({ attributes, setAttributes }) => {
     const { rows = [] } = attributes;
 
+    const generateEventId = () => {
+        // Generate a random number within the mediumint range
+        return Math.floor(Math.random() * 8388607);
+    };
+
     const addRow = () => {
         const newRows = [...rows, { 
+            id: generateEventId(), // Use a unique identifier for each row within the mediumint range
             wasAngefragt: '', 
             kontext: '', 
             nameHochschule: '', 
@@ -34,7 +40,7 @@ const Edit = ({ attributes, setAttributes }) => {
                         <th>Vorauss. TN-Anzahl</th>
                         <th>Anvisierter Zeitpunkt</th>
                         <th>Auftragdetails</th>
-                        <th>Wer macht's?</th> {/* Moved to the end */}
+                        <th>Wer macht's?</th>
                     </tr>
                 </thead>
                 <tbody>

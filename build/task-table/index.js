@@ -28,8 +28,14 @@ const Edit = ({
   const {
     rows = []
   } = attributes;
+  const generateEventId = () => {
+    // Generate a random number within the mediumint range
+    return Math.floor(Math.random() * 8388607);
+  };
   const addRow = () => {
     const newRows = [...rows, {
+      id: generateEventId(),
+      // Use a unique identifier for each row within the mediumint range
       wasAngefragt: '',
       kontext: '',
       nameHochschule: '',
@@ -69,7 +75,7 @@ const Edit = ({
             children: "Auftragdetails"
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("th", {
             children: "Wer macht's?"
-          }), " "]
+          })]
         })
       }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsx)("tbody", {
         children: rows.map((row, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_2__.jsxs)("tr", {
