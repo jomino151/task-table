@@ -16,5 +16,17 @@
 	},
 	"devDependencies": {
 		"@wordpress/scripts": "^30.10.0"
+	},
+	"wp-scripts": {
+		"copyAllFiles": [
+			{
+				"from": "src/*.php",
+				"to": "build/[basename]"
+			},
+			{
+				"from": "src/templates",
+				"to": "build/templates"
+			}
+		]
 	}
 }

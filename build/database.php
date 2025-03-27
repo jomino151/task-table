@@ -1,0 +1,159 @@
+<?php
+/**
+ * Database setup and utilities for task table plugin
+ */
+
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly.
+}
+
+/**
+ * Create the necessary database tables during plugin activation
+ */
+function task_table_create_database_tables() {
+    global $wpdb;
+    $charset_collate = $wpdb->get_charset_collate();
+    
+    // Create events table
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $events_sql = "CREATE TABLE $events_table (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        was_angefragt text NOT NULL,
+        kontext text NOT NULL,
+        name_hochschule text NOT NULL,
+        tn_anzahl text NOT NULL,
+        zeitpunkt text NOT NULL,
+        auftragdetails text NOT NULL,
+        wer_macht text NOT NULL,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        PRIMARY KEY  (id)
+    ) $charset_collate;";
+    
+    // Create signups table
+    $signups_table = $wpdb->prefix . 'task_table_signups';
+    $signups_sql = "CREATE TABLE $signups_table (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        event_id mediumint(9) NOT NULL,
+        user_name varchar(100) NOT NULL,
+        user_email varchar(100) NOT NULL,
+        status varchar(20) NOT NULL,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        PRIMARY KEY  (id),
+        KEY event_id (event_id)
+    ) $charset_collate;";
+    
+    // Create subscribers table
+    $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
+    $subscribers_sql = "CREATE TABLE $subscribers_table (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        email varchar(100) NOT NULL,
+        confirmed tinyint(1) DEFAULT 0 NOT NULL,
+        created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        PRIMARY KEY  (id),
+        UNIQUE KEY email (email)
+    ) $charset_collate;";
+    
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($events_sql);
+    dbDelta($signups_sql);
+    dbDelta($subscribers_sql);
+    
+    // Set version to track database changes
+    update_option('task_table_db_version', '1.0');
+}
+
+/**
+ * Migrate existing data from block attributes to database tables
+ */
+function task_table_migrate_existing_data() {
+    global $wpdb;
+    
+    // Only run migration once
+    if (get_option('task_table_migration_complete')) {
+        return;
+    }
+    
+    // Get all task-table blocks from posts
+    $posts_with_blocks = $wpdb->get_results(
+        "SELECT ID, post_content FROM {$wpdb->posts} 
+        WHERE post_content LIKE '%wp:task-table/task-table%' 
+        AND post_status = 'publish'"
+    );
+    
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $migrated_count = 0;
+    
+    foreach ($posts_with_blocks as $post) {
+        // Parse blocks from content
+        $blocks = parse_blocks($post->post_content);
+        
+        foreach ($blocks as $block) {
+            if ($block['blockName'] === 'task-table/task-table' && !empty($block['attrs']['rows'])) {
+                $rows = $block['attrs']['rows'];
+                
+                foreach ($rows as $row) {
+                    // Skip rows without ID
+                    if (empty($row['id'])) {
+                        continue;
+                    }
+                    
+                    // Check if this event is already migrated
+                    $exists = $wpdb->get_var($wpdb->prepare(
+                        "SELECT COUNT(*) FROM $events_table WHERE id = %d",
+                        $row['id']
+                    ));
+                    
+                    if ($exists) {
+                        continue;
+                    }
+                    
+                    // Insert into events table
+                    $wpdb->insert($events_table, array(
+                        'id' => $row['id'],
+                        'was_angefragt' => $row['wasAngefragt'] ?? '',
+                        'kontext' => $row['kontext'] ?? '',
+                        'name_hochschule' => $row['nameHochschule'] ?? '',
+                        'tn_anzahl' => $row['tnAnzahl'] ?? '',
+                        'zeitpunkt' => $row['zeitpunkt'] ?? '',
+                        'auftragdetails' => $row['auftragdetails'] ?? '',
+                        'wer_macht' => $row['werMacht'] ?? '',
+                        'created_at' => current_time('mysql'),
+                        'updated_at' => current_time('mysql')
+                    ));
+                    
+                    $migrated_count++;
+                }
+            }
+        }
+    }
+    
+    // Migrate existing signups table if it exists
+    $old_signups_table = $wpdb->prefix . 'event_signups';
+    $new_signups_table = $wpdb->prefix . 'task_table_signups';
+    
+    if ($wpdb->get_var("SHOW TABLES LIKE '$old_signups_table'") === $old_signups_table) {
+        $signups = $wpdb->get_results("SELECT * FROM $old_signups_table");
+        
+        foreach ($signups as $signup) {
+            $wpdb->insert($new_signups_table, array(
+                'event_id' => $signup->event_id,
+                'user_name' => $signup->user_name,
+                'user_email' => $signup->user_email,
+                'status' => $signup->status,
+                'created_at' => current_time('mysql'),
+                'updated_at' => current_time('mysql')
+            ));
+        }
+    }
+    
+    update_option('task_table_migration_complete', true);
+    update_option('task_table_migrated_events', $migrated_count);
+}
+
+// Use the activation hook to create tables
+register_activation_hook(TASK_TABLE_PLUGIN_FILE, 'task_table_create_database_tables');
+
+// Hook for migrating existing data
+add_action('admin_init', 'task_table_migrate_existing_data');

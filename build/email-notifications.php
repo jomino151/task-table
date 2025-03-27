@@ -1,0 +1,404 @@
+<?php
+/**
+ * Email notification system for Task Table plugin
+ */
+
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly.
+}
+
+/**
+ * Get default email templates
+ * 
+ * @return array Array of email templates
+ */
+function task_table_get_email_templates() {
+    return [
+        'signup_approved' => [
+            'subject' => 'Your Sign-Up for "{event_title}" Has Been Approved',
+            'message' => "Dear {user_name},\n\nYour sign-up for the event \"{event_title}\" has been approved.\n\n{event_details}\n\nThank you,\n{site_name}"
+        ],
+        'signup_denied' => [
+            'subject' => 'Update Regarding Your Sign-Up for "{event_title}"',
+            'message' => "Dear {user_name},\n\nWe regret to inform you that your sign-up for the event \"{event_title}\" cannot be approved at this time.\n\n{event_details}\n\nThank you for your interest.\n\n{site_name}"
+        ],
+        'new_signup' => [
+            'subject' => 'New Event Sign-Up',
+            'message' => "A new sign-up has been received:\n\nEvent ID: {event_id}\nName: {user_name}\nEmail: {user_email}\n\nPlease review this submission in the admin dashboard."
+        ],
+        'new_event' => [
+            'subject' => 'New Event Added: {event_title}',
+            'message' => "A new event has been added that might interest you:\n\n{event_details}\n\nBest regards,\n{site_name}"
+        ]
+    ];
+}
+
+/**
+ * Get email template content with placeholders replaced
+ * 
+ * @param string $template_key The template key
+ * @param array $data Data to replace placeholders
+ * @return array The processed email template
+ */
+function task_table_get_email_content($template_key, $data = []) {
+    $templates = task_table_get_email_templates();
+    
+    if (!isset($templates[$template_key])) {
+        return false;
+    }
+    
+    $template = $templates[$template_key];
+    
+    // Get stored custom templates if available
+    $custom_subject = get_option("task_table_email_{$template_key}_subject", '');
+    $custom_message = get_option("task_table_email_{$template_key}_message", '');
+    
+    if (!empty($custom_subject)) {
+        $template['subject'] = $custom_subject;
+    }
+    
+    if (!empty($custom_message)) {
+        $template['message'] = $custom_message;
+    }
+    
+    // Add site name to data
+    $data['site_name'] = get_bloginfo('name');
+    
+    // Replace placeholders
+    foreach ($data as $key => $value) {
+        $template['subject'] = str_replace("{{$key}}", $value, $template['subject']);
+        $template['message'] = str_replace("{{$key}}", $value, $template['message']);
+    }
+    
+    return $template;
+}
+
+/**
+ * Send email notification
+ * 
+ * @param string $to Recipient email
+ * @param string $template_key Template key
+ * @param array $data Data for email content
+ * @return bool Whether the email was sent
+ */
+function task_table_send_notification($to, $template_key, $data = []) {
+    $email = task_table_get_email_content($template_key, $data);
+    
+    if (!$email) {
+        return false;
+    }
+    
+    $headers = ['Content-Type: text/plain; charset=UTF-8'];
+    
+    return wp_mail($to, $email['subject'], $email['message'], $headers);
+}
+
+/**
+ * Get event details by event ID - Updated to use database table
+ * 
+ * @param int $event_id The event ID
+ * @return array|bool Event details array or false if not found
+ */
+function task_table_get_event_details($event_id) {
+    global $wpdb;
+    $events_table = $wpdb->prefix . 'task_table_events';
+    
+    $event = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $events_table WHERE id = %d",
+        $event_id
+    ), ARRAY_A);
+    
+    if (!$event) {
+        error_log('Could not find event data for event ID ' . $event_id);
+        return false;
+    }
+    
+    // Convert database fields to match expected format for compatibility
+    return [
+        'id' => $event['id'],
+        'wasAngefragt' => $event['was_angefragt'],
+        'kontext' => $event['kontext'],
+        'nameHochschule' => $event['name_hochschule'],
+        'tnAnzahl' => $event['tn_anzahl'],
+        'zeitpunkt' => $event['zeitpunkt'],
+        'auftragdetails' => $event['auftragdetails'],
+        'werMacht' => $event['wer_macht']
+    ];
+}
+
+/**
+ * Format event details for email
+ * 
+ * @param array $event_data The event data
+ * @return string Formatted event details
+ */
+function task_table_format_event_details($event_data) {
+    if (!$event_data) {
+        return 'Event details not available';
+    }
+    
+    $details = "Event Information:\n";
+    
+    if (!empty($event_data['wasAngefragt'])) {
+        $details .= "Request: " . strip_tags(wp_unslash($event_data['wasAngefragt'])) . "\n";
+    }
+    
+    if (!empty($event_data['kontext'])) {
+        $details .= "Context: " . strip_tags(wp_unslash($event_data['kontext'])) . "\n";
+    }
+    
+    if (!empty($event_data['nameHochschule'])) {
+        $details .= "University name: " . strip_tags(wp_unslash($event_data['nameHochschule'])) . "\n";
+    }
+    
+    if (!empty($event_data['tnAnzahl'])) {
+        $details .= "Number of participants: " . strip_tags(wp_unslash($event_data['tnAnzahl'])) . "\n";
+    }
+    
+    if (!empty($event_data['zeitpunkt'])) {
+        $details .= "Time: " . strip_tags(wp_unslash($event_data['zeitpunkt'])) . "\n";
+    }
+    
+    if (!empty($event_data['auftragdetails'])) {
+        $details .= "Order details: " . strip_tags(wp_unslash($event_data['auftragdetails'])) . "\n";
+    }
+    
+    return $details;
+}
+
+/**
+ * Send signup approval notification
+ * 
+ * @param object $signup The signup database object
+ * @return bool Whether the email was sent
+ */
+function task_table_send_approval_notification($signup) {
+    // Get event details from database
+    $event_data = task_table_get_event_details($signup->event_id);
+    $event_details = task_table_format_event_details($event_data);
+    
+    // Add event title if available
+    $event_title = !empty($event_data['wasAngefragt']) ? 
+        strip_tags(wp_unslash($event_data['wasAngefragt'])) : 
+        "Event #" . $signup->event_id;
+    
+    // Log for debugging
+    error_log('Sending approval email for event: ' . $event_title);
+    
+    return task_table_send_notification(
+        $signup->user_email,
+        'signup_approved',
+        [
+            'user_name' => $signup->user_name,
+            'event_id' => $signup->event_id,
+            'event_details' => $event_details,
+            'event_title' => $event_title
+        ]
+    );
+}
+
+/**
+ * Send signup denial notification
+ * 
+ * @param object $signup The signup database object
+ * @return bool Whether the email was sent
+ */
+function task_table_send_denial_notification($signup) {
+    // Get event details from database
+    $event_data = task_table_get_event_details($signup->event_id);
+    $event_title = !empty($event_data['wasAngefragt']) ? 
+        strip_tags(wp_unslash($event_data['wasAngefragt'])) : 
+        "Event #" . $signup->event_id;
+    
+    // Include basic event details in denial emails too
+    $event_details = "";
+    if (!empty($event_data['nameHochschule'])) {
+        $event_details .= "University: " . strip_tags(wp_unslash($event_data['nameHochschule'])) . "\n";
+    }
+    if (!empty($event_data['zeitpunkt'])) {
+        $event_details .= "Time: " . strip_tags(wp_unslash($event_data['zeitpunkt'])) . "\n";
+    }
+    
+    return task_table_send_notification(
+        $signup->user_email,
+        'signup_denied',
+        [
+            'user_name' => $signup->user_name,
+            'event_id' => $signup->event_id,
+            'event_title' => $event_title,
+            'event_details' => $event_details
+        ]
+    );
+}
+
+/**
+ * Send new signup notification to admin
+ * 
+ * @param array $signup_data The signup data
+ * @return bool Whether the email was sent
+ */
+function task_table_send_new_signup_notification($signup_data) {
+    $moderator_email = get_option('moderator_email', get_option('admin_email'));
+    
+    return task_table_send_notification(
+        $moderator_email,
+        'new_signup',
+        [
+            'user_name' => $signup_data['user_name'],
+            'user_email' => $signup_data['user_email'],
+            'event_id' => $signup_data['event_id']
+        ]
+    );
+}
+
+/**
+ * Send notification for new events to subscribers
+ * 
+ * @param array $event_data The event data
+ * @param bool $test_mode Whether this is a test notification
+ * @return array Result of the notification process
+ */
+function task_table_send_new_event_notification($event_data, $test_mode = false) {
+    global $wpdb;
+    $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
+    
+    // Convert event data format if needed (if it comes from the database vs frontend)
+    $normalized_event = $event_data;
+    if (isset($event_data['was_angefragt']) && !isset($event_data['wasAngefragt'])) {
+        $normalized_event = [
+            'id' => $event_data['id'],
+            'wasAngefragt' => $event_data['was_angefragt'],
+            'kontext' => $event_data['kontext'],
+            'nameHochschule' => $event_data['name_hochschule'],
+            'tnAnzahl' => $event_data['tn_anzahl'],
+            'zeitpunkt' => $event_data['zeitpunkt'],
+            'auftragdetails' => $event_data['auftragdetails'],
+            'werMacht' => $event_data['wer_macht']
+        ];
+    }
+    
+    // Get all confirmed subscribers
+    $subscribers = $wpdb->get_results("SELECT email FROM $subscribers_table WHERE confirmed = 1 OR confirmed = 0");
+    
+    // For test mode, don't actually send emails
+    if (empty($subscribers) && !$test_mode) {
+        return [
+            'success' => true,
+            'message' => 'No subscribers to notify',
+            'notification_sent' => false,
+            'subscriber_count' => 0
+        ];
+    }
+    
+    if ($test_mode) {
+        return [
+            'success' => true,
+            'message' => 'Test notification would be sent to ' . count($subscribers) . ' subscribers',
+            'notification_sent' => true,
+            'subscriber_count' => count($subscribers),
+            'test_mode' => true
+        ];
+    }
+    
+    // Format the event data for email
+    $event_title = !empty($normalized_event['wasAngefragt']) ? 
+        strip_tags($normalized_event['wasAngefragt']) : 
+        "New Event #" . $normalized_event['id'];
+    
+    $event_details = task_table_format_event_details($normalized_event);
+    
+    // Send email to each subscriber
+    $sent_count = 0;
+    foreach ($subscribers as $subscriber) {
+        $sent = task_table_send_notification(
+            $subscriber->email,
+            'new_event',
+            [
+                'event_title' => $event_title,
+                'event_details' => $event_details,
+                'event_id' => $normalized_event['id']
+            ]
+        );
+        
+        if ($sent) {
+            $sent_count++;
+        }
+    }
+    
+    return [
+        'success' => true,
+        'message' => "Notification sent to $sent_count subscribers",
+        'notification_sent' => ($sent_count > 0),
+        'subscriber_count' => $sent_count
+    ];
+}
+
+/**
+ * Send notification when a new signup is received
+ */
+function task_table_send_signup_notification($signup_data) {
+    $notification_emails = get_option(TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION, array());
+    
+    if (empty($notification_emails)) {
+        return false;
+    }
+    
+    $event_id = isset($signup_data['event_id']) ? intval($signup_data['event_id']) : 0;
+    $user_name = isset($signup_data['user_name']) ? sanitize_text_field($signup_data['user_name']) : 'Unknown';
+    $user_email = isset($signup_data['user_email']) ? sanitize_email($signup_data['user_email']) : 'Unknown';
+    
+    // Get event details if available
+    global $wpdb;
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $event = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $events_table WHERE id = %d",
+        $event_id
+    ));
+    
+    $event_title = $event ? $event->was_angefragt : 'Unknown Event';
+    
+    $subject = sprintf('New signup received for event: %s', $event_title);
+    
+    $message = sprintf(
+        "Hello,\n\nA new signup has been received for the event.\n\n" .
+        "Event Details:\n" .
+        "- Event: %s\n" .
+        "- Event ID: %d\n\n" .
+        "Signup Details:\n" .
+        "- Name: %s\n" .
+        "- Email: %s\n\n" .
+        "You can review this signup in the WordPress admin area.\n\n" .
+        "Regards,\n" .
+        "Task Table Plugin",
+        $event_title,
+        $event_id,
+        $user_name,
+        $user_email
+    );
+    
+    $headers = array('Content-Type: text/plain; charset=UTF-8');
+    
+    // Send email to each notification recipient
+    $sent = false;
+    foreach ($notification_emails as $email) {
+        $result = wp_mail($email, $subject, $message, $headers);
+        if ($result) {
+            $sent = true;
+        }
+    }
+    
+    return $sent;
+}
+
+/**
+ * Hook to send notifications when a new signup is processed
+ */
+function task_table_process_new_signup($data, $status) {
+    // Only send notification for new signups
+    if ($status === 'pending') {
+        task_table_send_signup_notification($data);
+    }
+    
+    return $data;
+}
+add_filter('task_table_process_signup', 'task_table_process_new_signup', 10, 2);
