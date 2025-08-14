@@ -57,15 +57,6 @@ function task_table_register_api_routes() {
         'callback' => 'task_table_add_subscriber',
         'permission_callback' => '__return_true' // Public access to subscribe
     ));
-    
-    // Notification trigger endpoint
-    register_rest_route('task-table/v1', '/trigger-event-notification', array(
-        'methods' => 'POST',
-        'callback' => 'task_table_trigger_notification',
-        'permission_callback' => function() {
-            return current_user_can('edit_posts');
-        }
-    ));
 }
 add_action('rest_api_init', 'task_table_register_api_routes');
 
@@ -183,12 +174,12 @@ function task_table_save_event(WP_REST_Request $request) {
     
     $event_id = $wpdb->insert_id;
     $event_data['id'] = $event_id;
-    
-    // Trigger notification for new event if not empty
-    if (!empty($event_data['was_angefragt']) || !empty($event_data['kontext'])) {
-        task_table_send_new_event_notification($event_data);
+
+    // Queue notification; actual sending happens on post save
+    if (task_table_event_is_complete($event_data)) {
+        task_table_queue_event_notification($event_id);
     }
-    
+
     return new WP_REST_Response(array(
         'success' => true,
         'event' => $event_data
@@ -217,8 +208,11 @@ function task_table_update_event(WP_REST_Request $request) {
             'message' => 'Event not found'
         ), 404);
     }
+
+    // Determine completeness before update
+    $was_complete = task_table_event_is_complete($existing_event);
     
-    // Sanitize and prepare update data - use wp_kses_post to preserve formatting but remove unsafe HTML
+    // Sanitize and prepare update data - preserve formatting where needed
     $update_data = array(
         'was_angefragt' => isset($data['was_angefragt']) ? wp_kses_post($data['was_angefragt']) : $existing_event['was_angefragt'],
         'kontext' => isset($data['kontext']) ? wp_kses_post($data['kontext']) : $existing_event['kontext'],
@@ -239,6 +233,9 @@ function task_table_update_event(WP_REST_Request $request) {
     if (isset($data['auftragdetails'])) $update_data['auftragdetails'] = wp_kses_post($data['auftragdetails']);
     if (isset($data['werMacht'])) $update_data['wer_macht'] = wp_kses_post($data['werMacht']);
     
+    // Determine completeness after update
+    $now_complete = task_table_event_is_complete($update_data);
+    
     $result = $wpdb->update(
         $table_name,
         $update_data,
@@ -253,14 +250,18 @@ function task_table_update_event(WP_REST_Request $request) {
         ), 500);
     }
     
-    // Include the ID in the response
-    $update_data['id'] = $event_id;
-    
-    // Get the complete updated row from the database to ensure we return accurate data
+    // Get the complete updated row
     $updated_event = $wpdb->get_row($wpdb->prepare(
         "SELECT * FROM $table_name WHERE id = %d",
         $event_id
     ), ARRAY_A);
+
+    $now_complete = task_table_event_is_complete($updated_event);
+
+    // Queue notification only on transition to complete; sending deferred to save_post
+    if (!$was_complete && $now_complete) {
+        task_table_queue_event_notification($event_id);
+    }
     
     return new WP_REST_Response(array(
         'success' => true,
@@ -348,26 +349,6 @@ function task_table_add_subscriber(WP_REST_Request $request) {
 }
 
 /**
- * Trigger notification for an event
- */
-function task_table_trigger_notification(WP_REST_Request $request) {
-    $data = $request->get_json_params();
-    $event = $data['event'] ?? null;
-    $test_mode = !empty($data['_test_mode']);
-    
-    if (!$event || empty($event['id'])) {
-        return new WP_REST_Response(array(
-            'success' => false,
-            'message' => 'Invalid event data'
-        ), 400);
-    }
-    
-    $result = task_table_send_new_event_notification($event, $test_mode);
-    
-    return new WP_REST_Response($result, 200);
-}
-
-/**
  * Utility function to get all approved signups for an event
  */
 function task_table_get_event_signups($event_id, $status = 'approved') {
@@ -414,22 +395,69 @@ function task_table_get_event($event_id) {
     return null;
 }
 
-/**
- * AJAX fallback for notification testing
- */
-function task_table_direct_notification_ajax() {
-    check_ajax_referer('wp_rest', 'security');
-    
-    if (!current_user_can('edit_posts')) {
-        wp_send_json_error('Permission denied');
+// Track events already notified to avoid duplicate emails
+if (!defined('TASK_TABLE_NOTIFIED_EVENTS_OPTION')) {
+    define('TASK_TABLE_NOTIFIED_EVENTS_OPTION', 'task_table_notified_event_ids');
+}
+
+function task_table_mark_event_notified($event_id) {
+    $list = get_option(TASK_TABLE_NOTIFIED_EVENTS_OPTION, array());
+    $list = is_array($list) ? $list : array();
+    $list[] = (int) $event_id;
+    $list = array_values(array_unique(array_map('intval', $list)));
+    update_option(TASK_TABLE_NOTIFIED_EVENTS_OPTION, $list);
+}
+
+function task_table_was_event_notified($event_id) {
+    $list = get_option(TASK_TABLE_NOTIFIED_EVENTS_OPTION, array());
+    return is_array($list) && in_array((int)$event_id, $list, true);
+}
+
+// Pending notifications queue (processed on post save)
+if (!defined('TASK_TABLE_PENDING_NOTIFICATIONS_OPTION')) {
+    define('TASK_TABLE_PENDING_NOTIFICATIONS_OPTION', 'task_table_pending_event_notifications');
+}
+
+function task_table_queue_event_notification($event_id) {
+    $queue = get_option(TASK_TABLE_PENDING_NOTIFICATIONS_OPTION, array());
+    $queue = is_array($queue) ? $queue : array();
+    $queue[] = (int) $event_id;
+    $queue = array_values(array_unique(array_map('intval', $queue)));
+    update_option(TASK_TABLE_PENDING_NOTIFICATIONS_OPTION, $queue);
+}
+
+function task_table_send_pending_event_notifications($post_id, $post, $update) {
+    if (wp_is_post_autosave($post_id) || wp_is_post_revision($post_id)) {
         return;
     }
-    
-    $event_data = json_decode(stripslashes($_POST['event_data']), true);
-    $test_mode = !empty($_POST['test_mode']);
-    
-    $result = task_table_send_new_event_notification($event_data, $test_mode);
-    
-    wp_send_json_success($result);
+    $queue = get_option(TASK_TABLE_PENDING_NOTIFICATIONS_OPTION, array());
+    if (empty($queue) || !is_array($queue)) {
+        return;
+    }
+
+    global $wpdb;
+    $events_table = $wpdb->prefix . 'task_table_events';
+    foreach ($queue as $event_id) {
+        if (task_table_was_event_notified($event_id)) {
+            continue;
+        }
+        $event = $wpdb->get_row($wpdb->prepare("SELECT * FROM $events_table WHERE id = %d", (int)$event_id), ARRAY_A);
+        if ($event && task_table_event_is_complete($event)) {
+            task_table_send_new_event_notification($event);
+            task_table_mark_event_notified($event_id);
+        }
+    }
+    delete_option(TASK_TABLE_PENDING_NOTIFICATIONS_OPTION);
 }
-add_action('wp_ajax_task_table_direct_notification', 'task_table_direct_notification_ajax');
+add_action('save_post', 'task_table_send_pending_event_notifications', 20, 3);
+
+/**
+ * Determine if an event is complete enough to notify (require title and context)
+ */
+function task_table_event_is_complete($event) {
+    $title = isset($event['was_angefragt']) ? $event['was_angefragt'] : ($event['wasAngefragt'] ?? '');
+    $context = isset($event['kontext']) ? $event['kontext'] : ($event['kontext'] ?? '');
+    $title = trim(strip_tags((string)$title));
+    $context = trim(strip_tags((string)$context));
+    return ($title !== '' && $context !== '');
+}

@@ -255,14 +255,13 @@ function task_table_send_new_signup_notification($signup_data) {
  * Send notification for new events to subscribers
  * 
  * @param array $event_data The event data
- * @param bool $test_mode Whether this is a test notification
  * @return array Result of the notification process
  */
-function task_table_send_new_event_notification($event_data, $test_mode = false) {
+function task_table_send_new_event_notification($event_data) {
     global $wpdb;
     $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
     
-    // Convert event data format if needed (if it comes from the database vs frontend)
+    // Normalize event data (support DB and frontend formats)
     $normalized_event = $event_data;
     if (isset($event_data['was_angefragt']) && !isset($event_data['wasAngefragt'])) {
         $normalized_event = [
@@ -276,12 +275,27 @@ function task_table_send_new_event_notification($event_data, $test_mode = false)
             'werMacht' => $event_data['wer_macht']
         ];
     }
-    
-    // Get all confirmed subscribers
-    $subscribers = $wpdb->get_results("SELECT email FROM $subscribers_table WHERE confirmed = 1 OR confirmed = 0");
-    
-    // For test mode, don't actually send emails
-    if (empty($subscribers) && !$test_mode) {
+
+    // Build recipient list: ONLY plugin subscribers (from the Subscribers admin page)
+    $recipient_emails = [];
+
+    // Ensure table exists and fetch emails
+    if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $subscribers_table)) === $subscribers_table) {
+        $recipient_emails = $wpdb->get_col("SELECT email FROM $subscribers_table WHERE email <> ''");
+    }
+
+    // Deduplicate emails (case-insensitive)
+    $unique_map = [];
+    foreach ($recipient_emails as $e) {
+        $key = strtolower(trim($e));
+        if ($key !== '' && is_email($e)) {
+            $unique_map[$key] = $e; // preserve original casing
+        }
+    }
+    $recipient_emails = array_values($unique_map);
+
+    // Nothing to do
+    if (empty($recipient_emails)) {
         return [
             'success' => true,
             'message' => 'No subscribers to notify',
@@ -289,45 +303,34 @@ function task_table_send_new_event_notification($event_data, $test_mode = false)
             'subscriber_count' => 0
         ];
     }
-    
-    if ($test_mode) {
-        return [
-            'success' => true,
-            'message' => 'Test notification would be sent to ' . count($subscribers) . ' subscribers',
-            'notification_sent' => true,
-            'subscriber_count' => count($subscribers),
-            'test_mode' => true
-        ];
-    }
-    
-    // Format the event data for email
-    $event_title = !empty($normalized_event['wasAngefragt']) ? 
-        strip_tags($normalized_event['wasAngefragt']) : 
-        "New Event #" . $normalized_event['id'];
-    
+
+    // Prepare email contents
+    $event_title = !empty($normalized_event['wasAngefragt']) ?
+        strip_tags($normalized_event['wasAngefragt']) :
+        'New Event #' . ($normalized_event['id'] ?? '');
+
     $event_details = task_table_format_event_details($normalized_event);
-    
-    // Send email to each subscriber
+
+    // Send emails
     $sent_count = 0;
-    foreach ($subscribers as $subscriber) {
+    foreach ($recipient_emails as $to) {
         $sent = task_table_send_notification(
-            $subscriber->email,
+            $to,
             'new_event',
             [
                 'event_title' => $event_title,
                 'event_details' => $event_details,
-                'event_id' => $normalized_event['id']
+                'event_id' => $normalized_event['id'] ?? 0
             ]
         );
-        
         if ($sent) {
             $sent_count++;
         }
     }
-    
+
     return [
         'success' => true,
-        'message' => "Notification sent to $sent_count subscribers",
+        'message' => 'Notification sent to ' . $sent_count . ' subscribers',
         'notification_sent' => ($sent_count > 0),
         'subscriber_count' => $sent_count
     ];
