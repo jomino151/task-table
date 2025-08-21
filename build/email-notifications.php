@@ -279,9 +279,9 @@ function task_table_send_new_event_notification($event_data) {
     // Build recipient list: ONLY plugin subscribers (from the Subscribers admin page)
     $recipient_emails = [];
 
-    // Ensure table exists and fetch emails
+    // Ensure table exists and fetch only CONFIRMED subscriber emails
     if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $subscribers_table)) === $subscribers_table) {
-        $recipient_emails = $wpdb->get_col("SELECT email FROM $subscribers_table WHERE email <> ''");
+        $recipient_emails = $wpdb->get_col("SELECT email FROM $subscribers_table WHERE confirmed = 1 AND email <> ''");
     }
 
     // Deduplicate emails (case-insensitive)
