@@ -2,7 +2,15 @@
 // Get events from the database instead of attributes
 global $wpdb;
 $events_table = $wpdb->prefix . 'task_table_events';
-$events = $wpdb->get_results("SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A);
+
+// Only show non-archived events on the public frontend. If the archived column
+// does not exist yet (e.g. race condition before upgrade hook), fall back to all.
+$has_archived_col = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$events_table} LIKE %s", 'archived'));
+if ($has_archived_col) {
+    $events = $wpdb->get_results("SELECT * FROM $events_table WHERE archived = 0 ORDER BY created_at DESC", ARRAY_A);
+} else {
+    $events = $wpdb->get_results("SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A);
+}
 
 echo '<div class="wp-block-task-table-task-table">';
 echo '<table>';
