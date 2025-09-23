@@ -66,9 +66,21 @@ function task_table_admin_dashboard_page() {
     global $wpdb;
     $events_table = $wpdb->prefix . 'task_table_events';
     $signups_table = $wpdb->prefix . 'task_table_signups';
-    
-    // Get events from database
-    $events = $wpdb->get_results("SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A);
+    // Handle archive/unarchive (nonce protected via URL)
+    if (isset($_GET['action'], $_GET['event_id'], $_GET['_wpnonce'])) {
+        $allowed = ['archive','unarchive'];
+        $action = sanitize_text_field($_GET['action']);
+        $event_id = (int)$_GET['event_id'];
+        if (in_array($action, $allowed, true) && wp_verify_nonce(sanitize_text_field($_GET['_wpnonce']), 'task_table_event_'.$action.'_'.$event_id)) {
+            $archived_val = $action === 'archive' ? 1 : 0;
+            $wpdb->update($events_table, ['archived'=>$archived_val, 'updated_at'=>current_time('mysql')], ['id'=>$event_id]);
+            echo '<div class="notice notice-success is-dismissible"><p>'.($archived_val?__('Event archived.','task-table'):__('Event restored.','task-table')).'</p></div>';
+        }
+    }
+
+    $show_archived = isset($_GET['archived']) && $_GET['archived'] === '1';
+    $where = $show_archived ? 'WHERE archived = 1' : 'WHERE archived = 0';
+    $events = $wpdb->get_results("SELECT * FROM $events_table $where ORDER BY created_at DESC", ARRAY_A);
     
     // Count signups
     $pending_signups = $wpdb->get_var("SELECT COUNT(*) FROM $signups_table WHERE status = 'pending'");
@@ -76,6 +88,20 @@ function task_table_admin_dashboard_page() {
     ?>
     <div class="wrap">
         <h1><?php _e('Task Table Dashboard', 'task-table'); ?></h1>
+        <p class="view-toggle-links">
+            <?php if(!$show_archived): ?>
+                <a href="<?php echo esc_url(add_query_arg(['archived'=>'1'])); ?>"><?php _e('View Archived Events','task-table'); ?></a>
+            <?php else: ?>
+                <a href="<?php echo esc_url(remove_query_arg('archived')); ?>"><?php _e('View Active Events','task-table'); ?></a>
+            <?php endif; ?>
+            | <?php 
+                $export_args = [ 'action' => 'task_table_export_events' ];
+                if ($show_archived) { $export_args['archived'] = '1'; }
+                $export_url = add_query_arg($export_args, admin_url('admin-post.php'));
+                $export_url = wp_nonce_url($export_url, 'task_table_export_events');
+            ?>
+            <a href="<?php echo esc_url($export_url); ?>" target="_blank"><?php _e('Download Excel','task-table'); ?></a>
+        </p>
         
         <div class="task-table-dashboard">
             <div class="task-table-stats">
@@ -95,7 +121,7 @@ function task_table_admin_dashboard_page() {
                 </div>
             </div>
             
-            <h2><?php _e('Recent Events', 'task-table'); ?></h2>
+            <h2><?php echo $show_archived ? esc_html__('Archived Events','task-table') : esc_html__('Events','task-table'); ?></h2>
             
             <?php if (!empty($events)): ?>
                 <table class="wp-list-table widefat fixed striped">
@@ -107,10 +133,11 @@ function task_table_admin_dashboard_page() {
                             <th><?php _e('Time', 'task-table'); ?></th>
                             <th><?php _e('Assignee', 'task-table'); ?></th>
                             <th><?php _e('Created', 'task-table'); ?></th>
+                            <th><?php _e('Actions', 'task-table'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach (array_slice($events, 0, 10) as $event): ?>
+                        <?php foreach ($events as $event): ?>
                             <tr>
                                 <td><?php echo esc_html($event['id']); ?></td>
                                 <td><?php echo esc_html($event['was_angefragt']); ?></td>
@@ -118,6 +145,13 @@ function task_table_admin_dashboard_page() {
                                 <td><?php echo esc_html($event['zeitpunkt']); ?></td>
                                 <td><?php echo esc_html($event['wer_macht']); ?></td>
                                 <td><?php echo date_i18n(get_option('date_format'), strtotime($event['created_at'])); ?></td>
+                                <td>
+                                    <?php if(!$show_archived): ?>
+                                        <a class="button button-small" href="<?php echo wp_nonce_url(add_query_arg(['action'=>'archive','event_id'=>$event['id']]), 'task_table_event_archive_'.$event['id']); ?>" onclick="return confirm('<?php _e('Archive this event?','task-table'); ?>');"><?php _e('Archive','task-table'); ?></a>
+                                    <?php else: ?>
+                                        <a class="button button-small" href="<?php echo wp_nonce_url(add_query_arg(['action'=>'unarchive','event_id'=>$event['id']]), 'task_table_event_unarchive_'.$event['id']); ?>" onclick="return confirm('<?php _e('Restore this event?','task-table'); ?>');"><?php _e('Restore','task-table'); ?></a>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -146,7 +180,7 @@ function task_table_admin_dashboard_page() {
             border-radius: 3px;
             min-width: 150px;
         }
-        .stat-box h3 {
+        .stat-box {
             margin-top: 0;
         }
         .stat-count {
@@ -154,6 +188,7 @@ function task_table_admin_dashboard_page() {
             font-weight: bold;
             margin: 10px 0;
         }
+        .view-toggle-links { margin:10px 0 20px; }
     </style>
     <?php
 }

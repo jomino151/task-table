@@ -25,9 +25,11 @@ function task_table_create_database_tables() {
         zeitpunkt text NOT NULL,
         auftragdetails text NOT NULL,
         wer_macht text NOT NULL,
+        archived tinyint(1) DEFAULT 0 NOT NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
         updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
-        PRIMARY KEY  (id)
+        PRIMARY KEY  (id),
+        KEY archived (archived)
     ) $charset_collate;";
     
     // Create signups table
@@ -66,7 +68,7 @@ function task_table_create_database_tables() {
     dbDelta($subscribers_sql);
     
     // Set version to track database changes
-    update_option('task_table_db_version', '1.2');
+    update_option('task_table_db_version', '1.4');
 }
 
 /**
@@ -172,6 +174,7 @@ function task_table_maybe_upgrade_schema() {
     $current_version = get_option('task_table_db_version', '1.0');
     $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
     $signups_table = $wpdb->prefix . 'task_table_signups';
+    $events_table = $wpdb->prefix . 'task_table_events';
 
     // Upgrade to 1.1: add confirmation_token
     if (version_compare($current_version, '1.1', '<')) {
@@ -201,6 +204,17 @@ function task_table_maybe_upgrade_schema() {
             $wpdb->query("ALTER TABLE $signups_table ADD COLUMN free_text text NULL AFTER user_email");
         }
         update_option('task_table_db_version', '1.3');
+        $current_version = '1.3';
+    }
+
+    // Upgrade to 1.4: add archived column to events
+    if (version_compare($current_version, '1.4', '<')) {
+        $col4 = $wpdb->get_results("SHOW COLUMNS FROM $events_table LIKE 'archived'");
+        if (empty($col4)) {
+            $wpdb->query("ALTER TABLE $events_table ADD COLUMN archived tinyint(1) DEFAULT 0 NOT NULL AFTER wer_macht");
+            $wpdb->query("ALTER TABLE $events_table ADD KEY archived (archived)");
+        }
+        update_option('task_table_db_version', '1.4');
     }
 }
 add_action('plugins_loaded', 'task_table_maybe_upgrade_schema');

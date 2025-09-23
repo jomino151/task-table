@@ -23,7 +23,7 @@ function task_table_register_api_routes() {
         'methods' => 'GET',
         'callback' => 'task_table_get_events',
         'permission_callback' => function() {
-            return current_user_can('edit_posts');
+            return current_user_can('manage_task_table');
         }
     ));
     
@@ -31,7 +31,7 @@ function task_table_register_api_routes() {
         'methods' => 'POST',
         'callback' => 'task_table_save_event',
         'permission_callback' => function() {
-            return current_user_can('edit_posts');
+            return current_user_can('manage_task_table');
         }
     ));
     
@@ -39,7 +39,7 @@ function task_table_register_api_routes() {
         'methods' => 'PUT',
         'callback' => 'task_table_update_event',
         'permission_callback' => function() {
-            return current_user_can('edit_posts');
+            return current_user_can('manage_task_table');
         }
     ));
     
@@ -47,8 +47,22 @@ function task_table_register_api_routes() {
         'methods' => 'DELETE',
         'callback' => 'task_table_delete_event',
         'permission_callback' => function() {
-            return current_user_can('edit_posts');
+            return current_user_can('manage_task_table');
         }
+    ));
+
+    // Archive/unarchive event
+    register_rest_route('task-table/v1', '/events/(?P<id>\d+)/archive', array(
+        'methods' => 'POST',
+        'callback' => 'task_table_archive_event',
+        'permission_callback' => function() { return current_user_can('manage_task_table'); }
+    ));
+
+    // Export events (active or archived) as Excel (.xls XML Spreadsheet)
+    register_rest_route('task-table/v1', '/events/export', array(
+        'methods' => 'GET',
+        'callback' => 'task_table_export_events_excel',
+        'permission_callback' => function() { return is_user_logged_in(); }
     ));
     
     // Notification subscriber management
@@ -141,12 +155,17 @@ function task_table_process_event_signup($request) {
 /**
  * Get all events from the database
  */
-function task_table_get_events() {
+function task_table_get_events(WP_REST_Request $request) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'task_table_events';
-    
-    $events = $wpdb->get_results("SELECT * FROM $table_name ORDER BY created_at DESC", ARRAY_A);
-    
+    $archived = $request->get_param('archived');
+    $where = '';
+    if ($archived === '1' || $archived === 1) {
+        $where = 'WHERE archived = 1';
+    } elseif ($archived === '0' || $archived === 0) {
+        $where = 'WHERE archived = 0';
+    }
+    $events = $wpdb->get_results("SELECT * FROM $table_name $where ORDER BY created_at DESC", ARRAY_A);
     return new WP_REST_Response($events, 200);
 }
 
@@ -168,6 +187,7 @@ function task_table_save_event(WP_REST_Request $request) {
         'zeitpunkt' => sanitize_text_field($data['zeitpunkt'] ?? ''),
         'auftragdetails' => sanitize_text_field($data['auftragdetails'] ?? ''),
         'wer_macht' => sanitize_text_field($data['werMacht'] ?? ''),
+        'archived' => 0,
         'created_at' => current_time('mysql'),
         'updated_at' => current_time('mysql')
     );
@@ -474,7 +494,8 @@ function task_table_get_event($event_id) {
             'auftragdetails' => $event['auftragdetails'],
             'werMacht' => $event['wer_macht'],
             'created_at' => $event['created_at'],
-            'updated_at' => $event['updated_at']
+            'updated_at' => $event['updated_at'],
+            'archived' => (int)$event['archived']
         );
     }
     
@@ -547,3 +568,192 @@ function task_table_event_is_complete($event) {
     $context = trim(strip_tags((string)$context));
     return ($title !== '' && $context !== '');
 }
+
+/**
+ * Archive or unarchive an event
+ */
+function task_table_archive_event(WP_REST_Request $request) {
+    global $wpdb;
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $event_id = (int)$request['id'];
+    $body = $request->get_json_params();
+    $archive = isset($body['archived']) ? (int)$body['archived'] : 1; // default archive
+    $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $events_table WHERE id = %d", $event_id));
+    if (!$exists) {
+        return new WP_REST_Response(['success' => false, 'message' => 'Event not found'], 404);
+    }
+    $res = $wpdb->update($events_table, [ 'archived' => $archive, 'updated_at' => current_time('mysql') ], ['id' => $event_id]);
+    if ($res === false) {
+        return new WP_REST_Response(['success' => false, 'message' => 'Failed to update archive state'], 500);
+    }
+    $event = $wpdb->get_row($wpdb->prepare("SELECT * FROM $events_table WHERE id = %d", $event_id), ARRAY_A);
+    return new WP_REST_Response(['success' => true, 'event' => $event]);
+}
+
+/**
+ * Export events as CSV (optionally archived=1)
+ */
+function task_table_export_events_excel(WP_REST_Request $request) {
+    // Allow any logged-in user to export (matches permission_callback)
+    if (!is_user_logged_in()) {
+        return new WP_REST_Response(['success' => false, 'message' => 'Forbidden'], 403);
+    }
+    global $wpdb;
+    $table = $wpdb->prefix . 'task_table_events';
+    $archived = $request->get_param('archived');
+        $format = $request->get_param('format') ?: 'xlsx';
+        $sheet = task_table_generate_events_spreadsheet($archived, $format);
+        return new WP_REST_Response($sheet['content'], 200, [
+            'Content-Type' => $sheet['content_type'],
+            'Content-Disposition' => 'attachment; filename="'.$sheet['filename'].'"'
+    ]);
+}
+
+/**
+ * Generate events spreadsheet (XLSX or legacy XML) and return array with content, filename, content_type
+ */
+function task_table_generate_events_spreadsheet($archived_param = null, $format = 'xlsx') {
+    global $wpdb;
+    $table = $wpdb->prefix . 'task_table_events';
+    $where = '';
+    if ($archived_param === '1' || $archived_param === 1) { $where = 'WHERE archived = 1'; }
+    elseif ($archived_param === '0' || $archived_param === 0) { $where = 'WHERE archived = 0'; }
+    $rows = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC", ARRAY_A);
+    $headers = ['id','was_angefragt','kontext','name_hochschule','tn_anzahl','zeitpunkt','auftragdetails','wer_macht','archived','created_at','updated_at'];
+
+    if ($format === 'xml' || !class_exists('ZipArchive')) {
+        $xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+        $xml .= "<?mso-application progid=\"Excel.Sheet\"?>\n";
+        $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
+        $xml .= '<Worksheet ss:Name="Events"><Table><Row>';
+        foreach ($headers as $h) { $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($h, ENT_XML1 | ENT_COMPAT, 'UTF-8') . '</Data></Cell>'; }
+        $xml .= '</Row>';
+        foreach ($rows as $r) {
+            $xml .= '<Row>';
+            foreach ($headers as $h) {
+                $val = isset($r[$h]) ? (string)$r[$h] : '';
+                $val = preg_replace("/\r\n?|\n/", "\n", $val);
+                $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($val, ENT_XML1 | ENT_COMPAT, 'UTF-8') . '</Data></Cell>';
+            }
+            $xml .= '</Row>';
+        }
+        $xml .= '</Table></Worksheet></Workbook>';
+        return [ 'content' => $xml, 'filename' => 'task-table-events.xls', 'content_type' => 'application/vnd.ms-excel; charset=UTF-8' ];
+    }
+
+    // Build XLSX
+    $sheet_rows_xml = '';
+    $rowIndex = 1; $colIndex = 1;
+    $sheet_rows_xml .= '<row r="'.$rowIndex.'">';
+    foreach ($headers as $h) {
+        $sheet_rows_xml .= '<c r="'.task_table_xlsx_cell_ref($colIndex,$rowIndex).'" t="inlineStr"><is><t>'.task_table_xlsx_escape($h).'</t></is></c>';
+        $colIndex++;
+    }
+    $sheet_rows_xml .= '</row>';
+    $rowIndex++;
+    foreach ($rows as $r) {
+        $sheet_rows_xml .= '<row r="'.$rowIndex.'">';
+        $colIndex = 1;
+        foreach ($headers as $h) {
+            $val = isset($r[$h]) ? (string)$r[$h] : '';
+            $val = preg_replace("/\r\n?|\n/", "\n", $val);
+            $sheet_rows_xml .= '<c r="'.task_table_xlsx_cell_ref($colIndex,$rowIndex).'" t="inlineStr"><is><t>'.task_table_xlsx_escape($val).'</t></is></c>';
+            $colIndex++;
+        }
+        $sheet_rows_xml .= '</row>';
+        $rowIndex++;
+    }
+    $sheet_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetData>'.$sheet_rows_xml.'</sheetData></worksheet>';
+    $workbook_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Events" sheetId="1" r:id="rId1"/></sheets></workbook>';
+    $rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+    $workbook_rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
+    $styles_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"></styleSheet>';
+    $content_types_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+    $tmp = wp_tempnam('task-table-xlsx');
+    if (!$tmp) { return task_table_generate_events_spreadsheet($archived_param,'xml'); }
+    $zip = new ZipArchive();
+    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) { return task_table_generate_events_spreadsheet($archived_param,'xml'); }
+    $zip->addFromString('[Content_Types].xml', $content_types_xml);
+    $zip->addEmptyDir('_rels');
+    $zip->addFromString('_rels/.rels', $rels_xml);
+    $zip->addEmptyDir('xl/_rels');
+    $zip->addEmptyDir('xl/worksheets');
+    $zip->addFromString('xl/workbook.xml', $workbook_xml);
+    $zip->addFromString('xl/worksheets/sheet1.xml', $sheet_xml);
+    $zip->addFromString('xl/_rels/workbook.xml.rels', $workbook_rels_xml);
+    $zip->addFromString('xl/styles.xml', $styles_xml);
+    $zip->close();
+    $content = file_get_contents($tmp);
+    @unlink($tmp);
+    return [ 'content' => $content, 'filename' => 'task-table-events.xlsx', 'content_type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ];
+}
+
+function task_table_xlsx_cell_ref($col, $row) {
+    $letters = '';
+    while ($col > 0) { $rem = ($col - 1) % 26; $letters = chr(65 + $rem) . $letters; $col = intval(($col - 1) / 26); }
+    return $letters . $row;
+}
+function task_table_xlsx_escape($value) { return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
+
+/**
+ * Generate the Excel XML (SpreadsheetML) for events export. Shared between REST and admin-post download.
+ *
+ * @param mixed $archived_param (string|int|null) Filter archived state: '1' for archived, '0' for active, anything else for all.
+ * @return string XML content
+ */
+function task_table_generate_events_excel_xml($archived_param = null) {
+    global $wpdb;
+    $table = $wpdb->prefix . 'task_table_events';
+    $where = '';
+    if ($archived_param === '1' || $archived_param === 1) { $where = 'WHERE archived = 1'; }
+    elseif ($archived_param === '0' || $archived_param === 0) { $where = 'WHERE archived = 0'; }
+    $rows = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC", ARRAY_A);
+
+    $headers = ['id','was_angefragt','kontext','name_hochschule','tn_anzahl','zeitpunkt','auftragdetails','wer_macht','archived','created_at','updated_at'];
+
+    $xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+    $xml .= "<?mso-application progid=\"Excel.Sheet\"?>\n";
+    $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
+    $xml .= '<Worksheet ss:Name="Events">';
+    $xml .= '<Table>';
+    $xml .= '<Row>';
+    foreach ($headers as $h) {
+        $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($h, ENT_XML1 | ENT_COMPAT, 'UTF-8') . '</Data></Cell>';
+    }
+    $xml .= '</Row>';
+    foreach ($rows as $r) {
+        $xml .= '<Row>';
+        foreach ($headers as $h) {
+            $val = isset($r[$h]) ? (string)$r[$h] : '';
+            $val = preg_replace("/\r\n?|\n/", "\n", $val);
+            $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($val, ENT_XML1 | ENT_COMPAT, 'UTF-8') . '</Data></Cell>';
+        }
+        $xml .= '</Row>';
+    }
+    $xml .= '</Table>';
+    $xml .= '</Worksheet>';
+    $xml .= '</Workbook>';
+    return $xml;
+}
+
+/**
+ * Admin-post handler to download events as Excel without relying on REST cookie auth quirks.
+ */
+function task_table_admin_post_export_events() {
+    if (!is_user_logged_in() || !current_user_can('manage_task_table')) {
+        wp_die(__('You do not have permission to export events.', 'task-table'), 403);
+    }
+    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_text_field($_GET['_wpnonce']), 'task_table_export_events')) {
+        wp_die(__('Security check failed.', 'task-table'), 403);
+    }
+    $archived = isset($_GET['archived']) ? sanitize_text_field($_GET['archived']) : null;
+        $format = isset($_GET['format']) ? sanitize_text_field($_GET['format']) : 'xlsx';
+        $sheet = task_table_generate_events_spreadsheet($archived, $format);
+        nocache_headers();
+        header('Content-Type: '.$sheet['content_type']);
+        header('Content-Disposition: attachment; filename="'.$sheet['filename'].'"');
+        header('X-Content-Type-Options: nosniff');
+        echo $sheet['content']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    exit;
+}
+add_action('admin_post_task_table_export_events', 'task_table_admin_post_export_events');
