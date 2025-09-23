@@ -37,13 +37,16 @@ if (!empty($events)) {
             $event['id']
         ));
         
-        if (!empty($signups)) {
+        $hasApproved = !empty($signups);
+        if ($hasApproved) {
+            echo '<div class="approved-signups">';
             foreach ($signups as $signup) {
-                echo esc_html($signup->user_name) . '<br>';
+                echo '<span class="approved-person">' . esc_html($signup->user_name) . '</span><br>';
             }
-        } else {
-            echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '">Anmelden</button>';
+            echo '</div>';
         }
+        $btnLabel = $hasApproved ? 'Weitere Anmeldung (Ersatz)' : 'Anmelden';
+        echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '" data-has-approved="' . ($hasApproved ? '1' : '0') . '">' . esc_html($btnLabel) . '</button>';
         echo '</td>';
         echo '</tr>';
     }
@@ -247,6 +250,18 @@ echo '<style>
         display: block;
         animation: fadeIn 0.3s ease-in;
     }
+
+    /* Replacement disclaimer */
+    #signup-modal .replacement-disclaimer {
+        background:#fff8e5;
+        border:1px solid #f0d48a;
+        color:#805800;
+        padding:0.75rem 1rem;
+        border-radius:6px;
+        font-size:0.85rem;
+        margin-bottom:1rem;
+        line-height:1.3;
+    }
     
     #signup-modal .tt-button-group, #signup-modal .button-group {
         display: flex;
@@ -381,6 +396,7 @@ if (!window.taskTableScriptLoaded) {
             button.addEventListener("click", function(e) {
                 e.preventDefault();
                 const eventId = this.getAttribute("data-event-id");
+                const hasApproved = this.getAttribute("data-has-approved") === "1";
                 if (document.getElementById("event-id")) {
                     document.getElementById("event-id").value = eventId;
                 }
@@ -392,6 +408,17 @@ if (!window.taskTableScriptLoaded) {
                 // Reset form and feedback
                 if (form) form.reset();
                 if (feedbackEl) feedbackEl.className = "signup-feedback";
+
+                // Replacement disclaimer logic
+                const disclaimer = document.getElementById("replacement-disclaimer");
+                const replacementFlag = document.getElementById("replacement-signup-flag");
+                if (hasApproved) {
+                    if (disclaimer) disclaimer.style.display = "block";
+                    if (replacementFlag) replacementFlag.value = "1";
+                } else {
+                    if (disclaimer) disclaimer.style.display = "none";
+                    if (replacementFlag) replacementFlag.value = "";
+                }
             });
         });
 
@@ -436,7 +463,13 @@ if (!window.taskTableScriptLoaded) {
                 const userName = document.getElementById("user-name").value;
                 const userEmail = document.getElementById("user-email").value;
                 const freeTextEl = document.getElementById("free-text");
-                const freeText = freeTextEl ? freeTextEl.value : "";
+                let freeText = freeTextEl ? freeTextEl.value : "";
+                const replacementFlag = document.getElementById("replacement-signup-flag");
+                if (replacementFlag && replacementFlag.value === "1") {
+                    if (!/^\[Ersatz-Anmeldung\]/.test(freeText)) {
+                        freeText = "[Ersatz-Anmeldung] " + freeText;
+                    }
+                }
                 
                 if (!userName.trim() || !userEmail.trim()) {
                     showFeedback("Bitte fülle alle Felder aus.", "error");

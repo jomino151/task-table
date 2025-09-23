@@ -13,9 +13,13 @@ if (!defined('ABSPATH')) {
         <h3>Für Veranstaltung anmelden</h3>
         
         <div id="signup-feedback" class="signup-feedback"></div>
+        <div id="replacement-disclaimer" class="replacement-disclaimer" style="display:none;">
+            Hinweis: Für diese Veranstaltung gibt es bereits eine bestätigte Person. Deine Anmeldung gilt als Ersatz, falls die bestätigte Person ausfällt.
+        </div>
         
         <form id="signup-form">
             <input type="hidden" id="event-id" name="event_id">
+            <input type="hidden" id="replacement-signup-flag" name="replacement_signup" value="">
             
             <div class="form-group">
                 <label for="user-name">Dein Name</label>
