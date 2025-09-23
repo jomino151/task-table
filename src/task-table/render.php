@@ -483,7 +483,8 @@ if (!window.taskTableScriptLoaded) {
                     
                     if (data.success) {
                         subscriptionMessage.className = "success-message";
-                        subscriptionMessage.textContent = "Vielen Dank für dein Abonnement!";
+                        // Always inform users to confirm via email
+                        subscriptionMessage.textContent = "Bitte prüfe deinen Posteingang und bestätige dein Abonnement über den Link in unserer E-Mail.";
                         subscriberEmail.value = "";
                     } else {
                         subscriptionMessage.className = "error-message";

@@ -380,6 +380,24 @@ function task_table_admin_subscribers_page() {
     
     // Get subscribers
     $subscribers = $wpdb->get_results("SELECT * FROM $subscribers_table ORDER BY created_at DESC");
+
+    // Handle resend confirmation
+    if (isset($_GET['action']) && $_GET['action'] === 'resend' && isset($_GET['subscriber_id']) && isset($_GET['_wpnonce'])) {
+        $subscriber_id = intval($_GET['subscriber_id']);
+        if (wp_verify_nonce(sanitize_text_field($_GET['_wpnonce']), 'task_table_resend_subscriber_' . $subscriber_id)) {
+            $subscriber = $wpdb->get_row($wpdb->prepare("SELECT * FROM $subscribers_table WHERE id = %d", $subscriber_id));
+            if ($subscriber && (int)$subscriber->confirmed === 0) {
+                // Generate new token
+                $token = wp_generate_password(32, false, false);
+                $wpdb->update($subscribers_table, [
+                    'confirmation_token' => $token,
+                    'updated_at' => current_time('mysql')
+                ], ['id' => $subscriber_id]);
+                task_table_send_subscription_confirmation_email($subscriber->email, $token);
+                echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__('Confirmation email resent.', 'task-table') . '</p></div>';
+            }
+        }
+    }
     
     ?>
     <div class="wrap">
@@ -405,9 +423,14 @@ function task_table_admin_subscribers_page() {
                         <tr>
                             <td><?php echo esc_html($subscriber->id); ?></td>
                             <td><?php echo esc_html($subscriber->email); ?></td>
-                            <td><?php echo $subscriber->confirmed ? __('Yes', 'task-table') : __('No', 'task-table'); ?></td>
+                            <td><?php echo ((int)$subscriber->confirmed === 1) ? __('Yes', 'task-table') : __('No', 'task-table'); ?></td>
                             <td><?php echo date_i18n(get_option('date_format'), strtotime($subscriber->created_at)); ?></td>
                             <td>
+                                <?php if (!(int)$subscriber->confirmed): ?>
+                                    <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=task-table-subscribers&action=resend&subscriber_id=' . $subscriber->id), 'task_table_resend_subscriber_' . $subscriber->id); ?>" class="button button-small">
+                                        <?php _e('Resend Confirmation', 'task-table'); ?>
+                                    </a>
+                                <?php endif; ?>
                                 <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=task-table-subscribers&action=delete&subscriber_id=' . $subscriber->id), 'task_table_delete_subscriber_' . $subscriber->id); ?>" class="button button-small action-delete" onclick="return confirm('<?php _e('Are you sure you want to delete this subscriber?', 'task-table'); ?>');">
                                     <?php _e('Delete', 'task-table'); ?>
                                 </a>
@@ -595,7 +618,9 @@ function task_table_admin_email_settings_page() {
                                 
                                 <h4><?php _e('Available Placeholders', 'task-table'); ?>:</h4>
                                 <ul class="task-table-placeholders">
-                                    <?php if (in_array($template_key, array('signup_approved', 'signup_denied'))): ?>
+                                    <?php if ($template_key === 'subscription_confirmation'): ?>
+                                        <li><code>{confirmation_link}</code> - <?php _e('Bestätigungslink für das Abo', 'task-table'); ?></li>
+                                    <?php elseif (in_array($template_key, array('signup_approved', 'signup_denied'))): ?>
                                         <li><code>{user_name}</code> - <?php _e('User name', 'task-table'); ?></li>
                                         <li><code>{event_title}</code> - <?php _e('Event title', 'task-table'); ?></li>
                                         <li><code>{event_details}</code> - <?php _e('Event details', 'task-table'); ?></li>

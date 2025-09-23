@@ -57,6 +57,13 @@ function task_table_register_api_routes() {
         'callback' => 'task_table_add_subscriber',
         'permission_callback' => '__return_true' // Public access to subscribe
     ));
+
+    // Confirmation endpoint (GET) for double opt-in
+    register_rest_route('task-table/v1', '/subscribers/confirm', array(
+        'methods' => 'GET',
+        'callback' => 'task_table_confirm_subscriber',
+        'permission_callback' => '__return_true'
+    ));
 }
 add_action('rest_api_init', 'task_table_register_api_routes');
 
@@ -322,30 +329,106 @@ function task_table_add_subscriber(WP_REST_Request $request) {
     ));
     
     if ($exists) {
+        // If already confirmed, treat as duplicate
+        $confirmed = (int)$wpdb->get_var($wpdb->prepare("SELECT confirmed FROM $table_name WHERE email = %s", $email));
+        if ($confirmed === 1) {
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Email already subscribed'
+            ), 409);
+        }
+        // If not confirmed, regenerate a token and re-send email
+        $token = wp_generate_password(32, false, false);
+        $wpdb->update($table_name, array(
+            'confirmation_token' => $token,
+            'updated_at' => current_time('mysql')
+        ), array('email' => $email));
+        task_table_send_subscription_confirmation_email($email, $token);
         return new WP_REST_Response(array(
-            'success' => false,
-            'message' => 'Email already subscribed'
-        ), 409); // Conflict status code
+            'success' => true,
+            'message' => 'Confirmation email resent. Please check your inbox.'
+        ), 200);
     }
-    
-    // Insert new subscriber
+
+    // Create new unconfirmed subscriber with token
+    $token = wp_generate_password(32, false, false);
     $result = $wpdb->insert($table_name, array(
         'email' => $email,
+        'confirmed' => 0,
+        'confirmation_token' => $token,
         'created_at' => current_time('mysql')
     ));
-    
+
     if ($result === false) {
         return new WP_REST_Response(array(
             'success' => false,
-            'message' => 'Failed to add subscriber',
+            'message' => 'Failed to start subscription',
             'error' => $wpdb->last_error
         ), 500);
     }
-    
+
+    task_table_send_subscription_confirmation_email($email, $token);
+
     return new WP_REST_Response(array(
         'success' => true,
-        'message' => 'Subscription successful'
+        'message' => 'Please confirm your subscription via the email we just sent.'
     ), 201);
+}
+
+/**
+ * Confirm a subscriber using token + email (double opt-in)
+ */
+function task_table_confirm_subscriber(WP_REST_Request $request) {
+    global $wpdb; 
+    $table_name = $wpdb->prefix . 'task_table_subscribers';
+    $email = sanitize_email($request->get_param('email'));
+    $token = sanitize_text_field($request->get_param('token'));
+
+    if (!is_email($email) || empty($token)) {
+        return new WP_REST_Response(array(
+            'success' => false,
+            'message' => 'Invalid confirmation parameters.'
+        ), 400);
+    }
+
+    $row = $wpdb->get_row($wpdb->prepare("SELECT id, confirmed, confirmation_token FROM $table_name WHERE email = %s", $email));
+    if (!$row) {
+        return new WP_REST_Response(array(
+            'success' => false,
+            'message' => 'Subscriber not found.'
+        ), 404);
+    }
+    if ((int)$row->confirmed === 1) {
+        return new WP_REST_Response(array(
+            'success' => true,
+            'message' => 'Subscription already confirmed.'
+        ), 200);
+    }
+    if (hash_equals((string)$row->confirmation_token, (string)$token)) {
+        $updated = $wpdb->update($table_name, array(
+            'confirmed' => 1,
+            'confirmation_token' => null,
+            'updated_at' => current_time('mysql')
+        ), array('id' => $row->id));
+        if ($updated !== false) {
+            // Re-fetch to verify
+            $verify = (int)$wpdb->get_var($wpdb->prepare("SELECT confirmed FROM $table_name WHERE id = %d", $row->id));
+            if ($verify === 1) {
+                return new WP_REST_Response(array(
+                    'success' => true,
+                    'message' => 'Subscription confirmed. Thank you!'
+                ), 200);
+            }
+        }
+        return new WP_REST_Response(array(
+            'success' => false,
+            'message' => 'Could not mark as confirmed.'
+        ), 500);
+    }
+    return new WP_REST_Response(array(
+        'success' => false,
+        'message' => 'Invalid or expired token.'
+    ), 400);
 }
 
 /**

@@ -46,13 +46,17 @@ function task_table_create_database_tables() {
     
     // Create subscribers table
     $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
+    // Added confirmation_token column for double opt-in (v1.1) and updated_at column (v1.2)
     $subscribers_sql = "CREATE TABLE $subscribers_table (
         id mediumint(9) NOT NULL AUTO_INCREMENT,
         email varchar(100) NOT NULL,
         confirmed tinyint(1) DEFAULT 0 NOT NULL,
+        confirmation_token varchar(64) DEFAULT NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
         PRIMARY KEY  (id),
-        UNIQUE KEY email (email)
+        UNIQUE KEY email (email),
+        KEY confirmation_token (confirmation_token)
     ) $charset_collate;";
     
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -61,7 +65,7 @@ function task_table_create_database_tables() {
     dbDelta($subscribers_sql);
     
     // Set version to track database changes
-    update_option('task_table_db_version', '1.0');
+    update_option('task_table_db_version', '1.2');
 }
 
 /**
@@ -157,3 +161,34 @@ register_activation_hook(TASK_TABLE_PLUGIN_FILE, 'task_table_create_database_tab
 
 // Hook for migrating existing data
 add_action('admin_init', 'task_table_migrate_existing_data');
+
+/**
+ * Perform database schema upgrades for existing installations.
+ * Currently ensures the confirmation_token column exists for subscribers table (v1.1).
+ */
+function task_table_maybe_upgrade_schema() {
+    global $wpdb;
+    $current_version = get_option('task_table_db_version', '1.0');
+    $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
+
+    // Upgrade to 1.1: add confirmation_token
+    if (version_compare($current_version, '1.1', '<')) {
+        $col = $wpdb->get_results("SHOW COLUMNS FROM $subscribers_table LIKE 'confirmation_token'");
+        if (empty($col)) {
+            $wpdb->query("ALTER TABLE $subscribers_table ADD COLUMN confirmation_token varchar(64) DEFAULT NULL");
+            $wpdb->query("ALTER TABLE $subscribers_table ADD KEY confirmation_token (confirmation_token)");
+        }
+        update_option('task_table_db_version', '1.1');
+        $current_version = '1.1';
+    }
+
+    // Upgrade to 1.2: add updated_at
+    if (version_compare($current_version, '1.2', '<')) {
+        $col2 = $wpdb->get_results("SHOW COLUMNS FROM $subscribers_table LIKE 'updated_at'");
+        if (empty($col2)) {
+            $wpdb->query("ALTER TABLE $subscribers_table ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL AFTER created_at");
+        }
+        update_option('task_table_db_version', '1.2');
+    }
+}
+add_action('plugins_loaded', 'task_table_maybe_upgrade_schema');

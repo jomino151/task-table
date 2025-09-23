@@ -14,6 +14,10 @@ if (!defined('ABSPATH')) {
  */
 function task_table_get_email_templates() {
     return [
+        'subscription_confirmation' => [
+            'subject' => 'Bitte bestätige dein Abo – {site_name}',
+            'message' => "Hallo,\n\nbitte bestätige, dass du Benachrichtigungen über neue Veranstaltungen erhalten möchtest.\nKlicke dazu auf den folgenden Link (oder kopiere ihn in deinen Browser):\n\n{confirmation_link}\n\nFalls du dich nicht angemeldet hast, kannst du diese E-Mail ignorieren.\n\nVielen Dank!\n{site_name}"
+        ],
         'signup_approved' => [
             'subject' => 'Your Sign-Up for "{event_title}" Has Been Approved',
             'message' => "Dear {user_name},\n\nYour sign-up for the event \"{event_title}\" has been approved.\n\n{event_details}\n\nThank you,\n{site_name}"
@@ -91,6 +95,21 @@ function task_table_send_notification($to, $template_key, $data = []) {
     $headers = ['Content-Type: text/plain; charset=UTF-8'];
     
     return wp_mail($to, $email['subject'], $email['message'], $headers);
+}
+
+/**
+ * Send a subscription confirmation email containing the confirmation link
+ */
+function task_table_send_subscription_confirmation_email($email, $token) {
+    $link = add_query_arg([
+        'task_table_confirm_subscription' => '1',
+        'token' => $token,
+        'email' => rawurlencode($email)
+    ], site_url('/'));
+
+    return task_table_send_notification($email, 'subscription_confirmation', [
+        'confirmation_link' => $link
+    ]);
 }
 
 /**

@@ -116,3 +116,38 @@ function task_table_deactivation() {
     // Nothing to do yet
 }
 register_deactivation_hook(__FILE__, 'task_table_deactivation');
+
+/**
+ * Handle front-end confirmation links (non-REST fallback)
+ */
+function task_table_handle_frontend_confirmation() {
+    if (!isset($_GET['task_table_confirm_subscription'])) {
+        return;
+    }
+    $email = isset($_GET['email']) ? sanitize_email(wp_unslash($_GET['email'])) : '';
+    $token = isset($_GET['token']) ? sanitize_text_field(wp_unslash($_GET['token'])) : '';
+    if (!$email || !$token) {
+        return; // Silent fail to avoid revealing info
+    }
+    global $wpdb; 
+    $table = $wpdb->prefix . 'task_table_subscribers';
+    $row = $wpdb->get_row($wpdb->prepare("SELECT id, confirmed, confirmation_token FROM $table WHERE email = %s", $email));
+    if ($row && (int)$row->confirmed === 0 && hash_equals((string)$row->confirmation_token, (string)$token)) {
+        $updated = $wpdb->update($table, [
+            'confirmed' => 1,
+            'confirmation_token' => null,
+            'updated_at' => current_time('mysql')
+        ], ['id' => $row->id]);
+        $verify = (int)$wpdb->get_var($wpdb->prepare("SELECT confirmed FROM $table WHERE id = %d", $row->id));
+        if ($updated !== false && $verify === 1) {
+            wp_die(__('Danke! Dein Abo wurde bestätigt.', 'task-table'), __('Abo bestätigt', 'task-table'), ['response' => 200]);
+        } else {
+            wp_die(__('Technischer Fehler: Bestätigung konnte nicht gespeichert werden.', 'task-table'), __('Fehler', 'task-table'), ['response' => 500]);
+        }
+    } elseif ($row && (int)$row->confirmed === 1) {
+        wp_die(__('Dieses Abo ist bereits bestätigt.', 'task-table'), __('Bereits bestätigt', 'task-table'), ['response' => 200]);
+    } else {
+        wp_die(__('Bestätigungslink ist ungültig oder abgelaufen.', 'task-table'), __('Ungültiger Link', 'task-table'), ['response' => 400]);
+    }
+}
+add_action('template_redirect', 'task_table_handle_frontend_confirmation');
