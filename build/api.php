@@ -78,6 +78,7 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
     $event_id = intval($data['event_id']); 
     $user_name = sanitize_text_field($data['user_name']);
     $user_email = sanitize_email($data['user_email']);
+    $free_text = isset($data['free_text']) ? wp_kses_post($data['free_text']) : '';
     
     // Verify the event exists
     $events_table = $wpdb->prefix . 'task_table_events';
@@ -95,6 +96,7 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
         'event_id' => $event_id,
         'user_name' => $user_name,
         'user_email' => $user_email,
+        'free_text' => $free_text,
         'status' => 'pending',
         'created_at' => current_time('mysql')
     ));
@@ -105,6 +107,7 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
     }
 
     // Send email to moderator using our notification system
+    $data['free_text'] = $free_text;
     task_table_send_new_signup_notification($data);
 
     return new WP_REST_Response(array('success' => true), 200);

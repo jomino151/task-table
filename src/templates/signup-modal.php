@@ -27,7 +27,12 @@ if (!defined('ABSPATH')) {
                 <input type="email" id="user-email" name="user_email" required>
             </div>
             
-            <div class="button-group">
+            <div class="form-group">
+                <label for="free-text">Weitere Informationen (optional)</label>
+                <textarea id="free-text" name="free_text" rows="4" placeholder="Zusätzliche Hinweise oder Fragen..."></textarea>
+            </div>
+            
+            <div class="tt-button-group">
                 <button type="button" id="cancel-signup" class="cancel-btn">Abbrechen</button>
                 <button type="submit" id="submit-signup">Anmelden</button>
             </div>

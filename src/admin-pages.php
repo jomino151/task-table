@@ -265,7 +265,7 @@ function task_table_admin_signups_page() {
                     <th><?php _e('Name', 'task-table'); ?></th>
                     <th><?php _e('Email', 'task-table'); ?></th>
                     <th><?php _e('Event', 'task-table'); ?></th>
-                    <th><?php _e('University', 'task-table'); ?></th>
+                    <th><?php _e('Info', 'task-table'); ?></th>
                     <th><?php _e('Time', 'task-table'); ?></th>
                     <th><?php _e('Status', 'task-table'); ?></th>
                     <th><?php _e('Date', 'task-table'); ?></th>
@@ -284,7 +284,32 @@ function task_table_admin_signups_page() {
                             <td><?php echo esc_html($signup->user_name); ?></td>
                             <td><?php echo esc_html($signup->user_email); ?></td>
                             <td><?php echo esc_html($signup->was_angefragt); ?></td>
-                            <td><?php echo esc_html($signup->name_hochschule); ?></td>
+                            <td class="signup-free-text">
+                                <?php if (!empty($signup->free_text)) {
+                                    $raw = (string) $signup->free_text;
+                                    // Normalize newlines
+                                    $raw = str_replace(["\r\n", "\r"], "\n", $raw);
+                                    // Trim overall and remove leading/trailing blank lines
+                                    $raw = trim($raw, " \t\n");
+                                    // Split to process each line
+                                    $lines = explode("\n", $raw);
+                                    $processed = [];
+                                    foreach ($lines as $line) {
+                                        // Trim left side only to remove large indent, keep intentional right spaces trimmed
+                                        $line = ltrim($line, " \t");
+                                        // Collapse internal excessive whitespace (but keep single spaces)
+                                        $line = preg_replace('/[ \t]{2,}/', ' ', $line);
+                                        $processed[] = rtrim($line); // remove trailing spaces
+                                    }
+                                    $raw = implode("\n", $processed);
+                                    // Collapse more than one blank line
+                                    $raw = preg_replace("/\n{3,}/", "\n\n", $raw);
+                                    $clean_text = trim($raw);
+                                    echo nl2br(esc_html($clean_text));
+                                } else {
+                                    echo '&mdash;';
+                                } ?>
+                            </td>
                             <td><?php echo esc_html($signup->zeitpunkt); ?></td>
                             <td>
                                 <?php
@@ -356,6 +381,20 @@ function task_table_admin_signups_page() {
             color: white !important;
             border-color: #757575 !important;
         }
+        .signup-free-text {
+            max-width: 260px;
+            white-space: normal; /* we convert newlines manually with nl2br */
+            word-break: break-word;
+            line-height: 1.35;
+            font-size: 12px;
+            padding: 0; /* align visually with other cells */
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            vertical-align: top;
+        }
+        .signup-free-text:empty::after { content: '\2014'; }
+        .wp-list-table .signup-free-text br { line-height: 1.2; }
     </style>
     <?php
 }

@@ -28,7 +28,7 @@ function task_table_get_email_templates() {
         ],
         'new_signup' => [
             'subject' => 'New Event Sign-Up',
-            'message' => "A new sign-up has been received:\n\nEvent ID: {event_id}\nName: {user_name}\nEmail: {user_email}\n\nPlease review this submission in the admin dashboard."
+            'message' => "A new sign-up has been received:\n\nEvent ID: {event_id}\nName: {user_name}\nEmail: {user_email}\n{free_text_section}\nPlease review this submission in the admin dashboard."
         ],
         'new_event' => [
             'subject' => 'New Event Added: {event_title}',
@@ -258,14 +258,21 @@ function task_table_send_denial_notification($signup) {
  */
 function task_table_send_new_signup_notification($signup_data) {
     $moderator_email = get_option('moderator_email', get_option('admin_email'));
-    
+    $free_text_section = '';
+    if (!empty($signup_data['free_text'])) {
+        $clean = trim(wp_strip_all_tags(wp_unslash($signup_data['free_text'])));
+        if ($clean !== '') {
+            $free_text_section = "Additional info:\n" . $clean . "\n\n";
+        }
+    }
     return task_table_send_notification(
         $moderator_email,
         'new_signup',
         [
             'user_name' => $signup_data['user_name'],
             'user_email' => $signup_data['user_email'],
-            'event_id' => $signup_data['event_id']
+            'event_id' => $signup_data['event_id'],
+            'free_text_section' => $free_text_section
         ]
     );
 }

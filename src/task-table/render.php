@@ -200,7 +200,7 @@ echo '<style>
         color: #444;
     }
     
-    #signup-modal input {
+    #signup-modal input, #signup-modal textarea {
         width: 100%;
         padding: 0.75rem 1rem;
         border: 1px solid #ddd;
@@ -210,10 +210,17 @@ echo '<style>
         transition: border-color 0.2s, box-shadow 0.2s;
     }
     
-    #signup-modal input:focus {
+    #signup-modal input:focus, #signup-modal textarea:focus {
         outline: none;
         border-color: #007cba;
         box-shadow: 0 0 0 2px rgba(0, 124, 186, 0.2);
+    }
+
+    /* Ensure textarea cannot be manually resized and always matches input width */
+    #signup-modal textarea {
+        resize: none;
+        overflow: hidden;
+        width: 100%;
     }
     
     #signup-modal .signup-feedback {
@@ -241,7 +248,7 @@ echo '<style>
         animation: fadeIn 0.3s ease-in;
     }
     
-    #signup-modal .button-group {
+    #signup-modal .tt-button-group, #signup-modal .button-group {
         display: flex;
         justify-content: space-between;
         margin-top: 1.5rem;
@@ -250,12 +257,14 @@ echo '<style>
     #signup-modal button {
         background-color: #007cba;
         color: white;
-        border: none;
+        border: 0;
+        outline: none;
         padding: 0.75rem 1.25rem;
         border-radius: 6px;
         cursor: pointer;
         font-weight: 500;
-        transition: background-color 0.2s, transform 0.1s;
+        transition: background-color 0.2s, transform 0.1s, box-shadow 0.2s;
+        box-shadow: none;
     }
     
     #signup-modal button:hover {
@@ -269,6 +278,8 @@ echo '<style>
     #signup-modal button.cancel-btn {
         background-color: #f5f5f5;
         color: #555;
+        border: 0;
+        box-shadow: none;
     }
     
     #signup-modal button.cancel-btn:hover {
@@ -323,6 +334,19 @@ if (!window.taskTableScriptLoaded) {
         const subscriberEmail = document.getElementById("subscriber-email");
         const subscriptionMessage = document.getElementById("subscription-message");
         const signupNotification = document.querySelector(".signup-notification");
+        const freeTextArea = document.getElementById("free-text");
+
+        // Auto-resize textarea
+        const autoResize = (el) => {
+            if (!el) return;
+            el.style.height = \'auto\';
+            el.style.height = el.scrollHeight + \'px\';
+        };
+        if (freeTextArea) {
+            freeTextArea.addEventListener(\'input\', () => autoResize(freeTextArea));
+            // Initialize height if prefilled
+            autoResize(freeTextArea);
+        }
 
         // Ensure modal is initially hidden
         if (modalOverlay) {
@@ -411,6 +435,8 @@ if (!window.taskTableScriptLoaded) {
                 const eventId = document.getElementById("event-id").value;
                 const userName = document.getElementById("user-name").value;
                 const userEmail = document.getElementById("user-email").value;
+                const freeTextEl = document.getElementById("free-text");
+                const freeText = freeTextEl ? freeTextEl.value : "";
                 
                 if (!userName.trim() || !userEmail.trim()) {
                     showFeedback("Bitte fülle alle Felder aus.", "error");
@@ -429,7 +455,8 @@ if (!window.taskTableScriptLoaded) {
                     body: JSON.stringify({
                         event_id: eventId,
                         user_name: userName,
-                        user_email: userEmail
+                        user_email: userEmail,
+                        free_text: freeText
                     })
                 })
                 .then(response => {

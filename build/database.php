@@ -37,6 +37,7 @@ function task_table_create_database_tables() {
         event_id mediumint(9) NOT NULL,
         user_name varchar(100) NOT NULL,
         user_email varchar(100) NOT NULL,
+        free_text text NULL,
         status varchar(20) NOT NULL,
         created_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
         updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL,
@@ -170,6 +171,7 @@ function task_table_maybe_upgrade_schema() {
     global $wpdb;
     $current_version = get_option('task_table_db_version', '1.0');
     $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
+    $signups_table = $wpdb->prefix . 'task_table_signups';
 
     // Upgrade to 1.1: add confirmation_token
     if (version_compare($current_version, '1.1', '<')) {
@@ -189,6 +191,16 @@ function task_table_maybe_upgrade_schema() {
             $wpdb->query("ALTER TABLE $subscribers_table ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL AFTER created_at");
         }
         update_option('task_table_db_version', '1.2');
+        $current_version = '1.2';
+    }
+
+    // Upgrade to 1.3: add free_text column to signups
+    if (version_compare($current_version, '1.3', '<')) {
+        $col3 = $wpdb->get_results("SHOW COLUMNS FROM $signups_table LIKE 'free_text'");
+        if (empty($col3)) {
+            $wpdb->query("ALTER TABLE $signups_table ADD COLUMN free_text text NULL AFTER user_email");
+        }
+        update_option('task_table_db_version', '1.3');
     }
 }
 add_action('plugins_loaded', 'task_table_maybe_upgrade_schema');
