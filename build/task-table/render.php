@@ -23,6 +23,8 @@ echo '<th>Vorauss. TN-Anzahl</th>';
 echo '<th>Anvisierter Zeitpunkt</th>';
 echo '<th>Auftragdetails</th>';
 echo '<th>Wer macht\'s?</th>';
+// New dedicated signup column
+ echo '<th>Anmelden</th>';
 echo '</tr>';
 echo '</thead>';
 echo '<tbody>';
@@ -36,6 +38,7 @@ if (!empty($events)) {
         echo '<td>' . esc_html($event['tn_anzahl']) . '</td>';
         echo '<td>' . esc_html($event['zeitpunkt']) . '</td>';
         echo '<td>' . esc_html($event['auftragdetails']) . '</td>';
+        // Column: Wer macht's? (approved signups only)
         echo '<td>';
         
         // Fetch approved sign-ups for this event
@@ -53,13 +56,17 @@ if (!empty($events)) {
             }
             echo '</div>';
         }
-        $btnLabel = $hasApproved ? 'Weitere Anmeldung (Ersatz)' : 'Anmelden';
-        echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '" data-has-approved="' . ($hasApproved ? '1' : '0') . '">' . esc_html($btnLabel) . '</button>';
+        echo '</td>';
+
+        // Column: Anmelden (button only)
+        echo '<td>';
+        echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '" data-has-approved="' . ($hasApproved ? '1' : '0') . '">Anmelden</button>';
         echo '</td>';
         echo '</tr>';
     }
 } else {
-    echo '<tr><td colspan="7">Noch keine Veranstaltungen hinzugefügt.</td></tr>';
+    // Updated colspan from 7 to 8 to match new column count
+    echo '<tr><td colspan="8">Noch keine Veranstaltungen hinzugefügt.</td></tr>';
 }
 
 echo '</tbody></table>';
@@ -362,11 +369,11 @@ if (!window.taskTableScriptLoaded) {
         // Auto-resize textarea
         const autoResize = (el) => {
             if (!el) return;
-            el.style.height = \'auto\';
-            el.style.height = el.scrollHeight + \'px\';
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
         };
         if (freeTextArea) {
-            freeTextArea.addEventListener(\'input\', () => autoResize(freeTextArea));
+            freeTextArea.addEventListener("input", () => autoResize(freeTextArea));
             // Initialize height if prefilled
             autoResize(freeTextArea);
         }
