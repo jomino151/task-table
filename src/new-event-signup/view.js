@@ -13,6 +13,7 @@ const initSignupForm = (container) => {
     const submitButton = container.querySelector('.subscription-button');
     const restUrl = container.dataset.restUrl;
     const restNonce = container.dataset.restNonce;
+    const categoryInputs = Array.from(container.querySelectorAll('.subscriber-category'));
 
     if (!form || !emailInput || !messageEl || !restUrl) {
         container.dataset.initialized = 'true';
@@ -31,11 +32,22 @@ const initSignupForm = (container) => {
         messageEl.classList.toggle('is-error', type === 'error');
     };
 
+    const getSelectedCategories = () => categoryInputs
+        .filter((input) => input.checked)
+        .map((input) => parseInt(input.value, 10))
+        .filter((value) => !Number.isNaN(value));
+
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         if (!emailInput.value.trim()) {
             showMessage('Bitte gib eine gültige E-Mail-Adresse ein.', 'error');
+            return;
+        }
+
+        const selectedCategories = getSelectedCategories();
+        if (categoryInputs.length > 0 && selectedCategories.length === 0) {
+            showMessage('Bitte wähle mindestens eine Kategorie aus.', 'error');
             return;
         }
 
@@ -53,6 +65,7 @@ const initSignupForm = (container) => {
                 },
                 body: JSON.stringify({
                     email: emailInput.value.trim(),
+                    categories: selectedCategories,
                 }),
             });
 

@@ -141,7 +141,8 @@ function task_table_get_event_details($event_id) {
         'tnAnzahl' => $event['tn_anzahl'],
         'zeitpunkt' => $event['zeitpunkt'],
         'auftragdetails' => $event['auftragdetails'],
-        'werMacht' => $event['wer_macht']
+        'werMacht' => $event['wer_macht'],
+        'category_id' => isset($event['category_id']) ? (int) $event['category_id'] : 0
     ];
 }
 
@@ -180,6 +181,20 @@ function task_table_format_event_details($event_data) {
     
     if (!empty($event_data['auftragdetails'])) {
         $details .= "Order details: " . strip_tags(wp_unslash($event_data['auftragdetails'])) . "\n";
+    }
+
+    $category_id = 0;
+    if (isset($event_data['category_id'])) {
+        $category_id = (int) $event_data['category_id'];
+    } elseif (isset($event_data['categoryId'])) {
+        $category_id = (int) $event_data['categoryId'];
+    }
+
+    if ($category_id) {
+        $category = task_table_get_category($category_id);
+        if ($category) {
+            $details .= "Category: " . $category['name'] . "\n";
+        }
     }
     
     return $details;
@@ -298,16 +313,47 @@ function task_table_send_new_event_notification($event_data) {
             'tnAnzahl' => $event_data['tn_anzahl'],
             'zeitpunkt' => $event_data['zeitpunkt'],
             'auftragdetails' => $event_data['auftragdetails'],
-            'werMacht' => $event_data['wer_macht']
+            'werMacht' => $event_data['wer_macht'],
+            'category_id' => isset($event_data['category_id']) ? (int) $event_data['category_id'] : 0
         ];
     }
 
-    // Build recipient list: ONLY plugin subscribers (from the Subscribers admin page)
+    // Build recipient list filtered by category subscription
     $recipient_emails = [];
+    $subscriber_categories_table = $wpdb->prefix . 'task_table_subscriber_categories';
+    $events_table = $wpdb->prefix . 'task_table_events';
 
-    // Ensure table exists and fetch only CONFIRMED subscriber emails
+    $event_category_id = 0;
+    if (isset($normalized_event['category_id'])) {
+        $event_category_id = (int) $normalized_event['category_id'];
+    } elseif (isset($normalized_event['categoryId'])) {
+        $event_category_id = (int) $normalized_event['categoryId'];
+    }
+
+    if (!$event_category_id && !empty($normalized_event['id'])) {
+        $event_category_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT category_id FROM $events_table WHERE id = %d",
+            (int) $normalized_event['id']
+        ));
+    }
+
+    if (!$event_category_id) {
+        $event_category_id = task_table_get_default_category_id();
+    }
+
     if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $subscribers_table)) === $subscribers_table) {
-        $recipient_emails = $wpdb->get_col("SELECT email FROM $subscribers_table WHERE confirmed = 1 AND email <> ''");
+        $recipient_query = "SELECT email FROM $subscribers_table WHERE confirmed = 1 AND email <> ''";
+
+        if ($event_category_id && $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $subscriber_categories_table)) === $subscriber_categories_table) {
+            $recipient_query = $wpdb->prepare(
+                "SELECT s.email FROM $subscribers_table s
+                 INNER JOIN $subscriber_categories_table sc ON sc.subscriber_id = s.id
+                 WHERE s.confirmed = 1 AND sc.category_id = %d AND s.email <> ''",
+                $event_category_id
+            );
+        }
+
+        $recipient_emails = $wpdb->get_col($recipient_query);
     }
 
     // Deduplicate emails (case-insensitive)

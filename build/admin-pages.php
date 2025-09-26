@@ -47,6 +47,15 @@ function task_table_register_admin_pages() {
         'task-table-subscribers',
         'task_table_admin_subscribers_page'
     );
+
+    add_submenu_page(
+        'task-table',
+        __('Categories', 'task-table'),
+        __('Categories', 'task-table'),
+        'manage_task_table',
+        'task-table-categories',
+        'task_table_admin_categories_page'
+    );
     
     add_submenu_page(
         'task-table',
@@ -79,8 +88,27 @@ function task_table_admin_dashboard_page() {
     }
 
     $show_archived = isset($_GET['archived']) && $_GET['archived'] === '1';
-    $where = $show_archived ? 'WHERE archived = 1' : 'WHERE archived = 0';
-    $events = $wpdb->get_results("SELECT * FROM $events_table $where ORDER BY created_at DESC", ARRAY_A);
+    $categories = task_table_get_categories();
+    $selected_category = isset($_GET['tt_category']) ? (int) $_GET['tt_category'] : 0;
+
+    $conditions = array('e.archived = %d');
+    $params = array($show_archived ? 1 : 0);
+
+    if ($selected_category) {
+        $conditions[] = 'e.category_id = %d';
+        $params[] = $selected_category;
+    }
+
+    $where_clause = 'WHERE ' . implode(' AND ', $conditions);
+
+    $categories_table = $wpdb->prefix . 'task_table_categories';
+    $sql = "SELECT e.*, c.name AS category_name
+            FROM $events_table e
+            LEFT JOIN $categories_table c ON c.id = e.category_id
+            $where_clause
+            ORDER BY e.created_at DESC";
+
+    $events = $wpdb->get_results($wpdb->prepare($sql, $params), ARRAY_A);
     
     // Count signups
     $pending_signups = $wpdb->get_var("SELECT COUNT(*) FROM $signups_table WHERE status = 'pending'");
@@ -104,6 +132,47 @@ function task_table_admin_dashboard_page() {
         </p>
         
         <div class="task-table-dashboard">
+            <?php if (!empty($categories)): ?>
+                <ul class="subsubsub task-table-category-tabs">
+                    <?php
+                    $base_url = admin_url('admin.php?page=task-table');
+                    $link_params = array();
+                    if ($show_archived) {
+                        $link_params['archived'] = '1';
+                    }
+                    $links = array();
+
+                    $all_url = add_query_arg($link_params, $base_url);
+                    $links[] = sprintf(
+                        '<a href="%s" %s>%s</a>',
+                        esc_url($all_url),
+                        $selected_category ? '' : 'class="current"',
+                        esc_html__('All Categories', 'task-table')
+                    );
+
+                    foreach ($categories as $category) {
+                        $cat_params = array_merge($link_params, array('tt_category' => $category['id']));
+                        $cat_url = add_query_arg($cat_params, $base_url);
+                        $links[] = sprintf(
+                            '<a href="%s" %s>%s</a>',
+                            esc_url($cat_url),
+                            ($selected_category === (int) $category['id']) ? 'class="current"' : '',
+                            esc_html($category['name'])
+                        );
+                    }
+
+                    $links_count = count($links);
+                    foreach ($links as $index => $link_markup) {
+                        echo '<li>' . $link_markup;
+                        if ($index < $links_count - 1) {
+                            echo ' | ';
+                        }
+                        echo '</li>';
+                    }
+                    ?>
+                </ul>
+            <?php endif; ?>
+
             <div class="task-table-stats">
                 <div class="stat-box">
                     <h3><?php _e('Events', 'task-table'); ?></h3>
@@ -131,6 +200,7 @@ function task_table_admin_dashboard_page() {
                             <th><?php _e('Request', 'task-table'); ?></th>
                             <th><?php _e('University', 'task-table'); ?></th>
                             <th><?php _e('Time', 'task-table'); ?></th>
+                            <th><?php _e('Category', 'task-table'); ?></th>
                             <th><?php _e('Assignee', 'task-table'); ?></th>
                             <th><?php _e('Created', 'task-table'); ?></th>
                             <th><?php _e('Actions', 'task-table'); ?></th>
@@ -143,6 +213,7 @@ function task_table_admin_dashboard_page() {
                                 <td><?php echo esc_html($event['was_angefragt']); ?></td>
                                 <td><?php echo esc_html($event['name_hochschule']); ?></td>
                                 <td><?php echo esc_html($event['zeitpunkt']); ?></td>
+                                <td><?php echo !empty($event['category_name']) ? esc_html($event['category_name']) : '&mdash;'; ?></td>
                                 <td><?php echo esc_html($event['wer_macht']); ?></td>
                                 <td><?php echo date_i18n(get_option('date_format'), strtotime($event['created_at'])); ?></td>
                                 <td>
@@ -171,6 +242,12 @@ function task_table_admin_dashboard_page() {
         .task-table-stats {
             display: flex;
             margin-bottom: 20px;
+        }
+        .task-table-category-tabs {
+            margin: 0 0 15px;
+        }
+        .task-table-category-tabs li {
+            display: inline;
         }
         .stat-box {
             background: white;
@@ -258,10 +335,12 @@ function task_table_admin_signups_page() {
     }
     
     // Get signups with event details
+    $categories_table = $wpdb->prefix . 'task_table_categories';
     $signups = $wpdb->get_results(
-        "SELECT s.*, e.was_angefragt, e.name_hochschule, e.zeitpunkt 
+        "SELECT s.*, e.was_angefragt, e.name_hochschule, e.zeitpunkt, c.name AS category_name 
          FROM $signups_table s
          LEFT JOIN $events_table e ON s.event_id = e.id
+         LEFT JOIN $categories_table c ON c.id = e.category_id
          $where_clause
          ORDER BY s.created_at DESC"
     );
@@ -300,6 +379,7 @@ function task_table_admin_signups_page() {
                     <th><?php _e('Name', 'task-table'); ?></th>
                     <th><?php _e('Email', 'task-table'); ?></th>
                     <th><?php _e('Event', 'task-table'); ?></th>
+                    <th><?php _e('Category', 'task-table'); ?></th>
                     <th><?php _e('Info', 'task-table'); ?></th>
                     <th><?php _e('Time', 'task-table'); ?></th>
                     <th><?php _e('Status', 'task-table'); ?></th>
@@ -310,7 +390,7 @@ function task_table_admin_signups_page() {
             <tbody>
                 <?php if (empty($signups)): ?>
                     <tr>
-                        <td colspan="9"><?php _e('No signups found.', 'task-table'); ?></td>
+                        <td colspan="10"><?php _e('No signups found.', 'task-table'); ?></td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($signups as $signup): ?>
@@ -319,6 +399,7 @@ function task_table_admin_signups_page() {
                             <td><?php echo esc_html($signup->user_name); ?></td>
                             <td><?php echo esc_html($signup->user_email); ?></td>
                             <td><?php echo esc_html($signup->was_angefragt); ?></td>
+                            <td><?php echo !empty($signup->category_name) ? esc_html($signup->category_name) : '&mdash;'; ?></td>
                             <td class="signup-free-text">
                                 <?php if (!empty($signup->free_text)) {
                                     $raw = (string) $signup->free_text;
@@ -440,6 +521,22 @@ function task_table_admin_signups_page() {
 function task_table_admin_subscribers_page() {
     global $wpdb;
     $subscribers_table = $wpdb->prefix . 'task_table_subscribers';
+    $subscriber_categories_table = $wpdb->prefix . 'task_table_subscriber_categories';
+    $categories = task_table_get_categories();
+    $default_category_id = task_table_get_default_category_id();
+    $category_update_notice = '';
+
+    if (isset($_POST['task_table_update_subscriber_categories']) && isset($_POST['_wpnonce'])) {
+        if (check_admin_referer('task_table_update_subscriber_categories')) {
+            $subscriber_id = isset($_POST['subscriber_id']) ? (int) $_POST['subscriber_id'] : 0;
+            $selected_categories = isset($_POST['subscriber_categories']) ? (array) $_POST['subscriber_categories'] : array();
+
+            if ($subscriber_id > 0) {
+                task_table_sync_subscriber_categories($subscriber_id, $selected_categories);
+                $category_update_notice = __('Subscriber categories updated.', 'task-table');
+            }
+        }
+    }
     
     // Handle subscriber deletion
     if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['subscriber_id']) && isset($_GET['_wpnonce'])) {
@@ -447,6 +544,7 @@ function task_table_admin_subscribers_page() {
         $nonce = sanitize_text_field($_GET['_wpnonce']);
         
         if (wp_verify_nonce($nonce, 'task_table_delete_subscriber_' . $subscriber_id)) {
+            $wpdb->delete($subscriber_categories_table, array('subscriber_id' => $subscriber_id));
             $wpdb->delete($subscribers_table, array('id' => $subscriber_id));
             echo '<div class="notice notice-success is-dismissible"><p>' . __('Subscriber deleted.', 'task-table') . '</p></div>';
         }
@@ -473,9 +571,53 @@ function task_table_admin_subscribers_page() {
         }
     }
     
+    $editing_subscriber = null;
+    $editing_categories = array();
+    if (isset($_GET['action']) && $_GET['action'] === 'edit-categories' && isset($_GET['subscriber_id'])) {
+        $editing_id = (int) $_GET['subscriber_id'];
+        $editing_subscriber = $wpdb->get_row($wpdb->prepare("SELECT * FROM $subscribers_table WHERE id = %d", $editing_id));
+        if ($editing_subscriber) {
+            $editing_categories = task_table_get_subscriber_categories($editing_subscriber->id);
+        }
+    }
+
     ?>
     <div class="wrap">
         <h1><?php _e('Manage Subscribers', 'task-table'); ?></h1>
+
+        <?php if (!empty($category_update_notice)): ?>
+            <div class="notice notice-success is-dismissible"><p><?php echo esc_html($category_update_notice); ?></p></div>
+        <?php endif; ?>
+
+        <?php if ($editing_subscriber): ?>
+            <div class="task-table-subscriber-edit">
+                <h2><?php printf(esc_html__('Edit Categories for %s', 'task-table'), esc_html($editing_subscriber->email)); ?></h2>
+                <form method="post" action="">
+                    <?php wp_nonce_field('task_table_update_subscriber_categories'); ?>
+                    <input type="hidden" name="task_table_update_subscriber_categories" value="1">
+                    <input type="hidden" name="subscriber_id" value="<?php echo esc_attr($editing_subscriber->id); ?>">
+                    <fieldset>
+                        <legend><?php _e('Categories', 'task-table'); ?></legend>
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $category): ?>
+                                <label style="display:block;margin-bottom:4px;">
+                                    <input type="checkbox" name="subscriber_categories[]" value="<?php echo esc_attr($category['id']); ?>" <?php checked(in_array((int) $category['id'], $editing_categories, true)); ?>>
+                                    <?php echo esc_html($category['name']); ?>
+                                </label>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p><?php _e('No categories available.', 'task-table'); ?></p>
+                        <?php endif; ?>
+                    </fieldset>
+                    <p class="submit">
+                        <button type="submit" class="button button-primary"><?php _e('Save Categories', 'task-table'); ?></button>
+                        <a class="button" href="<?php echo esc_url(admin_url('admin.php?page=task-table-subscribers')); ?>"><?php _e('Cancel', 'task-table'); ?></a>
+                    </p>
+                </form>
+            </div>
+        <?php elseif (isset($_GET['action']) && $_GET['action'] === 'edit-categories'): ?>
+            <div class="notice notice-error is-dismissible"><p><?php _e('Subscriber not found.', 'task-table'); ?></p></div>
+        <?php endif; ?>
         
         <table class="wp-list-table widefat fixed striped">
             <thead>
@@ -483,6 +625,7 @@ function task_table_admin_subscribers_page() {
                     <th><?php _e('ID', 'task-table'); ?></th>
                     <th><?php _e('Email', 'task-table'); ?></th>
                     <th><?php _e('Confirmed', 'task-table'); ?></th>
+                    <th><?php _e('Categories', 'task-table'); ?></th>
                     <th><?php _e('Date', 'task-table'); ?></th>
                     <th><?php _e('Actions', 'task-table'); ?></th>
                 </tr>
@@ -490,7 +633,7 @@ function task_table_admin_subscribers_page() {
             <tbody>
                 <?php if (empty($subscribers)): ?>
                     <tr>
-                        <td colspan="5"><?php _e('No subscribers found.', 'task-table'); ?></td>
+                        <td colspan="6"><?php _e('No subscribers found.', 'task-table'); ?></td>
                     </tr>
                 <?php else: ?>
                     <?php foreach ($subscribers as $subscriber): ?>
@@ -498,6 +641,12 @@ function task_table_admin_subscribers_page() {
                             <td><?php echo esc_html($subscriber->id); ?></td>
                             <td><?php echo esc_html($subscriber->email); ?></td>
                             <td><?php echo ((int)$subscriber->confirmed === 1) ? __('Yes', 'task-table') : __('No', 'task-table'); ?></td>
+                            <td>
+                                <?php
+                                $category_names = task_table_get_subscriber_category_names($subscriber->id);
+                                echo $category_names !== '' ? esc_html($category_names) : '&mdash;';
+                                ?>
+                            </td>
                             <td><?php echo date_i18n(get_option('date_format'), strtotime($subscriber->created_at)); ?></td>
                             <td>
                                 <?php if (!(int)$subscriber->confirmed): ?>
@@ -505,6 +654,9 @@ function task_table_admin_subscribers_page() {
                                         <?php _e('Resend Confirmation', 'task-table'); ?>
                                     </a>
                                 <?php endif; ?>
+                                <a href="<?php echo esc_url(add_query_arg(array('page' => 'task-table-subscribers', 'action' => 'edit-categories', 'subscriber_id' => $subscriber->id), admin_url('admin.php'))); ?>" class="button button-small">
+                                    <?php _e('Edit Categories', 'task-table'); ?>
+                                </a>
                                 <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=task-table-subscribers&action=delete&subscriber_id=' . $subscriber->id), 'task_table_delete_subscriber_' . $subscriber->id); ?>" class="button button-small action-delete" onclick="return confirm('<?php _e('Are you sure you want to delete this subscriber?', 'task-table'); ?>');">
                                     <?php _e('Delete', 'task-table'); ?>
                                 </a>
@@ -537,6 +689,27 @@ function task_table_admin_subscribers_page() {
                         <input type="checkbox" name="subscriber_confirmed" id="subscriber_confirmed" value="1">
                     </td>
                 </tr>
+                <tr>
+                    <th scope="row">
+                        <label><?php _e('Categories', 'task-table'); ?></label>
+                    </th>
+                    <td>
+                        <?php if (!empty($categories)): ?>
+                            <?php
+                            $preselected = isset($_POST['subscriber_categories']) ? array_map('intval', (array) $_POST['subscriber_categories']) : array();
+                            $preselected = !empty($preselected) ? $preselected : array($default_category_id);
+                            ?>
+                            <?php foreach ($categories as $category): ?>
+                                <label style="display:inline-block;margin-right:12px;">
+                                    <input type="checkbox" name="subscriber_categories[]" value="<?php echo esc_attr($category['id']); ?>" <?php checked(in_array((int) $category['id'], $preselected, true)); ?>>
+                                    <?php echo esc_html($category['name']); ?>
+                                </label>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <p><?php _e('No categories available. Please create one first.', 'task-table'); ?></p>
+                        <?php endif; ?>
+                    </td>
+                </tr>
             </table>
             
             <p class="submit">
@@ -551,6 +724,7 @@ function task_table_admin_subscribers_page() {
         if (wp_verify_nonce($_POST['task_table_add_subscriber_nonce'], 'task_table_add_subscriber')) {
             $email = sanitize_email($_POST['subscriber_email']);
             $confirmed = isset($_POST['subscriber_confirmed']) ? 1 : 0;
+            $category_ids = isset($_POST['subscriber_categories']) ? array_map('intval', (array) $_POST['subscriber_categories']) : array();
             
             if (is_email($email)) {
                 $exists = $wpdb->get_var($wpdb->prepare(
@@ -566,6 +740,11 @@ function task_table_admin_subscribers_page() {
                         'confirmed' => $confirmed,
                         'created_at' => current_time('mysql')
                     ));
+
+                    $new_id = (int) $wpdb->insert_id;
+                    if ($new_id) {
+                        task_table_sync_subscriber_categories($new_id, $category_ids);
+                    }
                     
                     echo '<div class="notice notice-success is-dismissible"><p>' . __('Subscriber added successfully.', 'task-table') . '</p></div>';
                     echo '<script>window.location.href = window.location.href;</script>';
@@ -576,6 +755,293 @@ function task_table_admin_subscribers_page() {
             }
         }
     }
+}
+
+/**
+ * Admin categories management page
+ */
+function task_table_admin_categories_page() {
+    global $wpdb;
+
+    $categories_table = $wpdb->prefix . 'task_table_categories';
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $subscriber_categories_table = $wpdb->prefix . 'task_table_subscriber_categories';
+
+    $message = '';
+    $error = '';
+    $default_category_id = task_table_get_default_category_id();
+
+    // Handle add category
+    if (isset($_POST['task_table_add_category_nonce']) && wp_verify_nonce($_POST['task_table_add_category_nonce'], 'task_table_add_category')) {
+        $name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : '';
+        $slug_input = isset($_POST['category_slug']) ? sanitize_text_field($_POST['category_slug']) : '';
+        $description = isset($_POST['category_description']) ? sanitize_textarea_field($_POST['category_description']) : '';
+        $make_default = !empty($_POST['category_set_default']);
+
+        if ($name === '') {
+            $error = __('Category name is required.', 'task-table');
+        } else {
+            $slug = task_table_get_unique_category_slug($slug_input !== '' ? $slug_input : $name);
+            $next_sort = (int) $wpdb->get_var("SELECT MAX(sort_order) FROM $categories_table");
+            $next_sort = $next_sort ? $next_sort + 10 : 10;
+
+            $inserted = $wpdb->insert(
+                $categories_table,
+                array(
+                    'name' => $name,
+                    'slug' => $slug,
+                    'description' => $description,
+                    'sort_order' => $next_sort,
+                    'created_at' => current_time('mysql'),
+                    'updated_at' => current_time('mysql')
+                )
+            );
+
+            if ($inserted !== false) {
+                $new_id = (int) $wpdb->insert_id;
+                if ($make_default || !$default_category_id) {
+                    update_option(TASK_TABLE_DEFAULT_CATEGORY_OPTION, $new_id);
+                    $default_category_id = $new_id;
+                }
+                $message = __('Category created successfully.', 'task-table');
+            } else {
+                $error = __('Failed to create category.', 'task-table');
+            }
+        }
+    }
+
+    // Handle update category
+    if (isset($_POST['task_table_update_category_nonce']) && wp_verify_nonce($_POST['task_table_update_category_nonce'], 'task_table_update_category')) {
+        $category_id = isset($_POST['category_id']) ? (int) $_POST['category_id'] : 0;
+        $category = $category_id ? task_table_get_category($category_id) : null;
+
+        if ($category) {
+            $name = isset($_POST['category_name']) ? sanitize_text_field($_POST['category_name']) : $category['name'];
+            $slug_input = isset($_POST['category_slug']) ? sanitize_text_field($_POST['category_slug']) : $category['slug'];
+            $description = isset($_POST['category_description']) ? sanitize_textarea_field($_POST['category_description']) : $category['description'];
+            $sort_order = isset($_POST['category_sort_order']) ? (int) $_POST['category_sort_order'] : (int) $category['sort_order'];
+            $make_default = !empty($_POST['category_set_default']);
+
+            if ($name === '') {
+                $error = __('Category name is required.', 'task-table');
+            } else {
+                $slug = task_table_get_unique_category_slug($slug_input !== '' ? $slug_input : $name, $category_id);
+
+                $wpdb->update(
+                    $categories_table,
+                    array(
+                        'name' => $name,
+                        'slug' => $slug,
+                        'description' => $description,
+                        'sort_order' => $sort_order,
+                        'updated_at' => current_time('mysql')
+                    ),
+                    array('id' => $category_id)
+                );
+
+                if ($make_default) {
+                    update_option(TASK_TABLE_DEFAULT_CATEGORY_OPTION, $category_id);
+                    $default_category_id = $category_id;
+                }
+
+                $message = __('Category updated.', 'task-table');
+            }
+        } else {
+            $error = __('Category not found.', 'task-table');
+        }
+    }
+
+    // Handle delete category
+    if (isset($_POST['task_table_delete_category_nonce']) && wp_verify_nonce($_POST['task_table_delete_category_nonce'], 'task_table_delete_category')) {
+        $category_id = isset($_POST['category_id']) ? (int) $_POST['category_id'] : 0;
+
+        if ($category_id === $default_category_id) {
+            $error = __('You cannot delete the default category.', 'task-table');
+        } else {
+            $reassign_id = isset($_POST['reassign_category_id']) ? (int) $_POST['reassign_category_id'] : $default_category_id;
+            if ($reassign_id === $category_id || !$reassign_id) {
+                $reassign_id = $default_category_id;
+            }
+
+            $reassign_category = task_table_get_category($reassign_id);
+            if (!$reassign_category) {
+                $reassign_id = $default_category_id;
+            }
+
+            // Reassign events
+            $wpdb->query($wpdb->prepare(
+                "UPDATE $events_table SET category_id = %d WHERE category_id = %d",
+                $reassign_id,
+                $category_id
+            ));
+
+            // Reassign subscriber preferences
+            if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $subscriber_categories_table)) === $subscriber_categories_table) {
+                $wpdb->query($wpdb->prepare(
+                    "INSERT IGNORE INTO $subscriber_categories_table (subscriber_id, category_id)
+                     SELECT subscriber_id, %d FROM $subscriber_categories_table WHERE category_id = %d",
+                    $reassign_id,
+                    $category_id
+                ));
+                $wpdb->query($wpdb->prepare(
+                    "DELETE FROM $subscriber_categories_table WHERE category_id = %d",
+                    $category_id
+                ));
+            }
+
+            $wpdb->delete($categories_table, array('id' => $category_id));
+            $message = __('Category deleted.', 'task-table');
+        }
+    }
+
+    $categories = task_table_get_categories();
+    $event_counts_raw = $wpdb->get_results("SELECT category_id, COUNT(*) AS total FROM $events_table GROUP BY category_id", OBJECT_K);
+    $subscriber_counts_raw = array();
+    if ($wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $subscriber_categories_table)) === $subscriber_categories_table) {
+        $subscriber_counts_raw = $wpdb->get_results("SELECT category_id, COUNT(*) AS total FROM $subscriber_categories_table GROUP BY category_id", OBJECT_K);
+    }
+
+    $editing_category = null;
+    if (isset($_GET['edit'])) {
+        $edit_id = (int) $_GET['edit'];
+        $editing_category = task_table_get_category($edit_id);
+    }
+
+    ?>
+    <div class="wrap">
+        <h1><?php _e('Task Categories', 'task-table'); ?></h1>
+
+        <?php if ($message): ?>
+            <div class="notice notice-success is-dismissible"><p><?php echo esc_html($message); ?></p></div>
+        <?php endif; ?>
+
+        <?php if ($error): ?>
+            <div class="notice notice-error is-dismissible"><p><?php echo esc_html($error); ?></p></div>
+        <?php endif; ?>
+
+        <div class="postbox" style="max-width:700px;">
+            <div class="inside">
+                <h2><?php _e('Add New Category', 'task-table'); ?></h2>
+                <form method="post">
+                    <?php wp_nonce_field('task_table_add_category', 'task_table_add_category_nonce'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><label for="category_name"><?php _e('Name', 'task-table'); ?></label></th>
+                            <td><input type="text" name="category_name" id="category_name" class="regular-text" required></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="category_slug"><?php _e('Slug', 'task-table'); ?></label></th>
+                            <td><input type="text" name="category_slug" id="category_slug" class="regular-text" placeholder="<?php esc_attr_e('Optional', 'task-table'); ?>"></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><label for="category_description"><?php _e('Description', 'task-table'); ?></label></th>
+                            <td><textarea name="category_description" id="category_description" class="large-text" rows="3"></textarea></td>
+                        </tr>
+                        <tr>
+                            <th scope="row"><?php _e('Default', 'task-table'); ?></th>
+                            <td>
+                                <label>
+                                    <input type="checkbox" name="category_set_default" value="1">
+                                    <?php _e('Set as default category', 'task-table'); ?>
+                                </label>
+                            </td>
+                        </tr>
+                    </table>
+                    <p class="submit"><button type="submit" class="button button-primary"><?php _e('Add Category', 'task-table'); ?></button></p>
+                </form>
+            </div>
+        </div>
+
+        <?php if ($editing_category): ?>
+            <div class="postbox" style="max-width:700px;">
+                <div class="inside">
+                    <h2><?php _e('Edit Category', 'task-table'); ?></h2>
+                    <form method="post">
+                        <?php wp_nonce_field('task_table_update_category', 'task_table_update_category_nonce'); ?>
+                        <input type="hidden" name="category_id" value="<?php echo esc_attr($editing_category['id']); ?>">
+                        <table class="form-table">
+                            <tr>
+                                <th scope="row"><label for="edit_category_name"><?php _e('Name', 'task-table'); ?></label></th>
+                                <td><input type="text" name="category_name" id="edit_category_name" class="regular-text" value="<?php echo esc_attr($editing_category['name']); ?>" required></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label for="edit_category_slug"><?php _e('Slug', 'task-table'); ?></label></th>
+                                <td><input type="text" name="category_slug" id="edit_category_slug" class="regular-text" value="<?php echo esc_attr($editing_category['slug']); ?>"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label for="edit_category_description"><?php _e('Description', 'task-table'); ?></label></th>
+                                <td><textarea name="category_description" id="edit_category_description" class="large-text" rows="3"><?php echo esc_textarea($editing_category['description']); ?></textarea></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><label for="edit_category_sort_order"><?php _e('Sort Order', 'task-table'); ?></label></th>
+                                <td><input type="number" name="category_sort_order" id="edit_category_sort_order" value="<?php echo esc_attr($editing_category['sort_order']); ?>" step="1"></td>
+                            </tr>
+                            <tr>
+                                <th scope="row"><?php _e('Default', 'task-table'); ?></th>
+                                <td>
+                                    <label>
+                                        <input type="checkbox" name="category_set_default" value="1" <?php checked($default_category_id === (int) $editing_category['id']); ?>>
+                                        <?php _e('Set as default category', 'task-table'); ?>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <p class="submit">
+                            <button type="submit" class="button button-primary"><?php _e('Save Changes', 'task-table'); ?></button>
+                            <a href="<?php echo esc_url(remove_query_arg('edit')); ?>" class="button"><?php _e('Cancel', 'task-table'); ?></a>
+                        </p>
+                    </form>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <h2><?php _e('Existing Categories', 'task-table'); ?></h2>
+        <table class="wp-list-table widefat fixed striped">
+            <thead>
+                <tr>
+                    <th><?php _e('Name', 'task-table'); ?></th>
+                    <th><?php _e('Slug', 'task-table'); ?></th>
+                    <th><?php _e('Sort Order', 'task-table'); ?></th>
+                    <th><?php _e('Events', 'task-table'); ?></th>
+                    <th><?php _e('Subscribers', 'task-table'); ?></th>
+                    <th><?php _e('Default', 'task-table'); ?></th>
+                    <th><?php _e('Actions', 'task-table'); ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if (empty($categories)): ?>
+                    <tr><td colspan="7"><?php _e('No categories found.', 'task-table'); ?></td></tr>
+                <?php else: ?>
+                    <?php foreach ($categories as $category): ?>
+                        <?php
+                            $event_total = isset($event_counts_raw[$category['id']]) ? (int) $event_counts_raw[$category['id']]->total : 0;
+                            $subscriber_total = isset($subscriber_counts_raw[$category['id']]) ? (int) $subscriber_counts_raw[$category['id']]->total : 0;
+                        ?>
+                        <tr>
+                            <td><?php echo esc_html($category['name']); ?></td>
+                            <td><?php echo esc_html($category['slug']); ?></td>
+                            <td><?php echo esc_html($category['sort_order']); ?></td>
+                            <td><?php echo esc_html($event_total); ?></td>
+                            <td><?php echo esc_html($subscriber_total); ?></td>
+                            <td><?php echo $default_category_id === (int) $category['id'] ? '&#10003;' : '&mdash;'; ?></td>
+                            <td>
+                                <a href="<?php echo esc_url(add_query_arg(array('edit' => $category['id']))); ?>" class="button button-small"><?php _e('Edit', 'task-table'); ?></a>
+                                <?php if ($default_category_id !== (int) $category['id']): ?>
+                                    <form method="post" action="" style="display:inline;">
+                                        <?php wp_nonce_field('task_table_delete_category', 'task_table_delete_category_nonce'); ?>
+                                        <input type="hidden" name="category_id" value="<?php echo esc_attr($category['id']); ?>">
+                                        <input type="hidden" name="reassign_category_id" value="<?php echo esc_attr($default_category_id); ?>">
+                                        <button type="submit" class="button button-small action-delete" onclick="return confirm('<?php _e('Delete this category? Associated items will be reassigned to the default category.', 'task-table'); ?>');"><?php _e('Delete', 'task-table'); ?></button>
+                                    </form>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+    <?php
 }
 
 /**

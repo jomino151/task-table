@@ -15,6 +15,10 @@
         "rows": {
             "type": "array",
             "default": []
+        },
+        "categoryId": {
+            "type": "number",
+            "default": 0
         }
     },
     "textdomain": "task-table",

@@ -21,6 +21,52 @@
   gap: 10px;
   align-items: center;
 }
+.wp-block-task-table-new-event-signup .subscription-categories {
+  flex: 1 1 100%;
+  border: 1px solid #e2e4e7;
+  border-radius: 4px;
+  padding: 12px;
+  background: #fafafa;
+}
+.wp-block-task-table-new-event-signup .subscription-categories legend {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+.wp-block-task-table-new-event-signup .subscription-categories .subscription-category {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 12px;
+  margin-bottom: 8px;
+}
+.wp-block-task-table-new-event-signup .subscription-categories .subscription-category input {
+  margin-left: 6px;
+  position: static !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  clip: auto;
+  height: 18px;
+  width: 18px;
+  -webkit-appearance: auto;
+     -moz-appearance: auto;
+          appearance: auto;
+  border: 1px solid #7e8993;
+  border-radius: 3px;
+  background-color: #fff;
+  accent-color: #007cba;
+}
+.wp-block-task-table-new-event-signup .subscription-categories .subscription-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: #555d66;
+}
+.wp-block-task-table-new-event-signup .subscription-categories-empty {
+  flex: 1 1 100%;
+  background: #fff4e5;
+  border: 1px solid #f2c087;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  color: #7c4a03;
+}
 .wp-block-task-table-new-event-signup input[type=email] {
   min-width: 250px;
   flex: 1 1 200px;

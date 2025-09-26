@@ -12,6 +12,11 @@
   background: white;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
+.wp-block-task-table-task-table .task-table-category-heading {
+  margin: 0 0 1rem;
+  font-weight: 600;
+  color: #2c3338;
+}
 .wp-block-task-table-task-table th, .wp-block-task-table-task-table td {
   padding: 1rem;
   text-align: right;

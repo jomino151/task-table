@@ -17,6 +17,13 @@ function task_table_register_api_routes() {
         'callback' => 'task_table_handle_signup_submission',
         'permission_callback' => '__return_true' // Allow public access
     ));
+
+    // Categories listing
+    register_rest_route('task-table/v1', '/categories', array(
+        'methods' => 'GET',
+        'callback' => 'task_table_api_get_categories',
+        'permission_callback' => '__return_true'
+    ));
     
     // Event management endpoints
     register_rest_route('task-table/v1', '/events', array(
@@ -128,6 +135,27 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
 }
 
 /**
+ * List available categories.
+ */
+function task_table_api_get_categories(WP_REST_Request $request) {
+    $categories = task_table_get_categories();
+    $default_id = task_table_get_default_category_id();
+
+    $payload = array_map(function ($category) use ($default_id) {
+        return array(
+            'id' => (int) $category['id'],
+            'name' => $category['name'],
+            'slug' => $category['slug'],
+            'description' => $category['description'],
+            'sort_order' => (int) $category['sort_order'],
+            'is_default' => ((int) $category['id'] === (int) $default_id),
+        );
+    }, $categories);
+
+    return new WP_REST_Response($payload, 200);
+}
+
+/**
  * Process a new event signup submission
  */
 function task_table_process_event_signup($request) {
@@ -157,16 +185,52 @@ function task_table_process_event_signup($request) {
  */
 function task_table_get_events(WP_REST_Request $request) {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'task_table_events';
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $categories_table = $wpdb->prefix . 'task_table_categories';
     $archived = $request->get_param('archived');
-    $where = '';
+    $category_id = $request->get_param('category_id');
+    $category_slug = $request->get_param('category');
+
+    $conditions = array();
+    $params = array();
+
     if ($archived === '1' || $archived === 1) {
-        $where = 'WHERE archived = 1';
+        $conditions[] = 'e.archived = 1';
     } elseif ($archived === '0' || $archived === 0) {
-        $where = 'WHERE archived = 0';
+        $conditions[] = 'e.archived = 0';
     }
-    $events = $wpdb->get_results("SELECT * FROM $table_name $where ORDER BY created_at DESC", ARRAY_A);
-    return new WP_REST_Response($events, 200);
+
+    if (!empty($category_id)) {
+        $conditions[] = 'e.category_id = %d';
+        $params[] = (int) $category_id;
+    } elseif (!empty($category_slug)) {
+        $conditions[] = 'c.slug = %s';
+        $params[] = sanitize_title($category_slug);
+    }
+
+    $where = '';
+    if (!empty($conditions)) {
+        $where = 'WHERE ' . implode(' AND ', $conditions);
+    }
+
+    $sql = "SELECT e.*, c.name AS category_name, c.slug AS category_slug
+            FROM $events_table e
+            LEFT JOIN $categories_table c ON c.id = e.category_id
+            $where
+            ORDER BY e.created_at DESC";
+
+    if (!empty($params)) {
+        $sql = $wpdb->prepare($sql, $params);
+    }
+
+    $events = $wpdb->get_results($sql, ARRAY_A);
+
+    $formatted = array_map(function ($event) {
+        $event['category_id'] = isset($event['category_id']) ? (int) $event['category_id'] : 0;
+        return $event;
+    }, $events);
+
+    return new WP_REST_Response($formatted, 200);
 }
 
 /**
@@ -177,6 +241,17 @@ function task_table_save_event(WP_REST_Request $request) {
     $table_name = $wpdb->prefix . 'task_table_events';
     
     $data = $request->get_json_params();
+
+    $category_id = 0;
+    if (isset($data['category_id'])) {
+        $category_id = (int) $data['category_id'];
+    } elseif (isset($data['categoryId'])) {
+        $category_id = (int) $data['categoryId'];
+    }
+
+    if ($category_id <= 0 || !task_table_get_category($category_id)) {
+        $category_id = task_table_get_default_category_id();
+    }
     
     // Sanitize all fields
     $event_data = array(
@@ -187,6 +262,7 @@ function task_table_save_event(WP_REST_Request $request) {
         'zeitpunkt' => sanitize_text_field($data['zeitpunkt'] ?? ''),
         'auftragdetails' => sanitize_text_field($data['auftragdetails'] ?? ''),
         'wer_macht' => sanitize_text_field($data['werMacht'] ?? ''),
+        'category_id' => $category_id,
         'archived' => 0,
         'created_at' => current_time('mysql'),
         'updated_at' => current_time('mysql')
@@ -262,6 +338,24 @@ function task_table_update_event(WP_REST_Request $request) {
     if (isset($data['zeitpunkt'])) $update_data['zeitpunkt'] = wp_kses_post($data['zeitpunkt']);
     if (isset($data['auftragdetails'])) $update_data['auftragdetails'] = wp_kses_post($data['auftragdetails']);
     if (isset($data['werMacht'])) $update_data['wer_macht'] = wp_kses_post($data['werMacht']);
+
+    $incoming_category_id = null;
+    if (isset($data['category_id'])) {
+        $incoming_category_id = (int) $data['category_id'];
+    } elseif (isset($data['categoryId'])) {
+        $incoming_category_id = (int) $data['categoryId'];
+    }
+
+    if ($incoming_category_id !== null) {
+        if ($incoming_category_id > 0 && task_table_get_category($incoming_category_id)) {
+            $update_data['category_id'] = $incoming_category_id;
+        } else {
+            $default_category_id = task_table_get_default_category_id();
+            if ($default_category_id) {
+                $update_data['category_id'] = $default_category_id;
+            }
+        }
+    }
     
     // Determine completeness after update
     $now_complete = task_table_event_is_complete($update_data);
@@ -337,6 +431,7 @@ function task_table_add_subscriber(WP_REST_Request $request) {
     
     $data = $request->get_json_params();
     $email = sanitize_email($data['email']);
+    $requested_categories = isset($data['categories']) ? (array) $data['categories'] : array();
     
     if (!is_email($email)) {
         return new WP_REST_Response(array(
@@ -344,29 +439,30 @@ function task_table_add_subscriber(WP_REST_Request $request) {
             'message' => 'Invalid email address'
         ), 400);
     }
-    
-    // Check if subscriber already exists
-    $exists = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM $table_name WHERE email = %s",
+
+    $subscriber = $wpdb->get_row($wpdb->prepare(
+        "SELECT * FROM $table_name WHERE email = %s",
         $email
     ));
-    
-    if ($exists) {
-        // If already confirmed, treat as duplicate
-        $confirmed = (int)$wpdb->get_var($wpdb->prepare("SELECT confirmed FROM $table_name WHERE email = %s", $email));
-        if ($confirmed === 1) {
+
+    if ($subscriber) {
+        task_table_sync_subscriber_categories((int) $subscriber->id, $requested_categories);
+
+        if ((int) $subscriber->confirmed === 1) {
             return new WP_REST_Response(array(
-                'success' => false,
-                'message' => 'Email already subscribed'
-            ), 409);
+                'success' => true,
+                'message' => 'Subscription preferences updated.'
+            ), 200);
         }
-        // If not confirmed, regenerate a token and re-send email
+
         $token = wp_generate_password(32, false, false);
         $wpdb->update($table_name, array(
             'confirmation_token' => $token,
             'updated_at' => current_time('mysql')
-        ), array('email' => $email));
+        ), array('id' => $subscriber->id));
+
         task_table_send_subscription_confirmation_email($email, $token);
+
         return new WP_REST_Response(array(
             'success' => true,
             'message' => 'Confirmation email resent. Please check your inbox.'
@@ -389,6 +485,8 @@ function task_table_add_subscriber(WP_REST_Request $request) {
             'error' => $wpdb->last_error
         ), 500);
     }
+
+    task_table_sync_subscriber_categories((int) $wpdb->insert_id, $requested_categories);
 
     task_table_send_subscription_confirmation_email($email, $token);
 
@@ -493,6 +591,7 @@ function task_table_get_event($event_id) {
             'zeitpunkt' => $event['zeitpunkt'],
             'auftragdetails' => $event['auftragdetails'],
             'werMacht' => $event['wer_macht'],
+            'category_id' => isset($event['category_id']) ? (int) $event['category_id'] : 0,
             'created_at' => $event['created_at'],
             'updated_at' => $event['updated_at'],
             'archived' => (int)$event['archived']

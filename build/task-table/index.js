@@ -8,7 +8,7 @@
   \***********************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"task-table/task-table","version":"0.1.0","title":"task-Table","category":"text","icon":"table","description":"Creates a dynamic table to communicate task to multis.","example":{},"supports":{"html":false},"attributes":{"rows":{"type":"array","default":[]}},"textdomain":"task-table","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"task-table/task-table","version":"0.1.0","title":"task-Table","category":"text","icon":"table","description":"Creates a dynamic table to communicate task to multis.","example":{},"supports":{"html":false},"attributes":{"rows":{"type":"array","default":[]},"categoryId":{"type":"number","default":0}},"textdomain":"task-table","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
 
 /***/ }),
 
@@ -28,10 +28,13 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wordpress_components__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__);
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wordpress/element */ "@wordpress/element");
 /* harmony import */ var _wordpress_element__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(_wordpress_element__WEBPACK_IMPORTED_MODULE_2__);
-/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/api-fetch */ "@wordpress/api-fetch");
-/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3__);
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
-/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wordpress/i18n */ "@wordpress/i18n");
+/* harmony import */ var _wordpress_i18n__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wordpress/api-fetch */ "@wordpress/api-fetch");
+/* harmony import */ var _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(_wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! react/jsx-runtime */ "react/jsx-runtime");
+/* harmony import */ var react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5___default = /*#__PURE__*/__webpack_require__.n(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__);
+
 
 
 
@@ -42,51 +45,117 @@ const Edit = ({
   setAttributes
 }) => {
   const {
-    rows = []
+    rows = [],
+    categoryId = 0
   } = attributes;
-  const [previousRows, setPreviousRows] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)([]);
-  const [isLoading, setIsLoading] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)(true);
+  const [categories, setCategories] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)([]);
+  const [isLoadingCategories, setIsLoadingCategories] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)(true);
+  const [categoryError, setCategoryError] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)('');
+  const [isLoadingEvents, setIsLoadingEvents] = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useState)(false);
   const rowUpdateTimers = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useRef)({});
-
-  // First-time setup - fetch data from database
-  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
-    fetchEvents();
+  const latestFetchCategory = (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useRef)(null);
+  const activeCategory = categories.find(cat => cat.id === categoryId);
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => () => {
+    Object.values(rowUpdateTimers.current).forEach(timeout => clearTimeout(timeout));
   }, []);
-
-  // Fetch events from database
-  const fetchEvents = async () => {
-    setIsLoading(true);
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
+    Object.values(rowUpdateTimers.current).forEach(timeout => clearTimeout(timeout));
+    rowUpdateTimers.current = {};
+  }, [categoryId]);
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
+    const loadCategories = async () => {
+      setIsLoadingCategories(true);
+      setCategoryError('');
+      try {
+        const fetched = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
+          path: '/task-table/v1/categories',
+          method: 'GET'
+        });
+        const normalized = Array.isArray(fetched) ? fetched.map(cat => ({
+          id: parseInt(cat.id, 10),
+          name: cat.name,
+          slug: cat.slug,
+          is_default: !!cat.is_default
+        })) : [];
+        setCategories(normalized);
+        if (normalized.length === 0) {
+          setAttributes({
+            categoryId: 0,
+            rows: []
+          });
+          return;
+        }
+        const hasCurrent = normalized.some(cat => cat.id === categoryId);
+        if (!hasCurrent) {
+          const fallback = normalized.find(cat => cat.is_default) || normalized[0];
+          if (fallback) {
+            setAttributes({
+              categoryId: fallback.id
+            });
+          }
+        }
+      } catch (error) {
+        setCategoryError((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Failed to load categories.', 'task-table'));
+        // eslint-disable-next-line no-console
+        console.error('Task Table: Failed to load categories', error);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+    loadCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  (0,_wordpress_element__WEBPACK_IMPORTED_MODULE_2__.useEffect)(() => {
+    if (!categoryId) {
+      setIsLoadingEvents(false);
+      return;
+    }
+    fetchEvents(categoryId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryId]);
+  const fetchEvents = async currentCategoryId => {
+    if (!currentCategoryId) {
+      return;
+    }
+    latestFetchCategory.current = currentCategoryId;
+    setIsLoadingEvents(true);
     try {
-      const events = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
-        path: '/task-table/v1/events',
+      const events = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
+        path: `/task-table/v1/events?category_id=${currentCategoryId}`,
         method: 'GET'
       });
-      const formattedEvents = events.map(event => ({
+      const formattedEvents = (events || []).map(event => ({
         id: event.id,
-        wasAngefragt: event.was_angefragt,
-        kontext: event.kontext,
-        nameHochschule: event.name_hochschule,
-        tnAnzahl: event.tn_anzahl,
-        zeitpunkt: event.zeitpunkt,
-        auftragdetails: event.auftragdetails,
-        werMacht: event.wer_macht
+        wasAngefragt: event.was_angefragt || '',
+        kontext: event.kontext || '',
+        nameHochschule: event.name_hochschule || '',
+        tnAnzahl: event.tn_anzahl || '',
+        zeitpunkt: event.zeitpunkt || '',
+        auftragdetails: event.auftragdetails || '',
+        werMacht: event.wer_macht || '',
+        categoryId: event.category_id ? parseInt(event.category_id, 10) : currentCategoryId
       }));
-      setAttributes({
-        rows: formattedEvents
-      });
-      setPreviousRows(JSON.parse(JSON.stringify(formattedEvents)));
+      if (latestFetchCategory.current === currentCategoryId) {
+        setAttributes({
+          rows: formattedEvents
+        });
+      }
     } catch (error) {
+      // eslint-disable-next-line no-console
       console.error('Task Table: Failed to fetch events:', error);
     } finally {
-      setIsLoading(false);
+      if (latestFetchCategory.current === currentCategoryId) {
+        setIsLoadingEvents(false);
+      }
     }
   };
-  const generateEventId = () => 0;
-
   // Add row - saves to database
   const addRow = async () => {
+    if (!categoryId) {
+      return;
+    }
     const newRow = {
-      id: generateEventId(),
+      id: 0,
       wasAngefragt: '',
       kontext: '',
       nameHochschule: '',
@@ -94,6 +163,7 @@ const Edit = ({
       zeitpunkt: '',
       auftragdetails: '',
       werMacht: '',
+      categoryId,
       _pending: true
     };
     const newRows = [...rows, newRow];
@@ -101,10 +171,13 @@ const Edit = ({
       rows: newRows
     });
     try {
-      const savedEvent = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
+      const savedEvent = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
         path: '/task-table/v1/events',
         method: 'POST',
-        data: newRow
+        data: {
+          ...newRow,
+          category_id: categoryId
+        }
       });
       const updatedRows = newRows.map((row, index) => {
         if (index === newRows.length - 1) {
@@ -116,7 +189,8 @@ const Edit = ({
             tnAnzahl: savedEvent.event.tn_anzahl,
             zeitpunkt: savedEvent.event.zeitpunkt,
             auftragdetails: savedEvent.event.auftragdetails,
-            werMacht: savedEvent.event.wer_macht
+            werMacht: savedEvent.event.wer_macht,
+            categoryId: savedEvent.event.category_id ? parseInt(savedEvent.event.category_id, 10) : categoryId
           };
         }
         return row;
@@ -150,7 +224,8 @@ const Edit = ({
           tnAnzahl: 'tn_anzahl',
           zeitpunkt: 'zeitpunkt',
           auftragdetails: 'auftragdetails',
-          werMacht: 'wer_macht'
+          werMacht: 'wer_macht',
+          categoryId: 'category_id'
         };
         const completeRow = {
           ...newRows[index]
@@ -161,7 +236,8 @@ const Edit = ({
           const dbField = fieldMap[key] || key;
           apiData[dbField] = v;
         }
-        const response = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
+        apiData.category_id = apiData.category_id ? parseInt(apiData.category_id, 10) : categoryId;
+        const response = await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
           path: `/task-table/v1/events/${newRows[index].id}`,
           method: 'PUT',
           data: apiData
@@ -177,6 +253,7 @@ const Edit = ({
             auftragdetails: response.event.auftragdetails || '',
             werMacht: response.event.wer_macht || ''
           };
+          updatedRow.categoryId = response.event.category_id ? parseInt(response.event.category_id, 10) : categoryId;
           const refreshedRows = [...rows];
           refreshedRows[index] = updatedRow;
           setAttributes({
@@ -200,7 +277,7 @@ const Edit = ({
       });
       if (rowToDelete._pending) return;
       try {
-        await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_3___default()({
+        await _wordpress_api_fetch__WEBPACK_IMPORTED_MODULE_4___default()({
           path: `/task-table/v1/events/${rowId}`,
           method: 'DELETE'
         });
@@ -209,105 +286,188 @@ const Edit = ({
       }
     }
   };
-  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("div", {
-    ...(0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.useBlockProps)(),
-    children: [isLoading && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
-      style: {
-        padding: '20px',
-        textAlign: 'center'
-      },
-      children: "Lade Veranstaltungen..."
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("table", {
-      className: "event-table-editor",
-      children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("thead", {
-        children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("tr", {
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Was ist angefragt?"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Kontext"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Name der Hochschule"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Vorauss. TN-Anzahl"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Anvisierter Zeitpunkt"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Auftragdetails"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Wer macht's?"
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("th", {
-            children: "Aktionen"
-          })]
-        })
-      }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("tbody", {
-        children: rows.map((row, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("tr", {
-          className: row._pending ? 'pending-row' : '',
-          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
-              value: row.wasAngefragt,
-              onChange: value => updateRow(index, 'wasAngefragt', value),
-              placeholder: "Was ist angefragt?"
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
-              value: row.kontext,
-              onChange: value => updateRow(index, 'kontext', value),
-              placeholder: "Kontext"
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
-              value: row.nameHochschule,
-              onChange: value => updateRow(index, 'nameHochschule', value),
-              placeholder: "Name der Hochschule"
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
-              value: row.tnAnzahl,
-              onChange: value => updateRow(index, 'tnAnzahl', value),
-              placeholder: "Vorauss. TN-Anzahl"
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
-              value: row.zeitpunkt,
-              onChange: value => updateRow(index, 'zeitpunkt', value),
-              placeholder: "Anvisierter Zeitpunkt"
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
-              value: row.auftragdetails,
-              onChange: value => updateRow(index, 'auftragdetails', value),
-              placeholder: "Auftragdetails"
-            })
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxs)("td", {
-            children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
-              children: row.werMacht
-            }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("div", {
-              className: "button-row",
-              children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
-                disabled: true,
-                variant: "secondary",
-                children: "Anmelden (Vorschau)"
-              })
-            })]
-          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("td", {
-            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
-              isDestructive: true,
-              onClick: () => deleteRow(index),
-              variant: "tertiary",
-              iconSize: 16,
-              icon: "trash",
-              title: "Delete row"
+  const handleCategoryChange = value => {
+    const nextCategoryId = parseInt(value, 10) || 0;
+    Object.values(rowUpdateTimers.current).forEach(timeout => clearTimeout(timeout));
+    rowUpdateTimers.current = {};
+    if (nextCategoryId === categoryId) {
+      return;
+    }
+    if (!nextCategoryId) {
+      setAttributes({
+        categoryId: 0,
+        rows: []
+      });
+      return;
+    }
+    setAttributes({
+      categoryId: nextCategoryId,
+      rows: []
+    });
+  };
+  return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.Fragment, {
+    children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.InspectorControls, {
+      children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.PanelBody, {
+        title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Category', 'task-table'),
+        initialOpen: true,
+        children: [isLoadingCategories ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Spinner, {}) : categories.length > 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.SelectControl, {
+          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Task category', 'task-table'),
+          value: categoryId ? String(categoryId) : '',
+          options: [{
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category', 'task-table'),
+            value: ''
+          }, ...categories.map(cat => ({
+            label: cat.name,
+            value: String(cat.id)
+          }))],
+          onChange: handleCategoryChange
+        }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
+          status: "warning",
+          isDismissible: false,
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('No categories available. Create one in the Task Table admin area.', 'task-table')
+        }), categoryError && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
+          status: "error",
+          isDismissible: false,
+          children: categoryError
+        })]
+      })
+    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
+      ...(0,_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.useBlockProps)(),
+      children: [isLoadingEvents && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+        style: {
+          padding: '20px',
+          textAlign: 'center'
+        },
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Loading events…', 'task-table')
+      }), !isLoadingCategories && categories.length === 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
+        status: "warning",
+        isDismissible: false,
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('No categories defined yet. Visit Task Table → Categories to add one.', 'task-table')
+      }), categories.length > 0 && !categoryId && !isLoadingCategories && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
+        status: "info",
+        isDismissible: false,
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category in the block settings to manage its tasks.', 'task-table')
+      }), categoryId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.Fragment, {
+        children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
+          className: "task-table-active-category",
+          children: [activeCategory ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("strong", {
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.sprintf)((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Active category: %s', 'task-table'), activeCategory.name)
+          }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("strong", {
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category', 'task-table')
+          }), categories.length > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+            className: "task-table-inline-category-select",
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.SelectControl, {
+              label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Displayed category', 'task-table'),
+              value: categoryId ? String(categoryId) : '',
+              options: [{
+                label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category', 'task-table'),
+                value: ''
+              }, ...categories.map(cat => ({
+                label: cat.name,
+                value: String(cat.id)
+              }))],
+              onChange: handleCategoryChange,
+              __nextHasNoMarginBottom: true
             })
           })]
-        }, index))
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("table", {
+          className: "event-table-editor",
+          children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("thead", {
+            children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Was ist angefragt?"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Kontext"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Name der Hochschule"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Vorauss. TN-Anzahl"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Anvisierter Zeitpunkt"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Auftragdetails"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Wer macht's?"
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
+                children: "Aktionen"
+              })]
+            })
+          }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tbody", {
+            children: rows.map((row, index) => /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
+              className: row._pending ? 'pending-row' : '',
+              children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
+                  value: row.wasAngefragt,
+                  onChange: value => updateRow(index, 'wasAngefragt', value),
+                  placeholder: "Was ist angefragt?"
+                })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
+                  value: row.kontext,
+                  onChange: value => updateRow(index, 'kontext', value),
+                  placeholder: "Kontext"
+                })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
+                  value: row.nameHochschule,
+                  onChange: value => updateRow(index, 'nameHochschule', value),
+                  placeholder: "Name der Hochschule"
+                })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
+                  value: row.tnAnzahl,
+                  onChange: value => updateRow(index, 'tnAnzahl', value),
+                  placeholder: "Vorauss. TN-Anzahl"
+                })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
+                  value: row.zeitpunkt,
+                  onChange: value => updateRow(index, 'zeitpunkt', value),
+                  placeholder: "Anvisierter Zeitpunkt"
+                })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
+                  value: row.auftragdetails,
+                  onChange: value => updateRow(index, 'auftragdetails', value),
+                  placeholder: "Auftragdetails"
+                })
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("td", {
+                children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+                  children: row.werMacht
+                }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
+                  className: "button-row",
+                  children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
+                    disabled: true,
+                    variant: "secondary",
+                    children: "Anmelden (Vorschau)"
+                  })
+                })]
+              }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
+                children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
+                  isDestructive: true,
+                  onClick: () => deleteRow(index),
+                  variant: "tertiary",
+                  iconSize: 16,
+                  icon: "trash",
+                  title: "Delete row"
+                })
+              })]
+            }, index))
+          })]
+        }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
+          onClick: addRow,
+          variant: "primary",
+          className: "add-row-button",
+          disabled: !categoryId,
+          children: "Zeile hinzuf\xFCgen"
+        })]
+      }) : null, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("style", {
+        children: `
+                    .pending-row { background-color: rgba(255, 255, 0, 0.1); }
+                    .task-table-active-category { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+                    .task-table-inline-category-select .components-select-control__input { max-width: 260px; }
+                `
       })]
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
-      onClick: addRow,
-      variant: "primary",
-      className: "add-row-button",
-      children: "Zeile hinzuf\xFCgen"
-    }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_4__.jsx)("style", {
-      children: `.pending-row { background-color: rgba(255, 255, 0, 0.1); }`
     })]
   });
 };
@@ -422,6 +582,16 @@ module.exports = window["wp"]["components"];
 /***/ ((module) => {
 
 module.exports = window["wp"]["element"];
+
+/***/ }),
+
+/***/ "@wordpress/i18n":
+/*!******************************!*\
+  !*** external ["wp","i18n"] ***!
+  \******************************/
+/***/ ((module) => {
+
+module.exports = window["wp"]["i18n"];
 
 /***/ }),
 

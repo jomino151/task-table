@@ -3,16 +3,46 @@
 global $wpdb;
 $events_table = $wpdb->prefix . 'task_table_events';
 
+$category_id = isset($attributes['categoryId']) ? (int) $attributes['categoryId'] : 0;
+if (!$category_id) {
+    $category_id = task_table_get_default_category_id();
+}
+
+$category_name = '';
+if ($category_id) {
+    $category = task_table_get_category($category_id);
+    if ($category) {
+        $category_name = $category['name'];
+    }
+}
+
 // Only show non-archived events on the public frontend. If the archived column
 // does not exist yet (e.g. race condition before upgrade hook), fall back to all.
 $has_archived_col = $wpdb->get_var($wpdb->prepare("SHOW COLUMNS FROM {$events_table} LIKE %s", 'archived'));
 if ($has_archived_col) {
-    $events = $wpdb->get_results("SELECT * FROM $events_table WHERE archived = 0 ORDER BY created_at DESC", ARRAY_A);
+    if ($category_id) {
+        $events = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $events_table WHERE archived = 0 AND category_id = %d ORDER BY created_at DESC",
+            $category_id
+        ), ARRAY_A);
+    } else {
+        $events = $wpdb->get_results("SELECT * FROM $events_table WHERE archived = 0 ORDER BY created_at DESC", ARRAY_A);
+    }
 } else {
-    $events = $wpdb->get_results("SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A);
+    if ($category_id) {
+        $events = $wpdb->get_results($wpdb->prepare(
+            "SELECT * FROM $events_table WHERE category_id = %d ORDER BY created_at DESC",
+            $category_id
+        ), ARRAY_A);
+    } else {
+        $events = $wpdb->get_results("SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A);
+    }
 }
 
 echo '<div class="wp-block-task-table-task-table">';
+if (!empty($category_name)) {
+    echo '<h3 class="task-table-category-heading">' . esc_html($category_name) . '</h3>';
+}
 echo '<table>';
 echo '<thead>';
 echo '<tr>';
@@ -66,7 +96,11 @@ if (!empty($events)) {
     }
 } else {
     // Updated colspan from 7 to 8 to match new column count
-    echo '<tr><td colspan="8">Noch keine Veranstaltungen hinzugefügt.</td></tr>';
+    $empty_message = __('Noch keine Veranstaltungen hinzugefügt.', 'task-table');
+    if (!empty($category_name)) {
+        $empty_message = sprintf(__('Noch keine Veranstaltungen in der Kategorie “%s”.', 'task-table'), $category_name);
+    }
+    echo '<tr><td colspan="8">' . esc_html($empty_message) . '</td></tr>';
 }
 
 echo '</tbody></table>';
