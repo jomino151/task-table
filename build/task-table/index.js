@@ -2,6 +2,16 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./src/task-table/block.json":
+/*!***********************************!*\
+  !*** ./src/task-table/block.json ***!
+  \***********************************/
+/***/ ((module) => {
+
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"task-table/task-table","version":"0.1.0","title":"task-Table","category":"text","icon":"table","description":"Creates a dynamic table to communicate task to multis.","example":{},"supports":{"html":false},"attributes":{"rows":{"type":"array","default":[]}},"textdomain":"task-table","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
+
+/***/ }),
+
 /***/ "./src/task-table/edit.js":
 /*!********************************!*\
   !*** ./src/task-table/edit.js ***!
@@ -365,16 +375,6 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
-/***/ "react/jsx-runtime":
-/*!**********************************!*\
-  !*** external "ReactJSXRuntime" ***!
-  \**********************************/
-/***/ ((module) => {
-
-module.exports = window["ReactJSXRuntime"];
-
-/***/ }),
-
 /***/ "@wordpress/api-fetch":
 /*!**********************************!*\
   !*** external ["wp","apiFetch"] ***!
@@ -425,13 +425,13 @@ module.exports = window["wp"]["element"];
 
 /***/ }),
 
-/***/ "./src/task-table/block.json":
-/*!***********************************!*\
-  !*** ./src/task-table/block.json ***!
-  \***********************************/
+/***/ "react/jsx-runtime":
+/*!**********************************!*\
+  !*** external "ReactJSXRuntime" ***!
+  \**********************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"task-table/task-table","version":"0.1.0","title":"task-Table","category":"text","icon":"table","description":"Creates a dynamic table to communicate task to multis.","example":{},"supports":{"html":false},"attributes":{"rows":{"type":"array","default":[]}},"textdomain":"task-table","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
+module.exports = window["ReactJSXRuntime"];
 
 /***/ })
 

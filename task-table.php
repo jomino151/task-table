@@ -49,20 +49,77 @@ function task_table_initialize_options() {
  */
 function task_table_register_blocks() {
     register_block_type(__DIR__ . '/build/task-table');
+    register_block_type(
+        __DIR__ . '/build/new-event-signup',
+        array(
+            'render_callback' => 'task_table_render_new_event_signup_block',
+        )
+    );
 }
 add_action('init', 'task_table_register_blocks');
+
+/**
+ * Render callback for the new event signup block.
+ *
+ * This wrapper ensures we always return markup even if the metadata render file
+ * cannot be automatically discovered (e.g. when the block is registered before
+ * build assets are finalized). It prefers the compiled build template but will
+ * gracefully fall back to the source version during development.
+ *
+ * @return string
+ */
+function task_table_render_new_event_signup_block($attributes = array(), $content = '', $block = null) {
+    $template_paths = array(
+        TASK_TABLE_PLUGIN_DIR . 'build/new-event-signup/render.php',
+        TASK_TABLE_PLUGIN_DIR . 'src/new-event-signup/render.php',
+    );
+
+    foreach ($template_paths as $template) {
+        if (!file_exists($template)) {
+            continue;
+        }
+
+        ob_start();
+        $returned = include $template;
+        $buffered_output = ob_get_clean();
+
+        if (is_string($returned) && $returned !== '') {
+            return $returned;
+        }
+
+        if ($buffered_output !== false) {
+            return $buffered_output;
+        }
+    }
+
+    return '';
+}
 
 /**
  * Enqueue frontend styles for the modal
  */
 function task_table_enqueue_frontend_styles() {
-    // Only enqueue if we're not in admin
-    if (!is_admin()) {
+    if (is_admin()) {
+        return;
+    }
+
+    $styles = array(
+        'task-table-frontend' => 'build/task-table/style-index.css',
+        'task-table-new-event-signup' => 'build/new-event-signup/style-index.css',
+    );
+
+    foreach ($styles as $handle => $relative_path) {
+        $full_path = TASK_TABLE_PLUGIN_DIR . $relative_path;
+
+        if (!file_exists($full_path)) {
+            continue;
+        }
+
         wp_enqueue_style(
-            'task-table-frontend',
-            TASK_TABLE_PLUGIN_URL . 'build/task-table/style-index.css',
+            $handle,
+            TASK_TABLE_PLUGIN_URL . $relative_path,
             array(),
-            filemtime(TASK_TABLE_PLUGIN_DIR . 'build/task-table/style-index.css')
+            filemtime($full_path)
         );
     }
 }
@@ -88,11 +145,32 @@ add_action('admin_enqueue_scripts', 'task_table_admin_enqueue_scripts');
  * Pass AJAX URL to front-end scripts
  */
 function task_table_localize_scripts() {
-    wp_localize_script('task-table-view', 'taskTableSettings', array(
+    $localization = array(
         'ajaxurl' => admin_url('admin-ajax.php'),
         'resturl' => esc_url_raw(rest_url()),
-        'nonce' => wp_create_nonce('wp_rest')
-    ));
+        'nonce' => wp_create_nonce('wp_rest'),
+    );
+
+    if (!class_exists('WP_Block_Type_Registry')) {
+        return;
+    }
+
+    $registry = WP_Block_Type_Registry::get_instance();
+    $block_names = array('task-table/task-table', 'task-table/new-event-signup');
+
+    foreach ($block_names as $block_name) {
+        $block_type = $registry->get_registered($block_name);
+
+        if (!$block_type || empty($block_type->view_script_handles)) {
+            continue;
+        }
+
+        foreach ($block_type->view_script_handles as $handle) {
+            if (wp_script_is($handle, 'registered')) {
+                wp_localize_script($handle, 'taskTableSettings', $localization);
+            }
+        }
+    }
 }
 add_action('wp_enqueue_scripts', 'task_table_localize_scripts');
 

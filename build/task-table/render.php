@@ -72,19 +72,6 @@ if (!empty($events)) {
 echo '</tbody></table>';
 
 // Add notification div for success/error messages
-echo '<div class="signup-notification"></div>';
-
-// Add event notification subscription form below the table
-echo '<div class="event-notification-subscription">
-    <h3>Neue Veranstaltungen abonnieren</h3>
-    <p>Erhalte E-Mail-Benachrichtigungen, wenn neue Veranstaltungen hinzugefügt werden.</p>
-    <form id="event-notification-form">
-        <input type="email" id="subscriber-email" placeholder="Deine E-Mail-Adresse" required>
-        <button type="submit" class="subscription-button">Abonnieren</button>
-    </form>
-    <div id="subscription-message" style="display: none;"></div>
-</div>';
-
 echo '</div>'; // Close the main container
 
 // Move the modal outside the main block container to avoid CSS scoping issues
@@ -95,47 +82,6 @@ $nonce = wp_create_nonce('wp_rest');
 
 // Add inline styles to ensure the modal is properly styled regardless of SCSS compilation
 echo '<style>
-    /* Event notification subscription styles */
-    .event-notification-subscription {
-        margin-top: 20px;
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-    }
-    .event-notification-subscription h3 {
-        margin-top: 0;
-    }
-    .event-notification-subscription input[type="email"] {
-        min-width: 250px;
-        padding: 8px;
-        margin-right: 10px;
-    }
-    .subscription-button {
-        padding: 8px 15px;
-        background-color: #0073aa;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .subscription-button:hover {
-        background-color: #005d8c;
-    }
-    .success-message {
-        background-color: #d4edda;
-        color: #155724;
-        padding: 10px;
-        margin-top: 10px;
-        border-radius: 4px;
-    }
-    .error-message {
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 10px;
-        margin-top: 10px;
-        border-radius: 4px;
-    }
-    
     /* Modal styles - defined globally to ensure they apply */
     .modal-overlay {
         position: fixed;
@@ -360,10 +306,6 @@ if (!window.taskTableScriptLoaded) {
         const cancelBtn = document.getElementById("cancel-signup");
         const submitBtn = document.getElementById("submit-signup");
         const feedbackEl = document.getElementById("signup-feedback");
-        const subscriptionForm = document.getElementById("event-notification-form");
-        const subscriberEmail = document.getElementById("subscriber-email");
-        const subscriptionMessage = document.getElementById("subscription-message");
-        const signupNotification = document.querySelector(".signup-notification");
         const freeTextArea = document.getElementById("free-text");
 
         // Auto-resize textarea
@@ -536,52 +478,6 @@ if (!window.taskTableScriptLoaded) {
             });
         }
 
-        // Subscription form handling
-        if (subscriptionForm) {
-            subscriptionForm.addEventListener("submit", function(e) {
-                e.preventDefault();
-                
-                fetch("/wp-json/task-table/v1/subscribers", {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-WP-Nonce": "' . $nonce . '"
-                    },
-                    body: JSON.stringify({
-                        email: subscriberEmail.value
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    subscriptionMessage.style.display = "block";
-                    
-                    if (data.success) {
-                        subscriptionMessage.className = "success-message";
-                        // Always inform users to confirm via email
-                        subscriptionMessage.textContent = "Bitte prüfe deinen Posteingang und bestätige dein Abonnement über den Link in unserer E-Mail.";
-                        subscriberEmail.value = "";
-                    } else {
-                        subscriptionMessage.className = "error-message";
-                        subscriptionMessage.textContent = data.message || "Ein Fehler ist aufgetreten.";
-                    }
-                    
-                    setTimeout(() => {
-                        subscriptionMessage.style.display = "none";
-                    }, 5000);
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    subscriptionMessage.style.display = "block";
-                    subscriptionMessage.className = "error-message";
-                    subscriptionMessage.textContent = "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.";
-                    
-                    setTimeout(() => {
-                        subscriptionMessage.style.display = "none";
-                    }, 5000);
-                });
-            });
-        }
     });
 }
 </script>';
