@@ -248,6 +248,18 @@ function task_table_print_admin_styles() {
             align-items: center;
         }
 
+        .task-table-admin .tt-filter-actions .button {
+            box-shadow: none;
+            min-height: 36px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .task-table-admin .tt-filter-actions .button:focus,
+        .task-table-admin .tt-filter-actions .button:focus-visible {
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px rgba(34, 113, 177, 0.45);
+        }
+
         .task-table-admin .tt-filter-actions .button-link {
             padding-left: 0;
         }
@@ -1064,21 +1076,11 @@ function task_table_admin_signups_page() {
                             <td>
                                 <strong><?php echo esc_html($signup->user_name); ?></strong>
                                 <div class="description">
-                                    <a href="mailto:<?php echo esc_attr($signup->user_email); ?>"><?php echo esc_html($signup->user_email); ?></a><br>
-                                    <?php printf(esc_html__('Signup ID %s', 'task-table'), esc_html($signup->id)); ?>
+                                    <a href="mailto:<?php echo esc_attr($signup->user_email); ?>"><?php echo esc_html($signup->user_email); ?></a>
                                 </div>
                             </td>
                             <td>
                                 <strong><?php echo esc_html($signup->was_angefragt); ?></strong>
-                                <?php if (!empty($signup->category_name)): ?>
-                                    <div><span class="tt-pill is-active"><?php echo esc_html($signup->category_name); ?></span></div>
-                                <?php endif; ?>
-                                <div class="description">
-                                    <?php echo $signup->name_hochschule !== null && $signup->name_hochschule !== '' ? esc_html($signup->name_hochschule) : '&mdash;'; ?>
-                                </div>
-                                <?php if (!empty($signup->zeitpunkt)): ?>
-                                    <div class="description"><?php printf(esc_html__('Time: %s', 'task-table'), esc_html($signup->zeitpunkt)); ?></div>
-                                <?php endif; ?>
                             </td>
                             <td class="signup-free-text">
                                 <?php echo $notes_markup; ?>
@@ -1320,7 +1322,6 @@ function task_table_admin_subscribers_page() {
                             <tr>
                                 <td>
                                     <strong><?php echo esc_html($subscriber->email); ?></strong>
-                                    <div class="description"><?php printf(esc_html__('Subscriber ID %s', 'task-table'), esc_html($subscriber->id)); ?></div>
                                 </td>
                                 <td>
                                     <?php if (!empty($category_tags)): ?>
