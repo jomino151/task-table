@@ -82,7 +82,7 @@ if (!empty($events)) {
         if ($hasApproved) {
             echo '<div class="approved-signups">';
             foreach ($signups as $signup) {
-                echo '<span class="approved-person">' . esc_html($signup->user_name) . '</span><br>';
+                echo '<span class="approved-person">' . esc_html($signup->user_name) . '</span>';
             }
             echo '</div>';
         }

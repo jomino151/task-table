@@ -28,6 +28,7 @@ require_once TASK_TABLE_PLUGIN_DIR . 'src/database.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'src/email-notifications.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'src/api.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'src/admin-pages.php';
+require_once TASK_TABLE_PLUGIN_DIR . 'src/translation-overrides.php';
 
 // Register activation hook
 register_activation_hook(__FILE__, 'task_table_create_database_tables');

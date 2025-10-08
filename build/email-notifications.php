@@ -19,20 +19,20 @@ function task_table_get_email_templates() {
             'message' => "Hallo,\n\nbitte bestätige, dass du Benachrichtigungen über neue Veranstaltungen erhalten möchtest.\nKlicke dazu auf den folgenden Link (oder kopiere ihn in deinen Browser):\n\n{confirmation_link}\n\nFalls du dich nicht angemeldet hast, kannst du diese E-Mail ignorieren.\n\nVielen Dank!\n{site_name}"
         ],
         'signup_approved' => [
-            'subject' => 'Your Sign-Up for "{event_title}" Has Been Approved',
-            'message' => "Dear {user_name},\n\nYour sign-up for the event \"{event_title}\" has been approved.\n\n{event_details}\n\nThank you,\n{site_name}"
+            'subject' => 'Deine Anmeldung für "{event_title}" wurde angenommen',
+            'message' => "Hallo {user_name},\n\ndeine Anmeldung für die Veranstaltung \"{event_title}\" wurde angenommen.\n\n{event_details}\n\nVielen Dank!\n{site_name}"
         ],
         'signup_denied' => [
-            'subject' => 'Update Regarding Your Sign-Up for "{event_title}"',
-            'message' => "Dear {user_name},\n\nWe regret to inform you that your sign-up for the event \"{event_title}\" cannot be approved at this time.\n\n{event_details}\n\nThank you for your interest.\n\n{site_name}"
+            'subject' => 'Aktualisierung zu deiner Anmeldung für "{event_title}"',
+            'message' => "Hallo {user_name},\n\nleider können wir deine Anmeldung für die Veranstaltung \"{event_title}\" derzeit nicht annehmen.\n\n{event_details}\n\nVielen Dank für dein Interesse.\n{site_name}"
         ],
         'new_signup' => [
-            'subject' => 'New Event Sign-Up',
-            'message' => "A new sign-up has been received:\n\nEvent ID: {event_id}\nName: {user_name}\nEmail: {user_email}\n{free_text_section}\nPlease review this submission in the admin dashboard."
+            'subject' => 'Neue Veranstaltungs-Anmeldung',
+            'message' => "Es ist eine neue Anmeldung eingegangen:\n\nEvent-ID: {event_id}\nName: {user_name}\nE-Mail: {user_email}\n{free_text_section}\nBitte prüfe diese Anfrage im Administrationsbereich."
         ],
         'new_event' => [
-            'subject' => 'New Event Added: {event_title}',
-            'message' => "A new event has been added that might interest you:\n\n{event_details}\n\nBest regards,\n{site_name}"
+            'subject' => 'Neue Veranstaltung veröffentlicht: {event_title}',
+            'message' => "Es wurde eine neue Veranstaltung veröffentlicht:\n\n{event_details}\n\nViele Grüße\n{site_name}"
         ]
     ];
 }
@@ -154,33 +154,33 @@ function task_table_get_event_details($event_id) {
  */
 function task_table_format_event_details($event_data) {
     if (!$event_data) {
-        return 'Event details not available';
+        return 'Veranstaltungsdetails nicht verfügbar';
     }
     
-    $details = "Event Information:\n";
+    $details = "Veranstaltungsinformationen:\n";
     
     if (!empty($event_data['wasAngefragt'])) {
-        $details .= "Request: " . strip_tags(wp_unslash($event_data['wasAngefragt'])) . "\n";
+        $details .= "Anfrage: " . strip_tags(wp_unslash($event_data['wasAngefragt'])) . "\n";
     }
     
     if (!empty($event_data['kontext'])) {
-        $details .= "Context: " . strip_tags(wp_unslash($event_data['kontext'])) . "\n";
+        $details .= "Kontext: " . strip_tags(wp_unslash($event_data['kontext'])) . "\n";
     }
     
     if (!empty($event_data['nameHochschule'])) {
-        $details .= "University name: " . strip_tags(wp_unslash($event_data['nameHochschule'])) . "\n";
+            $details .= "Hochschule: " . strip_tags(wp_unslash($event_data['nameHochschule'])) . "\n";
     }
     
     if (!empty($event_data['tnAnzahl'])) {
-        $details .= "Number of participants: " . strip_tags(wp_unslash($event_data['tnAnzahl'])) . "\n";
+        $details .= "Teilnehmerzahl: " . strip_tags(wp_unslash($event_data['tnAnzahl'])) . "\n";
     }
     
     if (!empty($event_data['zeitpunkt'])) {
-        $details .= "Time: " . strip_tags(wp_unslash($event_data['zeitpunkt'])) . "\n";
+            $details .= "Zeit: " . strip_tags(wp_unslash($event_data['zeitpunkt'])) . "\n";
     }
     
     if (!empty($event_data['auftragdetails'])) {
-        $details .= "Order details: " . strip_tags(wp_unslash($event_data['auftragdetails'])) . "\n";
+        $details .= "Auftragsdetails: " . strip_tags(wp_unslash($event_data['auftragdetails'])) . "\n";
     }
 
     $category_id = 0;
@@ -193,7 +193,7 @@ function task_table_format_event_details($event_data) {
     if ($category_id) {
         $category = task_table_get_category($category_id);
         if ($category) {
-            $details .= "Category: " . $category['name'] . "\n";
+                $details .= "Kategorie: " . $category['name'] . "\n";
         }
     }
     
@@ -213,8 +213,8 @@ function task_table_send_approval_notification($signup) {
     
     // Add event title if available
     $event_title = !empty($event_data['wasAngefragt']) ? 
-        strip_tags(wp_unslash($event_data['wasAngefragt'])) : 
-        "Event #" . $signup->event_id;
+    strip_tags(wp_unslash($event_data['wasAngefragt'])) : 
+    "Veranstaltung #" . $signup->event_id;
     
     // Log for debugging
     error_log('Sending approval email for event: ' . $event_title);
@@ -241,16 +241,16 @@ function task_table_send_denial_notification($signup) {
     // Get event details from database
     $event_data = task_table_get_event_details($signup->event_id);
     $event_title = !empty($event_data['wasAngefragt']) ? 
-        strip_tags(wp_unslash($event_data['wasAngefragt'])) : 
-        "Event #" . $signup->event_id;
+    strip_tags(wp_unslash($event_data['wasAngefragt'])) :
+    "Veranstaltung #" . $signup->event_id;
     
     // Include basic event details in denial emails too
     $event_details = "";
     if (!empty($event_data['nameHochschule'])) {
-        $event_details .= "University: " . strip_tags(wp_unslash($event_data['nameHochschule'])) . "\n";
+    $event_details .= "Hochschule: " . strip_tags(wp_unslash($event_data['nameHochschule'])) . "\n";
     }
     if (!empty($event_data['zeitpunkt'])) {
-        $event_details .= "Time: " . strip_tags(wp_unslash($event_data['zeitpunkt'])) . "\n";
+    $event_details .= "Zeit: " . strip_tags(wp_unslash($event_data['zeitpunkt'])) . "\n";
     }
     
     return task_table_send_notification(
@@ -277,7 +277,7 @@ function task_table_send_new_signup_notification($signup_data) {
     if (!empty($signup_data['free_text'])) {
         $clean = trim(wp_strip_all_tags(wp_unslash($signup_data['free_text'])));
         if ($clean !== '') {
-            $free_text_section = "Additional info:\n" . $clean . "\n\n";
+                $free_text_section = "Zusätzliche Hinweise:\n" . $clean . "\n\n";
         }
     }
     return task_table_send_notification(
@@ -370,16 +370,16 @@ function task_table_send_new_event_notification($event_data) {
     if (empty($recipient_emails)) {
         return [
             'success' => true,
-            'message' => 'No subscribers to notify',
+            'message' => 'Keine Abonnenten zu benachrichtigen',
             'notification_sent' => false,
             'subscriber_count' => 0
         ];
     }
 
-    // Prepare email contents
-    $event_title = !empty($normalized_event['wasAngefragt']) ?
-        strip_tags($normalized_event['wasAngefragt']) :
-        'New Event #' . ($normalized_event['id'] ?? '');
+        // Prepare email contents
+        $event_title = !empty($normalized_event['wasAngefragt']) ?
+            strip_tags($normalized_event['wasAngefragt']) :
+            'Neue Veranstaltung #' . ($normalized_event['id'] ?? '');
 
     $event_details = task_table_format_event_details($normalized_event);
 
@@ -400,12 +400,12 @@ function task_table_send_new_event_notification($event_data) {
         }
     }
 
-    return [
-        'success' => true,
-        'message' => 'Notification sent to ' . $sent_count . ' subscribers',
-        'notification_sent' => ($sent_count > 0),
-        'subscriber_count' => $sent_count
-    ];
+        return [
+            'success' => true,
+            'message' => 'Benachrichtigung an ' . $sent_count . ' Abonnenten gesendet',
+            'notification_sent' => ($sent_count > 0),
+            'subscriber_count' => $sent_count
+        ];
 }
 
 /**

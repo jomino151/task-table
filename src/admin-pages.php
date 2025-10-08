@@ -59,8 +59,8 @@ function task_table_register_admin_pages() {
     
     add_submenu_page(
         'task-table',
-        __('Email Settings', 'task-table'),
-        __('Email Settings', 'task-table'),
+        __('E-Mail-Einstellungen', 'task-table'),
+        __('E-Mail-Einstellungen', 'task-table'),
         'manage_task_table',
         'task-table-email-settings',
         'task_table_admin_email_settings_page'
@@ -609,7 +609,7 @@ function task_table_admin_dashboard_page() {
         $latest_ts = strtotime($latest_event_date);
         if ($latest_ts) {
             /* translators: %s: human readable time difference */
-            $latest_event_meta = sprintf(__('Last event created %s ago', 'task-table'), human_time_diff($latest_ts, current_time('timestamp')));
+            $latest_event_meta = sprintf(__('Letztes Event erstellt vor %s', 'task-table'), human_time_diff($latest_ts, current_time('timestamp')));
         }
     }
 
@@ -777,7 +777,7 @@ function task_table_admin_dashboard_page() {
                             </td>
                             <td>
                                 <?php if ($event['wer_macht'] !== ''): ?>
-                                    <?php echo esc_html($event['wer_macht']); ?>
+                                    <span class="tt-pill is-approved"><?php echo esc_html($event['wer_macht']); ?></span>
                                 <?php else: ?>
                                     <span class="tt-pill is-pending"><?php _e('Unassigned', 'task-table'); ?></span>
                                 <?php endif; ?>
@@ -870,7 +870,7 @@ function task_table_admin_signups_page() {
                         array('id' => $signup->event_id)
                     );
                     
-                    echo '<div class="notice notice-success is-dismissible"><p>' . __('Signup approved.', 'task-table') . '</p></div>';
+                    echo '<div class="notice notice-success is-dismissible"><p>' . __('Anmeldung angenommen.', 'task-table') . '</p></div>';
                 } elseif ($action === 'deny') {
                     $wpdb->update(
                         $signups_table,
@@ -880,7 +880,7 @@ function task_table_admin_signups_page() {
                     
                     task_table_send_denial_notification($signup);
                     
-                    echo '<div class="notice notice-info is-dismissible"><p>' . __('Signup denied.', 'task-table') . '</p></div>';
+                    echo '<div class="notice notice-info is-dismissible"><p>' . __('Anmeldung abgelehnt.', 'task-table') . '</p></div>';
                 } elseif ($action === 'delete') {
                     $wpdb->delete($signups_table, array('id' => $signup_id));
                     echo '<div class="notice notice-info is-dismissible"><p>' . __('Signup deleted.', 'task-table') . '</p></div>';
@@ -1867,10 +1867,18 @@ function task_table_admin_email_settings_page() {
         update_option('moderator_email', implode(',', $valid_emails));
         }
         
-        echo '<div class="notice notice-success is-dismissible"><p>' . __('Email settings saved.', 'task-table') . '</p></div>';
+    echo '<div class="notice notice-success is-dismissible"><p>' . __('E-Mail-Einstellungen gespeichert.', 'task-table') . '</p></div>';
     }
     
     $templates = task_table_get_email_templates();
+    $template_labels = [
+        'subscription_confirmation' => __('Abo-Bestätigung', 'task-table'),
+        'signup_approved' => __('Anmeldung angenommen', 'task-table'),
+        'signup_denied' => __('Anmeldung abgelehnt', 'task-table'),
+        'new_signup' => __('Neue Anmeldung', 'task-table'),
+        'new_event' => __('Neue Veranstaltung', 'task-table'),
+    ];
+
     $moderator_emails = get_option('moderator_email', get_option('admin_email'));
     $email_list = task_table_parse_email_list($moderator_emails);
     
@@ -1878,8 +1886,8 @@ function task_table_admin_email_settings_page() {
     <div class="wrap task-table-admin">
         <div class="tt-page-header">
             <div class="tt-page-title">
-                <h1><?php _e('Email Settings', 'task-table'); ?></h1>
-                <p><?php _e('Customize signup notifications and automated responses. Tailor each template so recipients get the right message at the right time.', 'task-table'); ?></p>
+                <h1><?php _e('E-Mail-Einstellungen', 'task-table'); ?></h1>
+                <p><?php _e('Passe die Benachrichtigungen und automatischen Antworten an, damit jede Nachricht im richtigen Ton an die richtige Person geht.', 'task-table'); ?></p>
             </div>
         </div>
 
@@ -1888,7 +1896,7 @@ function task_table_admin_email_settings_page() {
 
             <div class="tt-toolbar" style="justify-content: flex-start;">
                 <h2 style="margin:0; font-size: 16px; font-weight:600; color: var(--tt-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-                    <?php _e('Notification Recipients', 'task-table'); ?>
+                    <?php _e('Benachrichtigungsempfänger', 'task-table'); ?>
                 </h2>
             </div>
 
@@ -1897,63 +1905,65 @@ function task_table_admin_email_settings_page() {
                     <?php foreach($email_list as $email): ?>
                         <div class="email-tag">
                             <span><?php echo esc_html($email); ?></span>
-                            <button type="button" class="remove-email" data-email="<?php echo esc_attr($email); ?>" aria-label="<?php esc_attr_e('Remove email', 'task-table'); ?>">&times;</button>
+                            <button type="button" class="remove-email" data-email="<?php echo esc_attr($email); ?>" aria-label="<?php esc_attr_e('E-Mail-Adresse entfernen', 'task-table'); ?>">&times;</button>
                         </div>
                     <?php endforeach; ?>
                 </div>
 
                 <div class="email-input-container">
-                    <input type="email" id="new_email" placeholder="<?php esc_attr_e('Add new email address', 'task-table'); ?>" class="regular-text">
+                    <input type="email" id="new_email" placeholder="<?php esc_attr_e('Neue E-Mail-Adresse hinzufügen', 'task-table'); ?>" class="regular-text">
                     <button type="button" id="add_email" class="button button-secondary">
                         <span class="dashicons dashicons-plus-alt"></span>
-                        <?php _e('Add', 'task-table'); ?>
+                        <?php _e('Hinzufügen', 'task-table'); ?>
                     </button>
                 </div>
 
                 <input type="hidden" name="moderator_emails" id="moderator_emails" value="<?php echo esc_attr($moderator_emails); ?>">
 
                 <p class="description" style="margin-top:12px; color: var(--tt-text-muted);">
-                    <?php _e('Add every address that should be notified about new signups. Each recipient receives an individual email.', 'task-table'); ?>
+                    <?php _e('Füge hier alle Adressen hinzu, die über neue Anmeldungen informiert werden sollen. Jeder Empfänger erhält eine eigene E-Mail.', 'task-table'); ?>
                 </p>
             </div>
 
             <h2 style="margin: 0 0 16px; font-size: 18px;">
-                <?php _e('Email Templates', 'task-table'); ?>
+                <?php _e('E-Mail-Vorlagen', 'task-table'); ?>
             </h2>
 
             <div class="email-templates-tabs tt-pill-toggle" style="margin-bottom:18px;">
                 <a href="#general-settings" class="nav-tab is-active" data-tab="general-settings">
-                    <?php _e('Placeholders', 'task-table'); ?>
+                    <?php _e('Platzhalter', 'task-table'); ?>
                 </a>
                 <?php foreach (array_keys($templates) as $tab_key): ?>
+                    <?php $tab_label = isset($template_labels[$tab_key]) ? $template_labels[$tab_key] : ucwords(str_replace('_', ' ', $tab_key)); ?>
                     <a href="#template-<?php echo $tab_key; ?>" class="nav-tab" data-tab="template-<?php echo esc_attr($tab_key); ?>">
-                        <?php echo esc_html(ucfirst(str_replace('_', ' ', $tab_key))); ?>
+                        <?php echo esc_html($tab_label); ?>
                     </a>
                 <?php endforeach; ?>
             </div>
 
             <div id="general-settings" class="email-template-tab" style="display: block;">
                 <p style="margin-top:0;">
-                    <?php _e('Use these placeholders inside any template to personalize the message. They will be replaced automatically when the email is sent.', 'task-table'); ?>
+                    <?php _e('Nutze diese Platzhalter in jeder Vorlage, um Nachrichten automatisch zu personalisieren. Beim Versand werden sie durch die passenden Werte ersetzt.', 'task-table'); ?>
                 </p>
                 <ul class="task-table-placeholders">
-                    <li><code>{site_name}</code> - <?php _e('Site name', 'task-table'); ?></li>
-                    <li><code>{user_name}</code> - <?php _e('User name (where available)', 'task-table'); ?></li>
-                    <li><code>{user_email}</code> - <?php _e('User email (where available)', 'task-table'); ?></li>
-                    <li><code>{event_title}</code> - <?php _e('Event title (where available)', 'task-table'); ?></li>
-                    <li><code>{event_details}</code> - <?php _e('Event details (where available)', 'task-table'); ?></li>
-                    <li><code>{event_id}</code> - <?php _e('Event ID (where available)', 'task-table'); ?></li>
-                    <li><code>{confirmation_link}</code> - <?php _e('Confirmation link (subscription emails only)', 'task-table'); ?></li>
+                    <li><code>{site_name}</code> - <?php _e('Seitenname', 'task-table'); ?></li>
+                    <li><code>{user_name}</code> - <?php _e('Name der Person (falls vorhanden)', 'task-table'); ?></li>
+                    <li><code>{user_email}</code> - <?php _e('E-Mail-Adresse der Person (falls vorhanden)', 'task-table'); ?></li>
+                    <li><code>{event_title}</code> - <?php _e('Titel der Veranstaltung (falls vorhanden)', 'task-table'); ?></li>
+                    <li><code>{event_details}</code> - <?php _e('Details zur Veranstaltung (falls vorhanden)', 'task-table'); ?></li>
+                    <li><code>{event_id}</code> - <?php _e('Veranstaltungs-ID (falls vorhanden)', 'task-table'); ?></li>
+                    <li><code>{confirmation_link}</code> - <?php _e('Bestätigungslink (nur Abo-E-Mails)', 'task-table'); ?></li>
                 </ul>
             </div>
 
             <?php foreach ($templates as $template_key => $template): ?>
                 <div id="template-<?php echo $template_key; ?>" class="email-template-tab" style="display: none;">
-                    <h3><?php echo esc_html(ucfirst(str_replace('_', ' ', $template_key))); ?> <?php _e('Template', 'task-table'); ?></h3>
+                    <?php $template_title = isset($template_labels[$template_key]) ? $template_labels[$template_key] : ucwords(str_replace('_', ' ', $template_key)); ?>
+                    <h3><?php echo esc_html($template_title); ?> <?php _e('Vorlage', 'task-table'); ?></h3>
                     <table class="form-table">
                         <tr>
                             <th scope="row">
-                                <label for="task_table_email_<?php echo $template_key; ?>_subject"><?php _e('Subject', 'task-table'); ?></label>
+                                <label for="task_table_email_<?php echo $template_key; ?>_subject"><?php _e('Betreff', 'task-table'); ?></label>
                             </th>
                             <td>
                                 <input type="text" name="task_table_email_<?php echo $template_key; ?>_subject" id="task_table_email_<?php echo $template_key; ?>_subject" class="large-text" value="<?php echo esc_attr(get_option("task_table_email_{$template_key}_subject", $template['subject'])); ?>">
@@ -1961,7 +1971,7 @@ function task_table_admin_email_settings_page() {
                         </tr>
                         <tr>
                             <th scope="row">
-                                <label for="task_table_email_<?php echo $template_key; ?>_message"><?php _e('Message', 'task-table'); ?></label>
+                                <label for="task_table_email_<?php echo $template_key; ?>_message"><?php _e('Nachricht', 'task-table'); ?></label>
                             </th>
                             <td>
                                 <textarea name="task_table_email_<?php echo $template_key; ?>_message" id="task_table_email_<?php echo $template_key; ?>_message" class="large-text" rows="10"><?php echo esc_textarea(get_option("task_table_email_{$template_key}_message", $template['message'])); ?></textarea>
@@ -1972,7 +1982,7 @@ function task_table_admin_email_settings_page() {
             <?php endforeach; ?>
 
             <p class="submit">
-                <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e('Save Changes', 'task-table'); ?>">
+                <input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e('Änderungen speichern', 'task-table'); ?>">
             </p>
         </form>
     </div>
@@ -2005,7 +2015,7 @@ function task_table_admin_email_settings_page() {
                 }
 
                 if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-                    window.alert('<?php echo esc_js(__('Please enter a valid email address', 'task-table')); ?>');
+                    window.alert('<?php echo esc_js(__('Bitte gib eine gültige E-Mail-Adresse ein.', 'task-table')); ?>');
                     return;
                 }
 
@@ -2018,14 +2028,14 @@ function task_table_admin_email_settings_page() {
                 });
 
                 if (isDuplicate) {
-                    window.alert('<?php echo esc_js(__('This email address is already added', 'task-table')); ?>');
+                    window.alert('<?php echo esc_js(__('Diese E-Mail-Adresse wurde bereits hinzugefügt.', 'task-table')); ?>');
                     return;
                 }
 
                 const emailTag = $(
                     '<div class="email-tag">' +
                         '<span>' + email + '</span>' +
-                        '<button type="button" class="remove-email" data-email="' + email + '" aria-label="<?php echo esc_js(__('Remove email', 'task-table')); ?>">&times;</button>' +
+                        '<button type="button" class="remove-email" data-email="' + email + '" aria-label="<?php echo esc_js(__('E-Mail-Adresse entfernen', 'task-table')); ?>">&times;</button>' +
                     '</div>'
                 );
                 $('#email-tags-container').append(emailTag);

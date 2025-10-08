@@ -46,6 +46,31 @@
         }
     }
 
+    .approved-signups {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4rem;
+    }
+
+    .approved-signups .approved-person {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 999px;
+        background-color: #e6f4ea;
+        color: #0b6b34;
+        font-weight: 600;
+        font-size: 0.85rem;
+        line-height: 1.2;
+    }
+
+    .approved-signups .approved-person::before {
+        content: "\2713";
+        font-size: 0.75rem;
+        line-height: 1;
+    }
+
     // Notification styles
     .signup-notification {
         display: none;

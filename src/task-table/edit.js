@@ -54,9 +54,9 @@ const Edit = ({ attributes, setAttributes }) => {
                     }
                 }
             } catch (error) {
-                setCategoryError(__('Failed to load categories.', 'task-table'));
+                setCategoryError(__('Kategorien konnten nicht geladen werden.', 'task-table'));
                 // eslint-disable-next-line no-console
-                console.error('Task Table: Failed to load categories', error);
+                console.error('Task Table: Kategorien konnten nicht geladen werden', error);
             } finally {
                 setIsLoadingCategories(false);
             }
@@ -82,7 +82,7 @@ const Edit = ({ attributes, setAttributes }) => {
         latestFetchCategory.current = currentCategoryId;
         setIsLoadingEvents(true);
         try {
-            const events = await apiFetch({ path: `/task-table/v1/events?category_id=${currentCategoryId}`, method: 'GET' });
+                const events = await apiFetch({ path: `/task-table/v1/events?category_id=${currentCategoryId}`, method: 'GET' });
             const formattedEvents = (events || []).map((event) => ({
                 id: event.id,
                 wasAngefragt: event.was_angefragt || '',
@@ -99,7 +99,7 @@ const Edit = ({ attributes, setAttributes }) => {
             }
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('Task Table: Failed to fetch events:', error);
+            console.error('Task Table: Veranstaltungen konnten nicht geladen werden:', error);
         } finally {
             if (latestFetchCategory.current === currentCategoryId) {
                 setIsLoadingEvents(false);
@@ -145,7 +145,7 @@ const Edit = ({ attributes, setAttributes }) => {
             });
             setAttributes({ rows: updatedRows });
         } catch (error) {
-            console.error('Task Table: Failed to save row to database:', error);
+            console.error('Task Table: Zeile konnte nicht in der Datenbank gespeichert werden:', error);
         }
     };
 
@@ -175,19 +175,19 @@ const Edit = ({ attributes, setAttributes }) => {
                     refreshedRows[index] = updatedRow;
                     setAttributes({ rows: refreshedRows });
                 }
-            } catch (error) { console.error('Task Table: Failed to update row in database:', error); }
+            } catch (error) { console.error('Task Table: Zeile konnte nicht in der Datenbank aktualisiert werden:', error); }
         }, 1000);
     };
 
     // Delete row
     const deleteRow = async (index) => {
-        if (window.confirm('Are you sure you want to delete this event?')) {
+        if (window.confirm(__('Möchtest du dieses Ereignis wirklich löschen?', 'task-table'))) {
             const rowToDelete = rows[index];
             const rowId = rowToDelete.id;
             const newRows = rows.filter((_, i) => i !== index);
             setAttributes({ rows: newRows });
             if (rowToDelete._pending) return;
-            try { await apiFetch({ path: `/task-table/v1/events/${rowId}`, method: 'DELETE' }); } catch (error) { console.error('Task Table: Failed to delete row from database:', error); }
+            try { await apiFetch({ path: `/task-table/v1/events/${rowId}`, method: 'DELETE' }); } catch (error) { console.error('Task Table: Zeile konnte nicht aus der Datenbank gelöscht werden:', error); }
         }
     };
 
@@ -212,22 +212,22 @@ const Edit = ({ attributes, setAttributes }) => {
     return (
         <>
             <InspectorControls>
-                <PanelBody title={ __('Category', 'task-table') } initialOpen={ true }>
+                <PanelBody title={ __('Kategorie', 'task-table') } initialOpen={ true }>
                     {isLoadingCategories ? (
                         <Spinner />
                     ) : categories.length > 0 ? (
                         <SelectControl
-                            label={ __('Task category', 'task-table') }
+                            label={ __('Aufgabenkategorie', 'task-table') }
                             value={ categoryId ? String(categoryId) : '' }
                             options={ [
-                                { label: __('Select a category', 'task-table'), value: '' },
+                                { label: __('Kategorie auswählen', 'task-table'), value: '' },
                                 ...categories.map((cat) => ({ label: cat.name, value: String(cat.id) }))
                             ] }
                             onChange={ handleCategoryChange }
                         />
                     ) : (
                         <Notice status="warning" isDismissible={ false }>
-                            { __('No categories available. Create one in the Task Table admin area.', 'task-table') }
+                            { __('Keine Kategorien verfügbar. Lege eine im Task-Table-Adminbereich an.', 'task-table') }
                         </Notice>
                     )}
                     {categoryError && (
@@ -239,18 +239,18 @@ const Edit = ({ attributes, setAttributes }) => {
             </InspectorControls>
             <div { ...useBlockProps() }>
                 {isLoadingEvents && (
-                    <div style={{ padding: '20px', textAlign: 'center' }}>{ __('Loading events…', 'task-table') }</div>
+                    <div style={{ padding: '20px', textAlign: 'center' }}>{ __('Veranstaltungen werden geladen …', 'task-table') }</div>
                 )}
 
                 {!isLoadingCategories && categories.length === 0 && (
                     <Notice status="warning" isDismissible={ false }>
-                        { __('No categories defined yet. Visit Task Table → Categories to add one.', 'task-table') }
+                        { __('Noch keine Kategorien definiert. Besuche Task Table → Kategorien, um eine anzulegen.', 'task-table') }
                     </Notice>
                 )}
 
                 {categories.length > 0 && !categoryId && !isLoadingCategories && (
                     <Notice status="info" isDismissible={ false }>
-                        { __('Select a category in the block settings to manage its tasks.', 'task-table') }
+                        { __('Wähle in den Blockeinstellungen eine Kategorie, um deren Aufgaben zu bearbeiten.', 'task-table') }
                     </Notice>
                 )}
 
@@ -258,17 +258,17 @@ const Edit = ({ attributes, setAttributes }) => {
                     <>
                         <div className="task-table-active-category">
                             {activeCategory ? (
-                                <strong>{sprintf(__('Active category: %s', 'task-table'), activeCategory.name)}</strong>
+                                <strong>{sprintf(__('Aktive Kategorie: %s', 'task-table'), activeCategory.name)}</strong>
                             ) : (
-                                <strong>{__('Select a category', 'task-table')}</strong>
+                                <strong>{__('Kategorie auswählen', 'task-table')}</strong>
                             )}
                             {categories.length > 0 && (
                                 <div className="task-table-inline-category-select">
                                     <SelectControl
-                                        label={ __('Displayed category', 'task-table') }
+                                        label={ __('Angezeigte Kategorie', 'task-table') }
                                         value={ categoryId ? String(categoryId) : '' }
                                         options={ [
-                                            { label: __('Select a category', 'task-table'), value: '' },
+                                            { label: __('Kategorie auswählen', 'task-table'), value: '' },
                                             ...categories.map((cat) => ({ label: cat.name, value: String(cat.id) })),
                                         ] }
                                         onChange={ handleCategoryChange }
@@ -278,42 +278,42 @@ const Edit = ({ attributes, setAttributes }) => {
                             )}
                         </div>
                         <table className="event-table-editor">
-                <thead>
-                    <tr>
-                        <th>Was ist angefragt?</th>
-                        <th>Kontext</th>
-                        <th>Name der Hochschule</th>
-                        <th>Vorauss. TN-Anzahl</th>
-                        <th>Anvisierter Zeitpunkt</th>
-                        <th>Auftragdetails</th>
-                        <th>Wer macht's?</th>
-                        <th>Aktionen</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {rows.map((row, index) => (
-                        <tr key={index} className={row._pending ? 'pending-row' : ''}>
-                            <td><RichText value={row.wasAngefragt} onChange={(value) => updateRow(index, 'wasAngefragt', value)} placeholder="Was ist angefragt?" /></td>
-                            <td><RichText value={row.kontext} onChange={(value) => updateRow(index, 'kontext', value)} placeholder="Kontext" /></td>
-                            <td><RichText value={row.nameHochschule} onChange={(value) => updateRow(index, 'nameHochschule', value)} placeholder="Name der Hochschule" /></td>
-                            <td><RichText value={row.tnAnzahl} onChange={(value) => updateRow(index, 'tnAnzahl', value)} placeholder="Vorauss. TN-Anzahl" /></td>
-                            <td><RichText value={row.zeitpunkt} onChange={(value) => updateRow(index, 'zeitpunkt', value)} placeholder="Anvisierter Zeitpunkt" /></td>
-                            <td><RichText value={row.auftragdetails} onChange={(value) => updateRow(index, 'auftragdetails', value)} placeholder="Auftragdetails" /></td>
-                            <td>
-                                <div>{row.werMacht}</div>
-                                <div className="button-row">
-                                    <Button disabled variant="secondary">Anmelden (Vorschau)</Button>
-                                </div>
-                            </td>
-                            <td>
-                                <Button isDestructive onClick={() => deleteRow(index)} variant="tertiary" iconSize={16} icon="trash" title="Delete row" />
-                            </td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
+                            <thead>
+                                <tr>
+                                    <th>{ __('Was ist angefragt?', 'task-table') }</th>
+                                    <th>{ __('Kontext', 'task-table') }</th>
+                                    <th>{ __('Name der Hochschule', 'task-table') }</th>
+                                    <th>{ __('Vorauss. TN-Anzahl', 'task-table') }</th>
+                                    <th>{ __('Anvisierter Zeitpunkt', 'task-table') }</th>
+                                    <th>{ __('Auftragdetails', 'task-table') }</th>
+                                    <th>{ __('Wer macht\'s?', 'task-table') }</th>
+                                    <th>{ __('Aktionen', 'task-table') }</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map((row, index) => (
+                                    <tr key={index} className={row._pending ? 'pending-row' : ''}>
+                                        <td><RichText value={row.wasAngefragt} onChange={(value) => updateRow(index, 'wasAngefragt', value)} placeholder={ __('Was ist angefragt?', 'task-table') } /></td>
+                                        <td><RichText value={row.kontext} onChange={(value) => updateRow(index, 'kontext', value)} placeholder={ __('Kontext', 'task-table') } /></td>
+                                        <td><RichText value={row.nameHochschule} onChange={(value) => updateRow(index, 'nameHochschule', value)} placeholder={ __('Name der Hochschule', 'task-table') } /></td>
+                                        <td><RichText value={row.tnAnzahl} onChange={(value) => updateRow(index, 'tnAnzahl', value)} placeholder={ __('Vorauss. TN-Anzahl', 'task-table') } /></td>
+                                        <td><RichText value={row.zeitpunkt} onChange={(value) => updateRow(index, 'zeitpunkt', value)} placeholder={ __('Anvisierter Zeitpunkt', 'task-table') } /></td>
+                                        <td><RichText value={row.auftragdetails} onChange={(value) => updateRow(index, 'auftragdetails', value)} placeholder={ __('Auftragdetails', 'task-table') } /></td>
+                                        <td>
+                                            <div>{row.werMacht}</div>
+                                            <div className="button-row">
+                                                <Button disabled variant="secondary">{ __('Anmelden (Vorschau)', 'task-table') }</Button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <Button isDestructive onClick={() => deleteRow(index)} variant="tertiary" iconSize={16} icon="trash" title={ __('Zeile löschen', 'task-table') } />
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                         <Button onClick={addRow} variant="primary" className="add-row-button" disabled={!categoryId}>
-                            Zeile hinzufügen
+                            { __('Zeile hinzufügen', 'task-table') }
                         </Button>
                     </>
                 ) : null}

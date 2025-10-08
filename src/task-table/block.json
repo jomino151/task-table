@@ -3,10 +3,10 @@
     "apiVersion": 3,
     "name": "task-table/task-table",
     "version": "0.1.0",
-    "title": "task-Table",
+    "title": "Task-Tabelle",
     "category": "text",
     "icon": "table",
-    "description": "Creates a dynamic table to communicate task to multis.",
+    "description": "Erstellt eine dynamische Tabelle zur Kommunikation von Aufgaben.",
     "example": {},
     "supports": {
         "html": false

@@ -8,7 +8,7 @@
   \***********************************/
 /***/ ((module) => {
 
-module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"task-table/task-table","version":"0.1.0","title":"task-Table","category":"text","icon":"table","description":"Creates a dynamic table to communicate task to multis.","example":{},"supports":{"html":false},"attributes":{"rows":{"type":"array","default":[]},"categoryId":{"type":"number","default":0}},"textdomain":"task-table","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
+module.exports = /*#__PURE__*/JSON.parse('{"$schema":"https://schemas.wp.org/trunk/block.json","apiVersion":3,"name":"task-table/task-table","version":"0.1.0","title":"Task-Tabelle","category":"text","icon":"table","description":"Erstellt eine dynamische Tabelle zur Kommunikation von Aufgaben.","example":{},"supports":{"html":false},"attributes":{"rows":{"type":"array","default":[]},"categoryId":{"type":"number","default":0}},"textdomain":"task-table","editorScript":"file:./index.js","editorStyle":"file:./index.css","style":"file:./style-index.css","render":"file:./render.php","viewScript":"file:./view.js"}');
 
 /***/ }),
 
@@ -95,9 +95,9 @@ const Edit = ({
           }
         }
       } catch (error) {
-        setCategoryError((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Failed to load categories.', 'task-table'));
+        setCategoryError((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kategorien konnten nicht geladen werden.', 'task-table'));
         // eslint-disable-next-line no-console
-        console.error('Task Table: Failed to load categories', error);
+        console.error('Task Table: Kategorien konnten nicht geladen werden', error);
       } finally {
         setIsLoadingCategories(false);
       }
@@ -142,7 +142,7 @@ const Edit = ({
       }
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Task Table: Failed to fetch events:', error);
+      console.error('Task Table: Veranstaltungen konnten nicht geladen werden:', error);
     } finally {
       if (latestFetchCategory.current === currentCategoryId) {
         setIsLoadingEvents(false);
@@ -199,7 +199,7 @@ const Edit = ({
         rows: updatedRows
       });
     } catch (error) {
-      console.error('Task Table: Failed to save row to database:', error);
+      console.error('Task Table: Zeile konnte nicht in der Datenbank gespeichert werden:', error);
     }
   };
 
@@ -261,14 +261,14 @@ const Edit = ({
           });
         }
       } catch (error) {
-        console.error('Task Table: Failed to update row in database:', error);
+        console.error('Task Table: Zeile konnte nicht in der Datenbank aktualisiert werden:', error);
       }
     }, 1000);
   };
 
   // Delete row
   const deleteRow = async index => {
-    if (window.confirm('Are you sure you want to delete this event?')) {
+    if (window.confirm((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Möchtest du dieses Ereignis wirklich löschen?', 'task-table'))) {
       const rowToDelete = rows[index];
       const rowId = rowToDelete.id;
       const newRows = rows.filter((_, i) => i !== index);
@@ -282,7 +282,7 @@ const Edit = ({
           method: 'DELETE'
         });
       } catch (error) {
-        console.error('Task Table: Failed to delete row from database:', error);
+        console.error('Task Table: Zeile konnte nicht aus der Datenbank gelöscht werden:', error);
       }
     }
   };
@@ -308,13 +308,13 @@ const Edit = ({
   return /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.Fragment, {
     children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.InspectorControls, {
       children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.PanelBody, {
-        title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Category', 'task-table'),
+        title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kategorie', 'task-table'),
         initialOpen: true,
         children: [isLoadingCategories ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Spinner, {}) : categories.length > 0 ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.SelectControl, {
-          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Task category', 'task-table'),
+          label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Aufgabenkategorie', 'task-table'),
           value: categoryId ? String(categoryId) : '',
           options: [{
-            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category', 'task-table'),
+            label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kategorie auswählen', 'task-table'),
             value: ''
           }, ...categories.map(cat => ({
             label: cat.name,
@@ -324,7 +324,7 @@ const Edit = ({
         }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
           status: "warning",
           isDismissible: false,
-          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('No categories available. Create one in the Task Table admin area.', 'task-table')
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Keine Kategorien verfügbar. Lege eine im Task-Table-Adminbereich an.', 'task-table')
         }), categoryError && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
           status: "error",
           isDismissible: false,
@@ -338,29 +338,29 @@ const Edit = ({
           padding: '20px',
           textAlign: 'center'
         },
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Loading events…', 'task-table')
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Veranstaltungen werden geladen …', 'task-table')
       }), !isLoadingCategories && categories.length === 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
         status: "warning",
         isDismissible: false,
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('No categories defined yet. Visit Task Table → Categories to add one.', 'task-table')
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Noch keine Kategorien definiert. Besuche Task Table → Kategorien, um eine anzulegen.', 'task-table')
       }), categories.length > 0 && !categoryId && !isLoadingCategories && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Notice, {
         status: "info",
         isDismissible: false,
-        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category in the block settings to manage its tasks.', 'task-table')
+        children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Wähle in den Blockeinstellungen eine Kategorie, um deren Aufgaben zu bearbeiten.', 'task-table')
       }), categoryId ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)(react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.Fragment, {
         children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("div", {
           className: "task-table-active-category",
           children: [activeCategory ? /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("strong", {
-            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.sprintf)((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Active category: %s', 'task-table'), activeCategory.name)
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.sprintf)((0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Aktive Kategorie: %s', 'task-table'), activeCategory.name)
           }) : /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("strong", {
-            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category', 'task-table')
+            children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kategorie auswählen', 'task-table')
           }), categories.length > 0 && /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
             className: "task-table-inline-category-select",
             children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.SelectControl, {
-              label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Displayed category', 'task-table'),
+              label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Angezeigte Kategorie', 'task-table'),
               value: categoryId ? String(categoryId) : '',
               options: [{
-                label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Select a category', 'task-table'),
+                label: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kategorie auswählen', 'task-table'),
                 value: ''
               }, ...categories.map(cat => ({
                 label: cat.name,
@@ -375,21 +375,21 @@ const Edit = ({
           children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("thead", {
             children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("tr", {
               children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Was ist angefragt?"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Was ist angefragt?', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Kontext"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kontext', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Name der Hochschule"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Name der Hochschule', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Vorauss. TN-Anzahl"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Vorauss. TN-Anzahl', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Anvisierter Zeitpunkt"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Anvisierter Zeitpunkt', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Auftragdetails"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Auftragdetails', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Wer macht's?"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Wer macht\'s?', 'task-table')
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("th", {
-                children: "Aktionen"
+                children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Aktionen', 'task-table')
               })]
             })
           }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("tbody", {
@@ -399,37 +399,37 @@ const Edit = ({
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
                   value: row.wasAngefragt,
                   onChange: value => updateRow(index, 'wasAngefragt', value),
-                  placeholder: "Was ist angefragt?"
+                  placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Was ist angefragt?', 'task-table')
                 })
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
                   value: row.kontext,
                   onChange: value => updateRow(index, 'kontext', value),
-                  placeholder: "Kontext"
+                  placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Kontext', 'task-table')
                 })
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
                   value: row.nameHochschule,
                   onChange: value => updateRow(index, 'nameHochschule', value),
-                  placeholder: "Name der Hochschule"
+                  placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Name der Hochschule', 'task-table')
                 })
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
                   value: row.tnAnzahl,
                   onChange: value => updateRow(index, 'tnAnzahl', value),
-                  placeholder: "Vorauss. TN-Anzahl"
+                  placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Vorauss. TN-Anzahl', 'task-table')
                 })
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
                   value: row.zeitpunkt,
                   onChange: value => updateRow(index, 'zeitpunkt', value),
-                  placeholder: "Anvisierter Zeitpunkt"
+                  placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Anvisierter Zeitpunkt', 'task-table')
                 })
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
                 children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_block_editor__WEBPACK_IMPORTED_MODULE_0__.RichText, {
                   value: row.auftragdetails,
                   onChange: value => updateRow(index, 'auftragdetails', value),
-                  placeholder: "Auftragdetails"
+                  placeholder: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Auftragdetails', 'task-table')
                 })
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsxs)("td", {
                 children: [/*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("div", {
@@ -439,7 +439,7 @@ const Edit = ({
                   children: /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)(_wordpress_components__WEBPACK_IMPORTED_MODULE_1__.Button, {
                     disabled: true,
                     variant: "secondary",
-                    children: "Anmelden (Vorschau)"
+                    children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Anmelden (Vorschau)', 'task-table')
                   })
                 })]
               }), /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("td", {
@@ -449,7 +449,7 @@ const Edit = ({
                   variant: "tertiary",
                   iconSize: 16,
                   icon: "trash",
-                  title: "Delete row"
+                  title: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Zeile löschen', 'task-table')
                 })
               })]
             }, index))
@@ -459,7 +459,7 @@ const Edit = ({
           variant: "primary",
           className: "add-row-button",
           disabled: !categoryId,
-          children: "Zeile hinzuf\xFCgen"
+          children: (0,_wordpress_i18n__WEBPACK_IMPORTED_MODULE_3__.__)('Zeile hinzufügen', 'task-table')
         })]
       }) : null, /*#__PURE__*/(0,react_jsx_runtime__WEBPACK_IMPORTED_MODULE_5__.jsx)("style", {
         children: `
