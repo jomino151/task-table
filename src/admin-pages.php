@@ -508,6 +508,149 @@ function task_table_print_admin_styles() {
             word-break: break-word;
         }
 
+        .task-table-admin .tt-export-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 100000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        .task-table-admin .tt-export-modal.is-open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .task-table-admin .tt-export-modal__overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+        }
+
+        .task-table-admin .tt-export-modal__dialog {
+            position: relative;
+            background: var(--tt-surface);
+            border-radius: var(--tt-radius);
+            border: 1px solid var(--tt-border);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.22);
+            max-width: 560px;
+            width: 100%;
+            padding: 28px 32px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .task-table-admin .tt-export-modal__close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            border: 0;
+            background: none;
+            color: var(--tt-text-muted);
+            font-size: 24px;
+            line-height: 1;
+            cursor: pointer;
+        }
+
+        .task-table-admin .tt-export-modal__close:hover,
+        .task-table-admin .tt-export-modal__close:focus {
+            color: var(--tt-text);
+        }
+
+        .task-table-admin .tt-export-modal__title {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        .task-table-admin .tt-export-modal__intro {
+            margin: 0;
+            color: var(--tt-text-muted);
+            font-size: 14px;
+        }
+
+        .task-table-admin .tt-export-fieldset {
+            border: 1px solid var(--tt-border);
+            border-radius: 8px;
+            padding: 16px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .task-table-admin .tt-export-fieldset legend {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--tt-text-muted);
+            padding: 0 6px;
+        }
+
+        .task-table-admin .tt-export-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .task-table-admin .tt-export-field {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .task-table-admin .tt-export-field > label,
+        .task-table-admin .tt-export-field legend {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--tt-text-muted);
+        }
+
+        .task-table-admin .tt-export-checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 8px;
+        }
+
+        .task-table-admin .tt-export-checkbox-grid label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .task-table-admin .tt-export-help {
+            font-size: 12px;
+            color: var(--tt-text-muted);
+            margin: 0;
+        }
+
+        .task-table-admin .tt-export-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .task-table-admin .tt-export-actions .button.button-primary {
+            min-width: 120px;
+        }
+
+        body.tt-export-modal-open {
+            overflow: hidden;
+        }
+
         @media (max-width: 782px) {
             .task-table-admin .tt-page-actions,
             .task-table-admin .tt-toolbar {
@@ -528,6 +671,11 @@ function task_table_print_admin_styles() {
             .task-table-admin table.tt-table {
                 display: block;
                 overflow-x: auto;
+            }
+
+            .task-table-admin .tt-export-modal__dialog {
+                padding: 24px 20px;
+                max-width: 100%;
             }
         }
     </style>
@@ -620,19 +768,20 @@ function task_table_admin_dashboard_page() {
     $base_admin_url = add_query_arg($base_args, admin_url('admin.php'));
     $filters_applied = $search_term !== '' || $selected_category;
 
-    $export_args = array('action' => 'task_table_export_events');
+    $export_action_url = admin_url('admin-post.php');
+    $export_selected_categories = $selected_category ? array($selected_category) : array();
+    $export_default_archived = $show_archived ? '1' : '0';
+    $export_fallback_args = array('action' => 'task_table_export_events');
     if ($show_archived) {
-        $export_args['archived'] = '1';
+        $export_fallback_args['archived'] = '1';
     }
     if ($selected_category) {
-        $export_args['tt_category'] = $selected_category;
+        $export_fallback_args['tt_category'] = $selected_category;
     }
     if ($search_term !== '') {
-        $export_args['tt_search'] = $search_term;
+        $export_fallback_args['tt_search'] = $search_term;
     }
-
-    $export_url = add_query_arg($export_args, admin_url('admin-post.php'));
-    $export_url = wp_nonce_url($export_url, 'task_table_export_events');
+    $export_fallback_url = wp_nonce_url(add_query_arg($export_fallback_args, $export_action_url), 'task_table_export_events');
 
     ?>
     <div class="wrap task-table-admin">
@@ -649,9 +798,79 @@ function task_table_admin_dashboard_page() {
                 <a class="button button-secondary" href="<?php echo esc_url(admin_url('admin.php?page=task-table-signups')); ?>">
                     <?php _e('Manage Signups', 'task-table'); ?>
                 </a>
-                <a class="button button-primary" href="<?php echo esc_url($export_url); ?>" target="_blank" rel="noopener">
+                <button type="button" class="button button-primary" id="tt-export-open">
                     <?php _e('Download Excel', 'task-table'); ?>
-                </a>
+                </button>
+                <noscript>
+                    <a class="button button-primary" href="<?php echo esc_url($export_fallback_url); ?>" target="_blank" rel="noopener">
+                        <?php _e('Download Excel', 'task-table'); ?>
+                    </a>
+                </noscript>
+            </div>
+        </div>
+
+        <div class="tt-export-modal" id="tt-export-modal" aria-hidden="true">
+            <div class="tt-export-modal__overlay" data-tt-export-close></div>
+            <div class="tt-export-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tt-export-modal-title">
+                <button type="button" class="tt-export-modal__close" data-tt-export-close aria-label="<?php esc_attr_e('Close export dialog', 'task-table'); ?>">&times;</button>
+                <h2 class="tt-export-modal__title" id="tt-export-modal-title"><?php _e('Customize Excel export', 'task-table'); ?></h2>
+                <p class="tt-export-modal__intro"><?php _e('Choose exactly which events to include before downloading.', 'task-table'); ?></p>
+                <form method="get" action="<?php echo esc_url($export_action_url); ?>" target="_blank" class="tt-export-form">
+                    <?php wp_nonce_field('task_table_export_events'); ?>
+                    <input type="hidden" name="action" value="task_table_export_events">
+
+                    <fieldset class="tt-export-fieldset">
+                        <legend><?php _e('Event status', 'task-table'); ?></legend>
+                        <label class="tt-export-option">
+                            <input type="radio" name="archived" value="all">
+                            <span><?php _e('All events', 'task-table'); ?></span>
+                        </label>
+                        <label class="tt-export-option">
+                            <input type="radio" name="archived" value="0" <?php checked($export_default_archived, '0'); ?>>
+                            <span><?php _e('Active events only', 'task-table'); ?></span>
+                        </label>
+                        <label class="tt-export-option">
+                            <input type="radio" name="archived" value="1" <?php checked($export_default_archived, '1'); ?>>
+                            <span><?php _e('Archived events only', 'task-table'); ?></span>
+                        </label>
+                    </fieldset>
+
+                    <div class="tt-export-field">
+                        <label for="tt-export-categories"><?php _e('Categories (optional)', 'task-table'); ?></label>
+                        <p class="tt-export-help"><?php _e('Leave blank to include every category.', 'task-table'); ?></p>
+                        <?php if (!empty($categories)): ?>
+                            <div class="tt-export-checkbox-grid" id="tt-export-categories">
+                                <?php foreach ($categories as $category): ?>
+                                    <label>
+                                        <input type="checkbox" name="tt_categories[]" value="<?php echo esc_attr($category['id']); ?>" <?php checked(in_array((int) $category['id'], $export_selected_categories, true)); ?>>
+                                        <?php echo esc_html($category['name']); ?>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <p class="tt-export-help"><?php _e('No categories available yet.', 'task-table'); ?></p>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="tt-export-field">
+                        <label for="tt-export-search"><?php _e('Search filter (optional)', 'task-table'); ?></label>
+                        <input type="text" id="tt-export-search" name="tt_search" value="<?php echo esc_attr($search_term); ?>" placeholder="<?php esc_attr_e('Filter by keyword', 'task-table'); ?>">
+                        <p class="tt-export-help"><?php _e('Matches event title, university, or assignee.', 'task-table'); ?></p>
+                    </div>
+
+                    <div class="tt-export-field">
+                        <label for="tt-export-format"><?php _e('File format', 'task-table'); ?></label>
+                        <select id="tt-export-format" name="format">
+                            <option value="xlsx"><?php _e('Excel (.xlsx)', 'task-table'); ?></option>
+                            <option value="xml"><?php _e('Legacy Excel (.xls)', 'task-table'); ?></option>
+                        </select>
+                    </div>
+
+                    <div class="tt-export-actions">
+                        <button type="button" class="button button-link" data-tt-export-close><?php _e('Cancel', 'task-table'); ?></button>
+                        <button type="submit" class="button button-primary"><?php _e('Download', 'task-table'); ?></button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -828,6 +1047,103 @@ function task_table_admin_dashboard_page() {
             </div>
         <?php endif; ?>
     </div>
+    <script>
+        (function() {
+            const modal = document.getElementById('tt-export-modal');
+            const openButton = document.getElementById('tt-export-open');
+            if (!modal || !openButton) {
+                return;
+            }
+
+            const body = document.body;
+            const overlay = modal.querySelector('.tt-export-modal__overlay');
+            const closeElements = modal.querySelectorAll('[data-tt-export-close]');
+            const form = modal.querySelector('form');
+            const focusableSelector = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+            let lastFocusedElement = null;
+
+            function getFocusableElements() {
+                return Array.from(modal.querySelectorAll(focusableSelector)).filter(function(el) {
+                    return el.offsetParent !== null && !el.hasAttribute('disabled');
+                });
+            }
+
+            function handleKeydown(event) {
+                if (!modal.classList.contains('is-open')) {
+                    return;
+                }
+
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeModal();
+                    return;
+                }
+
+                if (event.key === 'Tab') {
+                    const focusableElements = getFocusableElements();
+                    if (!focusableElements.length) {
+                        event.preventDefault();
+                        return;
+                    }
+                    const first = focusableElements[0];
+                    const last = focusableElements[focusableElements.length - 1];
+                    if (event.shiftKey) {
+                        if (document.activeElement === first || !modal.contains(document.activeElement)) {
+                            event.preventDefault();
+                            last.focus();
+                        }
+                    } else if (document.activeElement === last) {
+                        event.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
+
+            function openModal() {
+                lastFocusedElement = document.activeElement;
+                modal.classList.add('is-open');
+                modal.setAttribute('aria-hidden', 'false');
+                body.classList.add('tt-export-modal-open');
+                const focusableElements = getFocusableElements();
+                if (focusableElements.length) {
+                    focusableElements[0].focus();
+                }
+                document.addEventListener('keydown', handleKeydown);
+            }
+
+            function closeModal() {
+                modal.classList.remove('is-open');
+                modal.setAttribute('aria-hidden', 'true');
+                body.classList.remove('tt-export-modal-open');
+                document.removeEventListener('keydown', handleKeydown);
+                if (lastFocusedElement && typeof lastFocusedElement.focus === 'function') {
+                    lastFocusedElement.focus();
+                } else {
+                    openButton.focus();
+                }
+            }
+
+            openButton.addEventListener('click', function() {
+                openModal();
+            });
+
+            if (overlay) {
+                overlay.addEventListener('click', closeModal);
+            }
+
+            closeElements.forEach(function(element) {
+                element.addEventListener('click', function() {
+                    closeModal();
+                });
+            });
+
+            if (form) {
+                form.addEventListener('submit', function() {
+                    setTimeout(closeModal, 150);
+                });
+            }
+        })();
+    </script>
     <?php
 }
 

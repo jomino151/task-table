@@ -697,28 +697,162 @@ function task_table_export_events_excel(WP_REST_Request $request) {
     if (!is_user_logged_in()) {
         return new WP_REST_Response(['success' => false, 'message' => 'Forbidden'], 403);
     }
-    global $wpdb;
-    $table = $wpdb->prefix . 'task_table_events';
-    $archived = $request->get_param('archived');
-        $format = $request->get_param('format') ?: 'xlsx';
-        $sheet = task_table_generate_events_spreadsheet($archived, $format);
-        return new WP_REST_Response($sheet['content'], 200, [
-            'Content-Type' => $sheet['content_type'],
-            'Content-Disposition' => 'attachment; filename="'.$sheet['filename'].'"'
+
+    $params = $request->get_params();
+    $archived = isset($params['archived']) ? $params['archived'] : null;
+    $format = isset($params['format']) ? sanitize_text_field($params['format']) : 'xlsx';
+    if (!in_array($format, ['xlsx', 'xml'], true)) {
+        $format = 'xlsx';
+    }
+    $filters = task_table_normalize_export_filters($params);
+
+    $sheet = task_table_generate_events_spreadsheet($archived, $format, $filters);
+
+    return new WP_REST_Response($sheet['content'], 200, [
+        'Content-Type' => $sheet['content_type'],
+        'Content-Disposition' => 'attachment; filename="' . $sheet['filename'] . '"'
     ]);
 }
 
 /**
  * Generate events spreadsheet (XLSX or legacy XML) and return array with content, filename, content_type
  */
-function task_table_generate_events_spreadsheet($archived_param = null, $format = 'xlsx') {
+function task_table_normalize_archived_filter($value) {
+    if (is_array($value)) {
+        $value = reset($value);
+    }
+
+    if ($value === null) {
+        return null;
+    }
+
+    if (is_string($value)) {
+        $value = strtolower(trim($value));
+    }
+
+    if ($value === '' || $value === 'all' || $value === 'any' || $value === 'both' || $value === 'everything') {
+        return null;
+    }
+
+    if ($value === '1' || $value === 'true' || $value === 'archived' || $value === 'yes') {
+        return 1;
+    }
+
+    if ($value === '0' || $value === 'false' || $value === 'active' || $value === 'no' || $value === 'live') {
+        return 0;
+    }
+
+    if (is_numeric($value)) {
+        $int_val = (int) $value;
+        if ($int_val === 1) {
+            return 1;
+        }
+        if ($int_val === 0) {
+            return 0;
+        }
+    }
+
+    return null;
+}
+
+function task_table_normalize_export_filters($params) {
+    $filters = [];
+
+    if (!is_array($params)) {
+        return $filters;
+    }
+
+    $raw_categories = [];
+    if (isset($params['tt_categories'])) {
+        $raw_categories = wp_unslash($params['tt_categories']);
+    } elseif (isset($params['tt_category'])) {
+        $raw_categories = wp_unslash($params['tt_category']);
+    }
+
+    if (!empty($raw_categories)) {
+        if (!is_array($raw_categories)) {
+            $raw_categories = [$raw_categories];
+        }
+
+        $category_ids = [];
+        foreach ($raw_categories as $value) {
+            if (is_array($value)) {
+                $value = reset($value);
+            }
+            $value = absint($value);
+            if ($value > 0) {
+                $category_ids[] = $value;
+            }
+        }
+
+        if (!empty($category_ids)) {
+            $filters['categories'] = array_values(array_unique($category_ids));
+        }
+    }
+
+    if (isset($params['tt_search'])) {
+        $search = sanitize_text_field(wp_unslash($params['tt_search']));
+        if ($search !== '') {
+            $filters['search'] = $search;
+        }
+    }
+
+    return $filters;
+}
+
+function task_table_generate_events_spreadsheet($archived_param = null, $format = 'xlsx', $filters = []) {
     global $wpdb;
-    $table = $wpdb->prefix . 'task_table_events';
-    $where = '';
-    if ($archived_param === '1' || $archived_param === 1) { $where = 'WHERE archived = 1'; }
-    elseif ($archived_param === '0' || $archived_param === 0) { $where = 'WHERE archived = 0'; }
-    $rows = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC", ARRAY_A);
-    $headers = ['id','was_angefragt','kontext','name_hochschule','tn_anzahl','zeitpunkt','auftragdetails','wer_macht','archived','created_at','updated_at'];
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $categories_table = $wpdb->prefix . 'task_table_categories';
+
+    $archived_filter = task_table_normalize_archived_filter($archived_param);
+    if (!is_array($filters)) {
+        $filters = [];
+    }
+
+    $where_clauses = [];
+    $params = [];
+
+    if ($archived_filter !== null) {
+        $where_clauses[] = 'e.archived = %d';
+        $params[] = $archived_filter;
+    }
+
+    if (!empty($filters['categories']) && is_array($filters['categories'])) {
+        $category_ids = array_values(array_unique(array_filter(array_map('absint', $filters['categories']))));
+        if (!empty($category_ids)) {
+            $placeholders = implode(', ', array_fill(0, count($category_ids), '%d'));
+            $where_clauses[] = "e.category_id IN ($placeholders)";
+            $params = array_merge($params, $category_ids);
+        }
+    }
+
+    if (isset($filters['search']) && $filters['search'] !== '') {
+        $like = '%' . $wpdb->esc_like($filters['search']) . '%';
+        $where_clauses[] = '(e.was_angefragt LIKE %s OR e.name_hochschule LIKE %s OR e.wer_macht LIKE %s)';
+        $params[] = $like;
+        $params[] = $like;
+        $params[] = $like;
+    }
+
+    $where_sql = '';
+    if (!empty($where_clauses)) {
+        $where_sql = 'WHERE ' . implode(' AND ', $where_clauses);
+    }
+
+    $sql = "SELECT e.*, c.name AS category_name
+            FROM $events_table e
+            LEFT JOIN $categories_table c ON c.id = e.category_id
+            $where_sql
+            ORDER BY e.created_at DESC";
+
+    if (!empty($params)) {
+        $prepare_args = array_merge([$sql], $params);
+        $sql = call_user_func_array([$wpdb, 'prepare'], $prepare_args);
+    }
+
+    $rows = $wpdb->get_results($sql, ARRAY_A);
+    $headers = ['id','was_angefragt','kontext','name_hochschule','tn_anzahl','zeitpunkt','auftragdetails','wer_macht','category_id','category_name','archived','created_at','updated_at'];
 
     if ($format === 'xml' || !class_exists('ZipArchive')) {
         $xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
@@ -769,9 +903,9 @@ function task_table_generate_events_spreadsheet($archived_param = null, $format 
     $styles_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"></styleSheet>';
     $content_types_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
     $tmp = wp_tempnam('task-table-xlsx');
-    if (!$tmp) { return task_table_generate_events_spreadsheet($archived_param,'xml'); }
+    if (!$tmp) { return task_table_generate_events_spreadsheet($archived_param, 'xml', $filters); }
     $zip = new ZipArchive();
-    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) { return task_table_generate_events_spreadsheet($archived_param,'xml'); }
+    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) { return task_table_generate_events_spreadsheet($archived_param, 'xml', $filters); }
     $zip->addFromString('[Content_Types].xml', $content_types_xml);
     $zip->addEmptyDir('_rels');
     $zip->addFromString('_rels/.rels', $rels_xml);
@@ -800,39 +934,9 @@ function task_table_xlsx_escape($value) { return htmlspecialchars($value, ENT_QU
  * @param mixed $archived_param (string|int|null) Filter archived state: '1' for archived, '0' for active, anything else for all.
  * @return string XML content
  */
-function task_table_generate_events_excel_xml($archived_param = null) {
-    global $wpdb;
-    $table = $wpdb->prefix . 'task_table_events';
-    $where = '';
-    if ($archived_param === '1' || $archived_param === 1) { $where = 'WHERE archived = 1'; }
-    elseif ($archived_param === '0' || $archived_param === 0) { $where = 'WHERE archived = 0'; }
-    $rows = $wpdb->get_results("SELECT * FROM $table $where ORDER BY created_at DESC", ARRAY_A);
-
-    $headers = ['id','was_angefragt','kontext','name_hochschule','tn_anzahl','zeitpunkt','auftragdetails','wer_macht','archived','created_at','updated_at'];
-
-    $xml  = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
-    $xml .= "<?mso-application progid=\"Excel.Sheet\"?>\n";
-    $xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
-    $xml .= '<Worksheet ss:Name="Events">';
-    $xml .= '<Table>';
-    $xml .= '<Row>';
-    foreach ($headers as $h) {
-        $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($h, ENT_XML1 | ENT_COMPAT, 'UTF-8') . '</Data></Cell>';
-    }
-    $xml .= '</Row>';
-    foreach ($rows as $r) {
-        $xml .= '<Row>';
-        foreach ($headers as $h) {
-            $val = isset($r[$h]) ? (string)$r[$h] : '';
-            $val = preg_replace("/\r\n?|\n/", "\n", $val);
-            $xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars($val, ENT_XML1 | ENT_COMPAT, 'UTF-8') . '</Data></Cell>';
-        }
-        $xml .= '</Row>';
-    }
-    $xml .= '</Table>';
-    $xml .= '</Worksheet>';
-    $xml .= '</Workbook>';
-    return $xml;
+function task_table_generate_events_excel_xml($archived_param = null, $filters = []) {
+    $sheet = task_table_generate_events_spreadsheet($archived_param, 'xml', $filters);
+    return is_array($sheet) ? $sheet['content'] : $sheet;
 }
 
 /**
@@ -842,17 +946,22 @@ function task_table_admin_post_export_events() {
     if (!is_user_logged_in() || !current_user_can('manage_task_table')) {
         wp_die(__('You do not have permission to export events.', 'task-table'), 403);
     }
-    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_text_field($_GET['_wpnonce']), 'task_table_export_events')) {
+    if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'task_table_export_events')) {
         wp_die(__('Security check failed.', 'task-table'), 403);
     }
-    $archived = isset($_GET['archived']) ? sanitize_text_field($_GET['archived']) : null;
-        $format = isset($_GET['format']) ? sanitize_text_field($_GET['format']) : 'xlsx';
-        $sheet = task_table_generate_events_spreadsheet($archived, $format);
-        nocache_headers();
-        header('Content-Type: '.$sheet['content_type']);
-        header('Content-Disposition: attachment; filename="'.$sheet['filename'].'"');
-        header('X-Content-Type-Options: nosniff');
-        echo $sheet['content']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+    $request_params = wp_unslash($_GET);
+    $archived = isset($request_params['archived']) ? $request_params['archived'] : null;
+    $format = isset($request_params['format']) ? sanitize_text_field($request_params['format']) : 'xlsx';
+    if (!in_array($format, ['xlsx', 'xml'], true)) {
+        $format = 'xlsx';
+    }
+    $filters = task_table_normalize_export_filters($request_params);
+    $sheet = task_table_generate_events_spreadsheet($archived, $format, $filters);
+    nocache_headers();
+    header('Content-Type: ' . $sheet['content_type']);
+    header('Content-Disposition: attachment; filename="' . $sheet['filename'] . '"');
+    header('X-Content-Type-Options: nosniff');
+    echo $sheet['content']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     exit;
 }
 add_action('admin_post_task_table_export_events', 'task_table_admin_post_export_events');
