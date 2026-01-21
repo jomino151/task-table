@@ -109,7 +109,7 @@ echo '</tbody></table>';
 echo '</div>'; // Close the main container
 
 // Move the modal outside the main block container to avoid CSS scoping issues
-include(TASK_TABLE_PLUGIN_DIR . 'src/templates/signup-modal.php');
+include(TASK_TABLE_PLUGIN_DIR . 'build/templates/signup-modal.php');
 
 // Add WordPress REST API nonce to the page
 $nonce = wp_create_nonce('wp_rest');
