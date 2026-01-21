@@ -1,1 +1,0 @@
-document.addEventListener("DOMContentLoaded",function(){console.log("Task Table: Frontend script loaded")});
