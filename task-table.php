@@ -22,6 +22,7 @@ define('TASK_TABLE_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('TASK_TABLE_PLUGIN_URL', plugin_dir_url(__FILE__));
 define('TASK_TABLE_PLUGIN_FILE', __FILE__);
 define('TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION', 'task_table_signup_notification_emails');
+define('TASK_TABLE_SIGNUP_NOTIFICATION_RECIPIENTS_OPTION', 'task_table_signup_notification_recipients');
 
 // Include required files
 require_once TASK_TABLE_PLUGIN_DIR . 'build/database.php';
@@ -43,6 +44,7 @@ function task_table_initialize_options() {
         // Initialize with empty array
         update_option(TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION, array());
     }
+
 }
 
 /**

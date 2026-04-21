@@ -1,68 +1,211 @@
 .wp-block-task-table-task-table {
+    --tt-surface: #ffffff;
+    --tt-border: #d8e1e9;
+    --tt-head-bg: #edf3f8;
+    --tt-head-text: #203142;
+    --tt-row-alt: #f8fbfe;
+    --tt-row-hover: #edf6ff;
+    --tt-link: #0a5d85;
+    --tt-link-hover: #084968;
+    --tt-details-bg: #f3f9ff;
+    --tt-details-border: #9fc6e7;
+    --tt-button-bg: #007cba;
+    --tt-button-bg-hover: #006ba1;
+    --tt-button-shadow: 0 1px 2px rgba(0, 93, 145, 0.16);
+    --tt-pill-bg: #e6f4ea;
+    --tt-pill-text: #0b6b34;
+    --tt-pill-border: #b7dfc3;
+    --tt-text: #1f2933;
+
     grid-column: 2/12;
     margin: 2rem 0;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable both-edges;
 
-    table {
+    .task-table-grid {
         width: 100%;
-        border-collapse: collapse;
-        background: white;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        min-width: 980px;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: var(--tt-surface);
+        border: 1px solid var(--tt-border);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(16, 46, 72, 0.06);
+        overflow: hidden;
+
+        col.tt-col-request { width: 10%; }
+        col.tt-col-context { width: 10%; }
+        col.tt-col-university { width: 17%; }
+        col.tt-col-tn { width: 7%; }
+        col.tt-col-time { width: 12%; }
+        col.tt-col-details { width: 20%; }
+        col.tt-col-signups { width: 9%; }
     }
 
     .task-table-category-heading {
         margin: 0 0 1rem;
-        font-weight: 600;
-        color: #2c3338;
+        padding-left: 0.75rem;
+        border-left: 4px solid var(--tt-details-border);
+        font-weight: 700;
+        color: var(--tt-head-text);
     }
 
-    th, td {
-        padding: 1rem;
+    .task-table-grid th,
+    .task-table-grid td {
+        padding: 0.95rem 0.9rem;
         text-align: left;
-        border-bottom: 1px solid #e1e1e1;
+        vertical-align: top;
+        border-bottom: 1px solid var(--tt-border);
+        color: var(--tt-text);
+        line-height: 1.45;
     }
 
-    th {
-        background-color: #f8f9fa;
+    .task-table-grid th {
+        background-color: var(--tt-head-bg);
+        font-weight: 650;
+        color: var(--tt-head-text);
+        hyphens: none;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+    }
+
+    .task-table-grid tbody tr:nth-child(even) td {
+        background-color: var(--tt-row-alt);
+    }
+
+    .task-table-grid tbody tr:hover td {
+        background-color: var(--tt-row-hover);
+    }
+
+    .task-table-grid tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .task-table-grid td {
+        overflow-wrap: anywhere;
+        word-break: normal;
+        hyphens: auto;
+    }
+
+    .task-table-grid th.tt-col-university,
+    .task-table-grid td.tt-col-university {
+        min-width: 14rem;
+    }
+
+    .task-table-grid th.tt-col-details,
+    .task-table-grid td.tt-col-details {
+        min-width: 18rem;
+    }
+
+    .task-table-grid tbody td.tt-col-details {
+        background-color: var(--tt-details-bg);
+    }
+
+    .task-table-grid tbody tr:hover td.tt-col-details {
+        background-color: #eaf4ff;
+    }
+
+    .task-table-grid th.tt-col-tn,
+    .task-table-grid td.tt-col-tn,
+    .task-table-grid th.tt-col-signups,
+    .task-table-grid td.tt-col-signups {
+        hyphens: none;
+    }
+
+    .task-table-grid th.tt-col-signups,
+    .task-table-grid td.tt-col-signups {
+        min-width: 8.6rem;
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+    }
+
+    .task-table-grid td.tt-col-signups {
+        vertical-align: top;
+    }
+
+    .tt-signup-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.6rem;
+        width: 100%;
+    }
+
+    .task-table-grid .tt-tn-value {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 2.25rem;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        background-color: #e7f3ff;
+        color: #123e63;
+        font-weight: 700;
+    }
+
+    .task-table-grid td a {
+        color: var(--tt-link);
+        text-decoration-thickness: 0.09em;
+        text-underline-offset: 0.18em;
         font-weight: 600;
-        color: #2c3338;
     }
 
-    tr:hover {
-        background-color: #f8f9fa;
+    .task-table-grid td a:hover,
+    .task-table-grid td a:focus {
+        color: var(--tt-link-hover);
+        text-decoration-thickness: 0.13em;
     }
 
     .event-signup {
-        background-color: #007cba;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 7.4rem;
+        white-space: nowrap;
+        background-color: var(--tt-button-bg);
         color: white;
         border: none;
-        padding: 0.5rem 1rem;
-        border-radius: 3px;
+        padding: 0.58rem 1rem;
+        border-radius: 5px;
+        box-shadow: var(--tt-button-shadow);
         cursor: pointer;
-        transition: background-color 0.2s;
+        transition: background-color 0.2s, transform 0.1s;
 
         &:hover {
-            background-color: #006ba1;
+            background-color: var(--tt-button-bg-hover);
+        }
+
+        &:active {
+            transform: translateY(1px);
         }
     }
 
     .approved-signups {
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        width: 100%;
     }
 
     .approved-signups .approved-person {
         display: inline-flex;
         align-items: center;
         gap: 0.35rem;
-        padding: 0.35rem 0.75rem;
+        max-width: 100%;
+        padding: 0.32rem 0.62rem;
         border-radius: 999px;
-        background-color: #e6f4ea;
-        color: #0b6b34;
+        background-color: var(--tt-pill-bg);
+        color: var(--tt-pill-text);
+        border: 1px solid var(--tt-pill-border);
         font-weight: 600;
         font-size: 0.85rem;
         line-height: 1.2;
+        white-space: normal;
+        overflow-wrap: anywhere;
     }
 
     .approved-signups .approved-person::before {
@@ -305,10 +448,19 @@
 
     @media (max-width: 768px) {
         grid-column: 1/-1;
-        margin: 1rem;
+        margin: 1rem 0;
         
-        table {
-            min-width: 600px;
+        .task-table-grid {
+            min-width: 860px;
+        }
+
+        .task-table-grid th,
+        .task-table-grid td {
+            padding: 0.8rem 0.75rem;
+        }
+
+        .event-signup {
+            min-width: 7rem;
         }
     }
 }

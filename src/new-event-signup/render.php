@@ -12,13 +12,7 @@ if (!defined('ABSPATH')) {
 $rest_url = esc_url_raw(rest_url('task-table/v1/subscribers'));
 $rest_nonce = wp_create_nonce('wp_rest');
 
-$categories = task_table_get_categories();
-$default_category_id = task_table_get_default_category_id();
-
-// Remove the fallback/default category from the public selection list.
-$display_categories = array_values(array_filter($categories, function ($category) use ($default_category_id) {
-    return (int) $category['id'] !== (int) $default_category_id;
-}));
+$display_categories = task_table_get_categories();
 
 ob_start();
 ?>

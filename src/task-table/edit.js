@@ -277,6 +277,9 @@ const Edit = ({ attributes, setAttributes }) => {
                                 </div>
                             )}
                         </div>
+                        <p className="task-table-format-hint">
+                            {__('Formatierungstipp: In allen Textfeldern sind Fett/Kursiv und Links uber die Rich-Text-Werkzeugleiste moglich.', 'task-table')}
+                        </p>
                         <table className="event-table-editor">
                             <thead>
                                 <tr>
@@ -320,6 +323,7 @@ const Edit = ({ attributes, setAttributes }) => {
                 <style>{`
                     .pending-row { background-color: rgba(255, 255, 0, 0.1); }
                     .task-table-active-category { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+                    .task-table-format-hint { margin: 0 0 12px; color: #1f2933; font-size: 13px; }
                     .task-table-inline-category-select .components-select-control__input { max-width: 260px; }
                 `}</style>
             </div>

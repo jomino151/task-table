@@ -164,6 +164,7 @@ add_filter('gettext', function ($translated, $text, $domain) {
             'Category updated.' => 'Kategorie aktualisiert.',
             'Category not found.' => 'Kategorie nicht gefunden.',
             'You cannot delete the default category.' => 'Die Standardkategorie kann nicht gelöscht werden.',
+            'At least one category must remain.' => 'Mindestens eine Kategorie muss bestehen bleiben.',
             'Category deleted.' => 'Kategorie gelöscht.',
             'Task Categories' => 'Aufgabenkategorien',
             'Group your events into meaningful segments. Categories power signup filters, subscriber preferences, and email targeting.' => 'Gruppiere Veranstaltungen in sinnvolle Segmente. Kategorien steuern Filter, Abonnenten-Präferenzen und E-Mail-Zielgruppen.',
@@ -194,6 +195,7 @@ add_filter('gettext', function ($translated, $text, $domain) {
             'Available' => 'Verfügbar',
             'Edit' => 'Bearbeiten',
             'Delete this category? Associated items will be reassigned to the default category.' => 'Diese Kategorie löschen? Zugeordnete Elemente werden der Standardkategorie neu zugewiesen.',
+            'Delete this category? Associated items will be reassigned automatically.' => 'Diese Kategorie löschen? Zugeordnete Elemente werden automatisch neu zugewiesen.',
             // Email settings
             'Customize signup notifications and automated responses. Tailor each template so recipients get the right message at the right time.' => 'Passe Anmelde-Benachrichtigungen und automatische Antworten an. Sorge dafür, dass Empfänger zur richtigen Zeit die richtige Nachricht erhalten.',
             'Notification Recipients' => 'Benachrichtigungsempfänger',

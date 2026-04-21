@@ -43,18 +43,43 @@ echo '<div class="wp-block-task-table-task-table">';
 if (!empty($category_name)) {
     echo '<h3 class="task-table-category-heading">' . esc_html($category_name) . '</h3>';
 }
-echo '<table>';
+
+$render_event_cell = static function ($value) {
+    $content = is_scalar($value) ? (string) $value : '';
+
+    if ($content === '') {
+        return '';
+    }
+
+    if (function_exists('task_table_sanitize_event_text')) {
+        $content = task_table_sanitize_event_text($content);
+        $content = make_clickable($content);
+
+        return task_table_sanitize_event_text($content);
+    }
+
+    return wp_kses_post(make_clickable($content));
+};
+
+echo '<table class="task-table-grid">';
+echo '<colgroup>';
+echo '<col class="tt-col-request" />';
+echo '<col class="tt-col-context" />';
+echo '<col class="tt-col-university" />';
+echo '<col class="tt-col-tn" />';
+echo '<col class="tt-col-time" />';
+echo '<col class="tt-col-details" />';
+echo '<col class="tt-col-signups" />';
+echo '</colgroup>';
 echo '<thead>';
 echo '<tr>';
-echo '<th>Was ist Angefragt?</th>';
-echo '<th>Kontext</th>';
-echo '<th>Name der Hochschule</th>';
-echo '<th>Vorauss. TN-Anzahl</th>';
-echo '<th>Anvisierter Zeitpunkt</th>';
-echo '<th>Auftragdetails</th>';
-echo '<th>Wer macht\'s?</th>';
-// New dedicated signup column
- echo '<th>Anmelden</th>';
+echo '<th class="tt-col-request">Was ist Angefragt?</th>';
+echo '<th class="tt-col-context">Kontext</th>';
+echo '<th class="tt-col-university">Name der Hochschule</th>';
+echo '<th class="tt-col-tn">Vorauss. TN-Anzahl</th>';
+echo '<th class="tt-col-time">Anvisierter Zeitpunkt</th>';
+echo '<th class="tt-col-details">Auftragdetails</th>';
+echo '<th class="tt-col-signups">Wer macht\'s? / Anmelden</th>';
 echo '</tr>';
 echo '</thead>';
 echo '<tbody>';
@@ -62,16 +87,13 @@ echo '<tbody>';
 if (!empty($events)) {
     foreach ($events as $event) {
         echo '<tr>';
-        echo '<td>' . esc_html($event['was_angefragt']) . '</td>';
-        echo '<td>' . esc_html($event['kontext']) . '</td>';
-        echo '<td>' . esc_html($event['name_hochschule']) . '</td>';
-        echo '<td>' . esc_html($event['tn_anzahl']) . '</td>';
-        echo '<td>' . esc_html($event['zeitpunkt']) . '</td>';
-        echo '<td>' . esc_html($event['auftragdetails']) . '</td>';
-        // Column: Wer macht's? (approved signups only)
-        echo '<td>';
-        
-        // Fetch approved sign-ups for this event
+        echo '<td class="tt-col-request">' . $render_event_cell($event['was_angefragt']) . '</td>';
+        echo '<td class="tt-col-context">' . $render_event_cell($event['kontext']) . '</td>';
+        echo '<td class="tt-col-university">' . $render_event_cell($event['name_hochschule']) . '</td>';
+        echo '<td class="tt-col-tn"><span class="tt-tn-value">' . $render_event_cell($event['tn_anzahl']) . '</span></td>';
+        echo '<td class="tt-col-time">' . $render_event_cell($event['zeitpunkt']) . '</td>';
+        echo '<td class="tt-col-details">' . $render_event_cell($event['auftragdetails']) . '</td>';
+        // Fetch approved sign-ups for this event.
         $signups_table = $wpdb->prefix . 'task_table_signups';
         $signups = $wpdb->get_results($wpdb->prepare(
             "SELECT * FROM $signups_table WHERE event_id = %d AND status = 'approved'", 
@@ -79,6 +101,10 @@ if (!empty($events)) {
         ));
         
         $hasApproved = !empty($signups);
+
+        // Combined column: approved names on top, signup button below.
+        echo '<td class="tt-col-signups">';
+        echo '<div class="tt-signup-stack">';
         if ($hasApproved) {
             echo '<div class="approved-signups">';
             foreach ($signups as $signup) {
@@ -86,21 +112,18 @@ if (!empty($events)) {
             }
             echo '</div>';
         }
-        echo '</td>';
-
-        // Column: Anmelden (button only)
-        echo '<td>';
         echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '" data-has-approved="' . ($hasApproved ? '1' : '0') . '">Anmelden</button>';
+        echo '</div>';
         echo '</td>';
         echo '</tr>';
     }
 } else {
-    // Updated colspan from 7 to 8 to match new column count
+    // Updated colspan to match the combined signups/action column.
     $empty_message = __('Noch keine Veranstaltungen hinzugefügt.', 'task-table');
     if (!empty($category_name)) {
         $empty_message = sprintf(__('Noch keine Veranstaltungen in der Kategorie “%s”.', 'task-table'), $category_name);
     }
-    echo '<tr><td colspan="8">' . esc_html($empty_message) . '</td></tr>';
+    echo '<tr><td colspan="7">' . esc_html($empty_message) . '</td></tr>';
 }
 
 echo '</tbody></table>';

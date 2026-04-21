@@ -508,6 +508,51 @@ function task_table_print_admin_styles() {
             word-break: break-word;
         }
 
+        .task-table-admin .tt-signups-table {
+            table-layout: auto;
+            min-width: 1120px;
+        }
+
+        .task-table-admin .tt-signups-table th:nth-child(1),
+        .task-table-admin .tt-signups-table td:nth-child(1) {
+            width: 15%;
+            min-width: 170px;
+        }
+
+        .task-table-admin .tt-signups-table th:nth-child(2),
+        .task-table-admin .tt-signups-table td:nth-child(2) {
+            width: 15%;
+            min-width: 180px;
+        }
+
+        .task-table-admin .tt-signups-table th:nth-child(3),
+        .task-table-admin .tt-signups-table td:nth-child(3) {
+            width: 42%;
+            min-width: 340px;
+        }
+
+        .task-table-admin .tt-signups-table th:nth-child(4),
+        .task-table-admin .tt-signups-table td:nth-child(4) {
+            width: 8%;
+            min-width: 110px;
+        }
+
+        .task-table-admin .tt-signups-table th:nth-child(5),
+        .task-table-admin .tt-signups-table td:nth-child(5) {
+            width: 10%;
+            min-width: 130px;
+        }
+
+        .task-table-admin .tt-signups-table th:nth-child(6),
+        .task-table-admin .tt-signups-table td:nth-child(6) {
+            width: 10%;
+            min-width: 170px;
+        }
+
+        .task-table-admin .tt-signups-table .signup-free-text {
+            max-width: none;
+        }
+
         .task-table-admin .tt-export-modal {
             position: fixed;
             inset: 0;
@@ -768,6 +813,23 @@ function task_table_admin_dashboard_page() {
     $base_admin_url = add_query_arg($base_args, admin_url('admin.php'));
     $filters_applied = $search_term !== '' || $selected_category;
 
+    $render_event_cell = static function ($value) {
+        $content = is_scalar($value) ? (string) $value : '';
+
+        if ($content === '') {
+            return '';
+        }
+
+        if (function_exists('task_table_sanitize_event_text')) {
+            $content = task_table_sanitize_event_text($content);
+            $content = make_clickable($content);
+
+            return task_table_sanitize_event_text($content);
+        }
+
+        return wp_kses_post(make_clickable($content));
+    };
+
     $export_action_url = admin_url('admin-post.php');
     $export_selected_categories = $selected_category ? array($selected_category) : array();
     $export_default_archived = $show_archived ? '1' : '0';
@@ -982,11 +1044,11 @@ function task_table_admin_dashboard_page() {
                         ?>
                         <tr>
                             <td>
-                                <strong><?php echo esc_html($event['was_angefragt']); ?></strong>
+                                <?php echo $event['was_angefragt'] !== '' ? $render_event_cell($event['was_angefragt']) : '&mdash;'; ?>
                                 <div class="description"><?php printf(esc_html__('Event ID %s', 'task-table'), esc_html($event['id'])); ?></div>
                             </td>
-                            <td><?php echo $event['name_hochschule'] !== '' ? esc_html($event['name_hochschule']) : '&mdash;'; ?></td>
-                            <td><?php echo $event['zeitpunkt'] !== '' ? esc_html($event['zeitpunkt']) : '&mdash;'; ?></td>
+                            <td><?php echo $event['name_hochschule'] !== '' ? $render_event_cell($event['name_hochschule']) : '&mdash;'; ?></td>
+                            <td><?php echo $event['zeitpunkt'] !== '' ? $render_event_cell($event['zeitpunkt']) : '&mdash;'; ?></td>
                             <td>
                                 <?php if (!empty($event['category_name'])): ?>
                                     <span class="tt-pill is-active"><?php echo esc_html($event['category_name']); ?></span>
@@ -996,7 +1058,7 @@ function task_table_admin_dashboard_page() {
                             </td>
                             <td>
                                 <?php if ($event['wer_macht'] !== ''): ?>
-                                    <span class="tt-pill is-approved"><?php echo esc_html($event['wer_macht']); ?></span>
+                                    <span class="tt-pill is-approved"><?php echo $render_event_cell($event['wer_macht']); ?></span>
                                 <?php else: ?>
                                     <span class="tt-pill is-pending"><?php _e('Unassigned', 'task-table'); ?></span>
                                 <?php endif; ?>
@@ -1263,6 +1325,23 @@ function task_table_admin_signups_page() {
     $base_url = add_query_arg($base_args, admin_url('admin.php'));
     $reset_url = admin_url('admin.php?page=task-table-signups');
 
+    $render_event_cell = static function ($value) {
+        $content = is_scalar($value) ? (string) $value : '';
+
+        if ($content === '') {
+            return '';
+        }
+
+        if (function_exists('task_table_sanitize_event_text')) {
+            $content = task_table_sanitize_event_text($content);
+            $content = make_clickable($content);
+
+            return task_table_sanitize_event_text($content);
+        }
+
+        return wp_kses_post(make_clickable($content));
+    };
+
     ?>
     <div class="wrap task-table-admin">
         <div class="tt-page-header">
@@ -1349,7 +1428,7 @@ function task_table_admin_signups_page() {
         </form>
 
         <?php if (!empty($signups)): ?>
-            <table class="wp-list-table widefat fixed striped tt-table">
+            <table class="wp-list-table widefat striped tt-table tt-signups-table">
                 <thead>
                     <tr>
                         <th scope="col"><?php _e('Signup', 'task-table'); ?></th>
@@ -1396,7 +1475,10 @@ function task_table_admin_signups_page() {
                                 </div>
                             </td>
                             <td>
-                                <strong><?php echo esc_html($signup->was_angefragt); ?></strong>
+                                <?php
+                                $event_title_markup = $render_event_cell($signup->was_angefragt);
+                                echo $event_title_markup !== '' ? $event_title_markup : '&mdash;';
+                                ?>
                             </td>
                             <td class="signup-free-text">
                                 <?php echo $notes_markup; ?>
@@ -1825,7 +1907,6 @@ function task_table_admin_categories_page() {
         $name = isset($_POST['category_name']) ? sanitize_text_field(wp_unslash($_POST['category_name'])) : '';
         $slug_input = isset($_POST['category_slug']) ? sanitize_text_field(wp_unslash($_POST['category_slug'])) : '';
         $description = isset($_POST['category_description']) ? sanitize_textarea_field(wp_unslash($_POST['category_description'])) : '';
-        $make_default = !empty($_POST['category_set_default']);
 
         if ($name === '') {
             $error = __('Category name is required.', 'task-table');
@@ -1848,7 +1929,7 @@ function task_table_admin_categories_page() {
 
             if ($inserted !== false) {
                 $new_id = (int) $wpdb->insert_id;
-                if ($make_default || !$default_category_id) {
+                if (!$default_category_id) {
                     update_option(TASK_TABLE_DEFAULT_CATEGORY_OPTION, $new_id);
                     $default_category_id = $new_id;
                 }
@@ -1869,7 +1950,6 @@ function task_table_admin_categories_page() {
             $slug_input = isset($_POST['category_slug']) ? sanitize_text_field(wp_unslash($_POST['category_slug'])) : $category['slug'];
             $description = isset($_POST['category_description']) ? sanitize_textarea_field(wp_unslash($_POST['category_description'])) : $category['description'];
             $sort_order = isset($_POST['category_sort_order']) ? (int) $_POST['category_sort_order'] : (int) $category['sort_order'];
-            $make_default = !empty($_POST['category_set_default']);
 
             if ($name === '') {
                 $error = __('Category name is required.', 'task-table');
@@ -1888,11 +1968,6 @@ function task_table_admin_categories_page() {
                     array('id' => $category_id)
                 );
 
-                if ($make_default) {
-                    update_option(TASK_TABLE_DEFAULT_CATEGORY_OPTION, $category_id);
-                    $default_category_id = $category_id;
-                }
-
                 $message = __('Category updated.', 'task-table');
             }
         } else {
@@ -1903,18 +1978,17 @@ function task_table_admin_categories_page() {
     // Handle delete category
     if (isset($_POST['task_table_delete_category_nonce']) && wp_verify_nonce(wp_unslash($_POST['task_table_delete_category_nonce']), 'task_table_delete_category')) {
         $category_id = isset($_POST['category_id']) ? (int) $_POST['category_id'] : 0;
+        $fallback_reassign_id = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT id FROM $categories_table WHERE id <> %d ORDER BY sort_order ASC, name ASC LIMIT 1",
+            $category_id
+        ));
 
-        if ($category_id === $default_category_id) {
-            $error = __('You cannot delete the default category.', 'task-table');
+        if (!$fallback_reassign_id) {
+            $error = __('At least one category must remain.', 'task-table');
         } else {
-            $reassign_id = isset($_POST['reassign_category_id']) ? (int) $_POST['reassign_category_id'] : $default_category_id;
-            if ($reassign_id === $category_id || !$reassign_id) {
-                $reassign_id = $default_category_id;
-            }
-
-            $reassign_category = task_table_get_category($reassign_id);
-            if (!$reassign_category) {
-                $reassign_id = $default_category_id;
+            $reassign_id = isset($_POST['reassign_category_id']) ? (int) $_POST['reassign_category_id'] : $fallback_reassign_id;
+            if ($reassign_id === $category_id || !task_table_get_category($reassign_id)) {
+                $reassign_id = $fallback_reassign_id;
             }
 
             // Reassign events
@@ -1939,6 +2013,12 @@ function task_table_admin_categories_page() {
             }
 
             $wpdb->delete($categories_table, array('id' => $category_id));
+
+            if ($category_id === $default_category_id || !task_table_get_category($default_category_id)) {
+                update_option(TASK_TABLE_DEFAULT_CATEGORY_OPTION, $reassign_id);
+                $default_category_id = $reassign_id;
+            }
+
             $message = __('Category deleted.', 'task-table');
         }
     }
@@ -1991,16 +2071,6 @@ function task_table_admin_categories_page() {
                 <div class="tt-card-meta"><?php _e('Ready to organize your workload', 'task-table'); ?></div>
             </div>
             <div class="tt-card">
-                <h3><?php _e('Default Category', 'task-table'); ?></h3>
-                <div class="tt-card-value">
-                    <?php
-                    $default_category = $default_category_id ? task_table_get_category($default_category_id) : null;
-                    echo $default_category ? esc_html($default_category['name']) : '&mdash;';
-                    ?>
-                </div>
-                <div class="tt-card-meta"><?php _e('Fallback for new events & subscribers', 'task-table'); ?></div>
-            </div>
-            <div class="tt-card">
                 <h3><?php _e('Events Tagged', 'task-table'); ?></h3>
                 <div class="tt-card-value"><?php echo esc_html($total_events); ?></div>
                 <div class="tt-card-meta"><?php _e('Events currently assigned to categories', 'task-table'); ?></div>
@@ -2029,12 +2099,6 @@ function task_table_admin_categories_page() {
                         <label for="category_description" class="screen-reader-text"><?php _e('Description', 'task-table'); ?></label>
                         <textarea name="category_description" id="category_description" class="large-text" rows="3" placeholder="<?php esc_attr_e('Short description (optional)', 'task-table'); ?>"></textarea>
                     </p>
-                    <p>
-                        <label>
-                            <input type="checkbox" name="category_set_default" value="1">
-                            <?php _e('Set as default category', 'task-table'); ?>
-                        </label>
-                    </p>
                     <p class="submit"><button type="submit" class="button button-primary"><?php _e('Add Category', 'task-table'); ?></button></p>
                 </form>
             </div>
@@ -2061,12 +2125,6 @@ function task_table_admin_categories_page() {
                             <label for="edit_category_sort_order" class="screen-reader-text"><?php _e('Sort Order', 'task-table'); ?></label>
                             <input type="number" name="category_sort_order" id="edit_category_sort_order" value="<?php echo esc_attr($editing_category['sort_order']); ?>" step="1">
                         </p>
-                        <p>
-                            <label>
-                                <input type="checkbox" name="category_set_default" value="1" <?php checked($default_category_id === (int) $editing_category['id']); ?>>
-                                <?php _e('Set as default category', 'task-table'); ?>
-                            </label>
-                        </p>
                         <p class="submit">
                             <button type="submit" class="button button-primary"><?php _e('Save Changes', 'task-table'); ?></button>
                             <a href="<?php echo esc_url(remove_query_arg('edit')); ?>" class="button"><?php _e('Cancel', 'task-table'); ?></a>
@@ -2092,16 +2150,15 @@ function task_table_admin_categories_page() {
                             <th scope="col"><?php _e('Sort Order', 'task-table'); ?></th>
                             <th scope="col"><?php _e('Events', 'task-table'); ?></th>
                             <th scope="col"><?php _e('Subscribers', 'task-table'); ?></th>
-                            <th scope="col"><?php _e('Status', 'task-table'); ?></th>
                             <th scope="col"><?php _e('Actions', 'task-table'); ?></th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php $has_alternative_categories = count($categories) > 1; ?>
                         <?php foreach ($categories as $category): ?>
                             <?php
                             $event_total = isset($event_counts_raw[$category['id']]) ? (int) $event_counts_raw[$category['id']]->total : 0;
                             $subscriber_total = isset($subscriber_counts_raw[$category['id']]) ? (int) $subscriber_counts_raw[$category['id']]->total : 0;
-                            $is_default = $default_category_id === (int) $category['id'];
                             ?>
                             <tr>
                                 <td>
@@ -2111,28 +2168,35 @@ function task_table_admin_categories_page() {
                                 <td><?php echo esc_html($category['sort_order']); ?></td>
                                 <td><?php echo esc_html($event_total); ?></td>
                                 <td><?php echo esc_html($subscriber_total); ?></td>
-                                <td>
-                                    <?php if ($is_default): ?>
-                                        <span class="tt-pill is-active"><?php _e('Default', 'task-table'); ?></span>
-                                    <?php else: ?>
-                                        <span class="tt-pill is-archived"><?php _e('Available', 'task-table'); ?></span>
-                                    <?php endif; ?>
-                                </td>
                                 <td class="tt-actions">
                                     <a href="<?php echo esc_url(add_query_arg(array('edit' => $category['id']))); ?>" class="button button-secondary">
                                         <span class="dashicons dashicons-edit"></span>
                                         <?php _e('Edit', 'task-table'); ?>
                                     </a>
-                                    <?php if (!$is_default): ?>
+                                    <?php if ($has_alternative_categories): ?>
+                                        <?php
+                                        $reassign_category_id = 0;
+                                        foreach ($categories as $candidate_category) {
+                                            if ((int) $candidate_category['id'] !== (int) $category['id']) {
+                                                $reassign_category_id = (int) $candidate_category['id'];
+                                                break;
+                                            }
+                                        }
+                                        ?>
                                         <form method="post" action="" style="display:inline-block;">
                                             <?php wp_nonce_field('task_table_delete_category', 'task_table_delete_category_nonce'); ?>
                                             <input type="hidden" name="category_id" value="<?php echo esc_attr($category['id']); ?>">
-                                            <input type="hidden" name="reassign_category_id" value="<?php echo esc_attr($default_category_id); ?>">
-                                            <button type="submit" class="button is-destructive" onclick="return confirm('<?php echo esc_js(__('Delete this category? Associated items will be reassigned to the default category.', 'task-table')); ?>');">
+                                            <input type="hidden" name="reassign_category_id" value="<?php echo esc_attr($reassign_category_id); ?>">
+                                            <button type="submit" class="button is-destructive" onclick="return confirm('<?php echo esc_js(__('Delete this category? Associated items will be reassigned automatically.', 'task-table')); ?>');">
                                                 <span class="dashicons dashicons-trash"></span>
                                                 <?php _e('Delete', 'task-table'); ?>
                                             </button>
                                         </form>
+                                    <?php else: ?>
+                                        <button type="button" class="button is-destructive" disabled>
+                                            <span class="dashicons dashicons-trash"></span>
+                                            <?php _e('Delete', 'task-table'); ?>
+                                        </button>
                                     <?php endif; ?>
                                 </td>
                             </tr>
@@ -2164,25 +2228,52 @@ function task_table_admin_email_settings_page() {
                 update_option("task_table_email_{$template_key}_message", wp_kses_post($_POST["task_table_email_{$template_key}_message"]));
             }
         }
-        
-        if (isset($_POST['moderator_emails'])) {
-            // Process and save multiple email addresses from the hidden input that contains all emails
-            $moderator_emails = sanitize_text_field(wp_unslash($_POST['moderator_emails']));
-            $emails_array = array_filter(explode(',', $moderator_emails));
-            
-            // Validate each email and remove duplicates
-            $valid_emails = array();
-            foreach ($emails_array as $email) {
-                $email = trim($email);
-                if (!empty($email) && is_email($email) && !in_array($email, $valid_emails)) {
-                    $valid_emails[] = sanitize_email($email);
+
+        $submitted_recipients = null;
+
+        if (isset($_POST['signup_notification_recipients_b64'])) {
+            $encoded_payload = trim((string) wp_unslash($_POST['signup_notification_recipients_b64']));
+            if ($encoded_payload !== '') {
+                $decoded_payload = base64_decode($encoded_payload, true);
+                if (is_string($decoded_payload)) {
+                    $raw_recipients = json_decode($decoded_payload, true);
+                    if (is_array($raw_recipients)) {
+                        $submitted_recipients = $raw_recipients;
+                    }
                 }
             }
-            
-            // Store as a comma-separated string
-        update_option('moderator_email', implode(',', $valid_emails));
         }
-        
+
+        if ($submitted_recipients === null && isset($_POST['signup_notification_recipients'])) {
+            $raw_json_payload = wp_unslash($_POST['signup_notification_recipients']);
+            if (is_string($raw_json_payload)) {
+                $raw_json_payload = html_entity_decode($raw_json_payload, ENT_QUOTES, 'UTF-8');
+                $raw_recipients = json_decode($raw_json_payload, true);
+                if (is_array($raw_recipients)) {
+                    $submitted_recipients = $raw_recipients;
+                }
+            }
+        }
+
+        if ($submitted_recipients !== null) {
+            task_table_save_signup_notification_recipients($submitted_recipients);
+        } elseif (isset($_POST['moderator_emails'])) {
+            // Legacy fallback for older forms posting only a comma-separated email list.
+            $moderator_emails = sanitize_text_field(wp_unslash($_POST['moderator_emails']));
+            $emails_array = array_filter(explode(',', $moderator_emails));
+            $legacy_recipients = array();
+            foreach ($emails_array as $email) {
+                $email = sanitize_email(trim($email));
+                if (is_email($email)) {
+                    $legacy_recipients[] = array(
+                        'email' => $email,
+                        'category_ids' => array(),
+                    );
+                }
+            }
+            task_table_save_signup_notification_recipients($legacy_recipients);
+        }
+
     echo '<div class="notice notice-success is-dismissible"><p>' . __('E-Mail-Einstellungen gespeichert.', 'task-table') . '</p></div>';
     }
     
@@ -2195,8 +2286,12 @@ function task_table_admin_email_settings_page() {
         'new_event' => __('Neue Veranstaltung', 'task-table'),
     ];
 
-    $moderator_emails = get_option('moderator_email', get_option('admin_email'));
-    $email_list = task_table_parse_email_list($moderator_emails);
+    $categories = task_table_get_categories();
+    $signup_recipients = task_table_get_signup_notification_recipients();
+    $signup_recipients_json = wp_json_encode($signup_recipients);
+    if (!is_string($signup_recipients_json)) {
+        $signup_recipients_json = '[]';
+    }
     
     ?>
     <div class="wrap task-table-admin">
@@ -2217,27 +2312,44 @@ function task_table_admin_email_settings_page() {
             </div>
 
             <div class="email-recipients-container" style="margin-bottom:24px;">
-                <div id="email-tags-container" class="email-tags-container">
-                    <?php foreach($email_list as $email): ?>
-                        <div class="email-tag">
-                            <span><?php echo esc_html($email); ?></span>
-                            <button type="button" class="remove-email" data-email="<?php echo esc_attr($email); ?>" aria-label="<?php esc_attr_e('E-Mail-Adresse entfernen', 'task-table'); ?>">&times;</button>
-                        </div>
-                    <?php endforeach; ?>
+                <div id="signup-recipient-list" style="display:grid; gap:12px; margin-bottom:16px;"></div>
+
+                <div class="tt-form-card" style="margin:0; padding:16px; border:1px solid var(--tt-border); border-radius:10px;">
+                    <h3 style="margin:0 0 10px;"><?php _e('Empfänger hinzufügen', 'task-table'); ?></h3>
+
+                    <div class="email-input-container" style="margin-bottom:10px;">
+                        <input type="email" id="new_email" placeholder="<?php esc_attr_e('Neue E-Mail-Adresse hinzufügen', 'task-table'); ?>" class="regular-text">
+                        <button type="button" id="add_signup_recipient" class="button button-secondary">
+                            <span class="dashicons dashicons-plus-alt"></span>
+                            <?php _e('Hinzufügen', 'task-table'); ?>
+                        </button>
+                    </div>
+
+                    <label style="display:inline-flex; align-items:center; gap:8px; margin-bottom:10px;">
+                        <input type="checkbox" id="recipient_all_categories" checked>
+                        <?php _e('Alle Kategorien', 'task-table'); ?>
+                    </label>
+
+                    <div id="recipient-category-picker" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px;">
+                        <?php if (!empty($categories)): ?>
+                            <?php foreach ($categories as $category): ?>
+                                <label style="display:inline-flex; align-items:center; gap:6px;">
+                                    <input type="checkbox" class="recipient-category" value="<?php echo esc_attr((int) $category['id']); ?>">
+                                    <?php echo esc_html($category['name']); ?>
+                                </label>
+                            <?php endforeach; ?>
+                        <?php else: ?>
+                            <span class="description"><?php _e('Keine Kategorien verfügbar.', 'task-table'); ?></span>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
-                <div class="email-input-container">
-                    <input type="email" id="new_email" placeholder="<?php esc_attr_e('Neue E-Mail-Adresse hinzufügen', 'task-table'); ?>" class="regular-text">
-                    <button type="button" id="add_email" class="button button-secondary">
-                        <span class="dashicons dashicons-plus-alt"></span>
-                        <?php _e('Hinzufügen', 'task-table'); ?>
-                    </button>
-                </div>
-
-                <input type="hidden" name="moderator_emails" id="moderator_emails" value="<?php echo esc_attr($moderator_emails); ?>">
+                <input type="hidden" name="signup_notification_recipients" id="signup_notification_recipients" value="<?php echo esc_attr($signup_recipients_json); ?>">
+                <input type="hidden" name="signup_notification_recipients_b64" id="signup_notification_recipients_b64" value="">
+                <input type="hidden" name="moderator_emails" id="moderator_emails" value="">
 
                 <p class="description" style="margin-top:12px; color: var(--tt-text-muted);">
-                    <?php _e('Füge hier alle Adressen hinzu, die über neue Anmeldungen informiert werden sollen. Jeder Empfänger erhält eine eigene E-Mail.', 'task-table'); ?>
+                    <?php _e('Lege für jede Adresse fest, ob sie alle neuen Anmeldungen oder nur Anmeldungen bestimmter Kategorien erhalten soll.', 'task-table'); ?>
                 </p>
             </div>
 
@@ -2268,6 +2380,7 @@ function task_table_admin_email_settings_page() {
                     <li><code>{event_title}</code> - <?php _e('Titel der Veranstaltung (falls vorhanden)', 'task-table'); ?></li>
                     <li><code>{event_details}</code> - <?php _e('Details zur Veranstaltung (falls vorhanden)', 'task-table'); ?></li>
                     <li><code>{event_id}</code> - <?php _e('Veranstaltungs-ID (falls vorhanden)', 'task-table'); ?></li>
+                    <li><code>{event_category_line}</code> - <?php _e('Kategorie als Textzeile (nur neue Anmeldung)', 'task-table'); ?></li>
                     <li><code>{confirmation_link}</code> - <?php _e('Bestätigungslink (nur Abo-E-Mails)', 'task-table'); ?></li>
                 </ul>
             </div>
@@ -2316,15 +2429,181 @@ function task_table_admin_email_settings_page() {
                 $('#' + tabId).show();
             });
 
-            function updateEmailsInput() {
-                const emails = [];
-                $('.email-tag span').each(function() {
-                    emails.push($(this).text());
-                });
-                $('#moderator_emails').val(emails.join(','));
+            const categoryMap = <?php echo wp_json_encode(array_map(static function ($category) {
+                return array(
+                    'id' => (int) $category['id'],
+                    'name' => $category['name'],
+                );
+            }, $categories)); ?>;
+            const recipientsInput = $('#signup_notification_recipients');
+            const recipientsB64Input = $('#signup_notification_recipients_b64');
+            const moderatorEmailsInput = $('#moderator_emails');
+            const recipientList = $('#signup-recipient-list');
+            const categoryCheckboxes = $('.recipient-category');
+            const allCategoriesToggle = $('#recipient_all_categories');
+            let recipients = [];
+
+            try {
+                recipients = JSON.parse(recipientsInput.val() || '[]');
+            } catch (e) {
+                recipients = [];
             }
 
-            $('#add_email').on('click', function() {
+            function normalizeRecipients(rawRecipients) {
+                const byEmail = {};
+
+                if (!Array.isArray(rawRecipients)) {
+                    return [];
+                }
+
+                rawRecipients.forEach(function(recipient) {
+                    if (!recipient || typeof recipient !== 'object') {
+                        return;
+                    }
+
+                    const email = String(recipient.email || '').trim();
+                    if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+                        return;
+                    }
+
+                    const categoryIds = [];
+                    if (Array.isArray(recipient.category_ids)) {
+                        recipient.category_ids.forEach(function(rawId) {
+                            const id = parseInt(rawId, 10);
+                            if (Number.isNaN(id) || id <= 0) {
+                                return;
+                            }
+
+                            const exists = categoryMap.some(function(category) {
+                                return parseInt(category.id, 10) === id;
+                            });
+
+                            if (!exists || categoryIds.indexOf(id) !== -1) {
+                                return;
+                            }
+
+                            categoryIds.push(id);
+                        });
+                    }
+
+                    byEmail[email.toLowerCase()] = {
+                        email: email,
+                        category_ids: categoryIds
+                    };
+                });
+
+                return Object.keys(byEmail).map(function(key) {
+                    return byEmail[key];
+                });
+            }
+
+            function encodeBase64Unicode(value) {
+                try {
+                    return window.btoa(unescape(encodeURIComponent(String(value))));
+                } catch (error) {
+                    return '';
+                }
+            }
+
+            function getSelectedCategoryIds() {
+                const selected = [];
+                categoryCheckboxes.filter(':checked').each(function() {
+                    const id = parseInt($(this).val(), 10);
+                    if (!Number.isNaN(id) && id > 0 && selected.indexOf(id) === -1) {
+                        selected.push(id);
+                    }
+                });
+                return selected;
+            }
+
+            function updateRecipientsInput() {
+                recipients = normalizeRecipients(recipients);
+
+                const jsonPayload = JSON.stringify(recipients);
+                const emailsPayload = recipients.map(function(recipient) {
+                    return recipient.email;
+                }).join(',');
+
+                recipientsInput.val(jsonPayload);
+                recipientsB64Input.val(encodeBase64Unicode(jsonPayload));
+                moderatorEmailsInput.val(emailsPayload);
+            }
+
+            function getCategoryName(categoryId) {
+                const match = categoryMap.find(function(category) {
+                    return parseInt(category.id, 10) === parseInt(categoryId, 10);
+                });
+
+                return match ? String(match.name) : '';
+            }
+
+            function renderRecipients() {
+                recipientList.empty();
+
+                if (!recipients.length) {
+                    recipientList.append(
+                        $('<p class="description"></p>').text('<?php echo esc_js(__('Noch keine Empfänger angelegt.', 'task-table')); ?>')
+                    );
+                    return;
+                }
+
+                recipients.forEach(function(recipient) {
+                    const row = $('<div></div>').css({
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: '12px',
+                        alignItems: 'flex-start',
+                        border: '1px solid var(--tt-border)',
+                        borderRadius: '10px',
+                        padding: '12px'
+                    });
+
+                    const info = $('<div></div>');
+                    info.append($('<strong></strong>').text(recipient.email));
+
+                    const categoryWrap = $('<div></div>').css({
+                        marginTop: '8px',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '6px'
+                    });
+
+                    if (!recipient.category_ids.length) {
+                        categoryWrap.append(
+                            $('<span class="tt-pill is-active"></span>').text('<?php echo esc_js(__('Alle Kategorien', 'task-table')); ?>')
+                        );
+                    } else {
+                        recipient.category_ids.forEach(function(categoryId) {
+                            const categoryName = getCategoryName(categoryId);
+                            if (!categoryName) {
+                                return;
+                            }
+                            categoryWrap.append(
+                                $('<span class="tt-pill is-unconfirmed"></span>').text(categoryName)
+                            );
+                        });
+                    }
+
+                    info.append(categoryWrap);
+
+                    const removeButton = $('<button type="button" class="button button-secondary remove-signup-recipient"></button>')
+                        .attr('data-email', recipient.email)
+                        .text('<?php echo esc_js(__('Entfernen', 'task-table')); ?>');
+
+                    row.append(info).append(removeButton);
+                    recipientList.append(row);
+                });
+            }
+
+            function syncCategoryInputState() {
+                const disableCategories = allCategoriesToggle.is(':checked');
+                categoryCheckboxes.prop('disabled', disableCategories);
+                if (disableCategories) {
+                    categoryCheckboxes.prop('checked', false);
+                }
+            }
+
+            $('#add_signup_recipient').on('click', function() {
                 const email = $('#new_email').val().trim();
                 if (!email) {
                     return;
@@ -2335,12 +2614,9 @@ function task_table_admin_email_settings_page() {
                     return;
                 }
 
-                let isDuplicate = false;
-                $('.email-tag span').each(function() {
-                    if ($(this).text().toLowerCase() === email.toLowerCase()) {
-                        isDuplicate = true;
-                        return false;
-                    }
+                recipients = normalizeRecipients(recipients);
+                const isDuplicate = recipients.some(function(recipient) {
+                    return recipient.email.toLowerCase() === email.toLowerCase();
                 });
 
                 if (isDuplicate) {
@@ -2348,30 +2624,54 @@ function task_table_admin_email_settings_page() {
                     return;
                 }
 
-                const emailTag = $(
-                    '<div class="email-tag">' +
-                        '<span>' + email + '</span>' +
-                        '<button type="button" class="remove-email" data-email="' + email + '" aria-label="<?php echo esc_js(__('E-Mail-Adresse entfernen', 'task-table')); ?>">&times;</button>' +
-                    '</div>'
-                );
-                $('#email-tags-container').append(emailTag);
+                const allCategories = allCategoriesToggle.is(':checked');
+                const selectedCategories = allCategories ? [] : getSelectedCategoryIds();
+
+                if (!allCategories && !selectedCategories.length) {
+                    window.alert('<?php echo esc_js(__('Bitte wähle mindestens eine Kategorie oder aktiviere „Alle Kategorien“.', 'task-table')); ?>');
+                    return;
+                }
+
+                recipients.push({
+                    email: email,
+                    category_ids: selectedCategories
+                });
+
+                recipients = normalizeRecipients(recipients);
+                renderRecipients();
+                updateRecipientsInput();
+
                 $('#new_email').val('').focus();
-                updateEmailsInput();
+                allCategoriesToggle.prop('checked', true);
+                syncCategoryInputState();
             });
 
             $('#new_email').on('keypress', function(e) {
                 if (e.which === 13) {
                     e.preventDefault();
-                    $('#add_email').click();
+                    $('#add_signup_recipient').click();
                 }
             });
 
-            $(document).on('click', '.remove-email', function() {
-                $(this).closest('.email-tag').remove();
-                updateEmailsInput();
+            allCategoriesToggle.on('change', syncCategoryInputState);
+
+            $(document).on('click', '.remove-signup-recipient', function() {
+                const email = String($(this).data('email') || '').toLowerCase();
+                recipients = recipients.filter(function(recipient) {
+                    return recipient.email.toLowerCase() !== email;
+                });
+                renderRecipients();
+                updateRecipientsInput();
             });
 
-            updateEmailsInput();
+            $('form.tt-form-card').on('submit', function() {
+                updateRecipientsInput();
+            });
+
+            recipients = normalizeRecipients(recipients);
+            syncCategoryInputState();
+            renderRecipients();
+            updateRecipientsInput();
         });
     </script>
     <?php
@@ -2408,6 +2708,14 @@ function task_table_parse_email_list($email_string) {
  * This function ensures emails are sent individually to protect recipient privacy
  */
 function task_table_get_signup_notification_emails() {
-    $moderator_emails = get_option('moderator_email', get_option('admin_email'));
-    return task_table_parse_email_list($moderator_emails);
+    $emails = array();
+
+    foreach (task_table_get_signup_notification_recipients() as $recipient) {
+        $email = isset($recipient['email']) ? sanitize_email($recipient['email']) : '';
+        if (is_email($email)) {
+            $emails[strtolower($email)] = $email;
+        }
+    }
+
+    return array_values($emails);
 }

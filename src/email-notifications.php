@@ -28,7 +28,7 @@ function task_table_get_email_templates() {
         ],
         'new_signup' => [
             'subject' => 'Neue Veranstaltungs-Anmeldung',
-            'message' => "Es ist eine neue Anmeldung eingegangen:\n\nEvent-ID: {event_id}\nName: {user_name}\nE-Mail: {user_email}\n{free_text_section}\nBitte prüfe diese Anfrage im Administrationsbereich."
+            'message' => "Es ist eine neue Anmeldung eingegangen:\n\nEvent-ID: {event_id}\n{event_category_line}Name: {user_name}\nE-Mail: {user_email}\n{free_text_section}\nBitte prüfe diese Anfrage im Administrationsbereich."
         ],
         'new_event' => [
             'subject' => 'Neue Veranstaltung veröffentlicht: {event_title}',
@@ -266,13 +266,267 @@ function task_table_send_denial_notification($signup) {
 }
 
 /**
+ * Return the option name used for signup notification recipient preferences.
+ *
+ * @return string
+ */
+function task_table_get_signup_notification_recipients_option_name() {
+    if (defined('TASK_TABLE_SIGNUP_NOTIFICATION_RECIPIENTS_OPTION')) {
+        return TASK_TABLE_SIGNUP_NOTIFICATION_RECIPIENTS_OPTION;
+    }
+
+    return 'task_table_signup_notification_recipients';
+}
+
+/**
+ * Normalize recipient preferences for signup notifications.
+ *
+ * Expected shape per recipient:
+ * [
+ *   'email' => 'person@example.com',
+ *   'category_ids' => [1, 2] // empty means all categories
+ * ]
+ *
+ * @param mixed $raw_recipients Raw recipients from option or request payload.
+ * @return array<int, array<string, mixed>>
+ */
+function task_table_normalize_signup_notification_recipients($raw_recipients) {
+    $valid_category_ids = array();
+    foreach (task_table_get_categories() as $category) {
+        $valid_category_ids[(int) $category['id']] = true;
+    }
+
+    $normalized = array();
+    foreach ((array) $raw_recipients as $recipient) {
+        if (!is_array($recipient)) {
+            continue;
+        }
+
+        $email = isset($recipient['email']) ? sanitize_email(wp_unslash($recipient['email'])) : '';
+        if (!is_email($email)) {
+            continue;
+        }
+
+        $raw_category_ids = array();
+        if (isset($recipient['category_ids']) && is_array($recipient['category_ids'])) {
+            $raw_category_ids = $recipient['category_ids'];
+        } elseif (isset($recipient['categories']) && is_array($recipient['categories'])) {
+            // Backward/alternate payload key support.
+            $raw_category_ids = $recipient['categories'];
+        }
+
+        $all_categories = !empty($recipient['all_categories']);
+        if (!$all_categories && !isset($recipient['all_categories']) && empty($raw_category_ids)) {
+            $all_categories = true;
+        }
+
+        $clean_category_ids = array();
+        if (!$all_categories) {
+            foreach ($raw_category_ids as $category_id) {
+                $category_id = (int) $category_id;
+                if ($category_id > 0 && isset($valid_category_ids[$category_id])) {
+                    $clean_category_ids[] = $category_id;
+                }
+            }
+            $clean_category_ids = array_values(array_unique($clean_category_ids));
+        }
+
+        $normalized[strtolower($email)] = array(
+            'email' => $email,
+            'category_ids' => $clean_category_ids,
+        );
+    }
+
+    return array_values($normalized);
+}
+
+/**
+ * Read legacy plain-email options used before category-based filtering.
+ *
+ * @return string[]
+ */
+function task_table_get_legacy_signup_notification_emails() {
+    $emails = array();
+
+    $moderator_email = get_option('moderator_email', '');
+    if (!empty($moderator_email) && is_string($moderator_email)) {
+        $raw_values = str_replace(array("\r\n", "\r"), "\n", $moderator_email);
+        foreach (explode("\n", str_replace(',', "\n", $raw_values)) as $candidate) {
+            $candidate = sanitize_email(trim($candidate));
+            if (is_email($candidate)) {
+                $emails[] = $candidate;
+            }
+        }
+    }
+
+    if (defined('TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION')) {
+        $legacy_option = get_option(TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION, array());
+        if (is_array($legacy_option)) {
+            foreach ($legacy_option as $candidate) {
+                $candidate = sanitize_email(trim((string) $candidate));
+                if (is_email($candidate)) {
+                    $emails[] = $candidate;
+                }
+            }
+        }
+    }
+
+    if (empty($emails)) {
+        $admin_email = sanitize_email(get_option('admin_email'));
+        if (is_email($admin_email)) {
+            $emails[] = $admin_email;
+        }
+    }
+
+    $deduplicated = array();
+    foreach ($emails as $email) {
+        $deduplicated[strtolower($email)] = $email;
+    }
+
+    return array_values($deduplicated);
+}
+
+/**
+ * Get signup notification recipients with normalized category targeting.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function task_table_get_signup_notification_recipients() {
+    $option_name = task_table_get_signup_notification_recipients_option_name();
+    $stored_value = get_option($option_name, null);
+    if ($stored_value !== null) {
+        return task_table_normalize_signup_notification_recipients($stored_value);
+    }
+
+    $fallback = array();
+    foreach (task_table_get_legacy_signup_notification_emails() as $email) {
+        $fallback[] = array(
+            'email' => $email,
+            'category_ids' => array(),
+        );
+    }
+
+    $normalized_fallback = task_table_normalize_signup_notification_recipients($fallback);
+    update_option($option_name, $normalized_fallback);
+
+    return $normalized_fallback;
+}
+
+/**
+ * Persist signup notification recipients and keep legacy options in sync.
+ *
+ * @param mixed $raw_recipients Raw recipient payload.
+ * @return array<int, array<string, mixed>>
+ */
+function task_table_save_signup_notification_recipients($raw_recipients) {
+    $normalized = task_table_normalize_signup_notification_recipients($raw_recipients);
+    $option_name = task_table_get_signup_notification_recipients_option_name();
+    update_option($option_name, $normalized);
+
+    $emails = array();
+    foreach ($normalized as $recipient) {
+        if (!empty($recipient['email']) && is_email($recipient['email'])) {
+            $emails[] = $recipient['email'];
+        }
+    }
+
+    update_option('moderator_email', implode(',', $emails));
+
+    if (defined('TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION')) {
+        update_option(TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION, $emails);
+    }
+
+    return $normalized;
+}
+
+/**
+ * Resolve signup notification emails matching a category.
+ *
+ * Empty category list on recipient means: all categories.
+ *
+ * @param int $category_id Event category ID.
+ * @return string[]
+ */
+function task_table_get_signup_notification_emails_for_category($category_id) {
+    $category_id = (int) $category_id;
+    $emails = array();
+
+    foreach (task_table_get_signup_notification_recipients() as $recipient) {
+        $recipient_email = isset($recipient['email']) ? sanitize_email($recipient['email']) : '';
+        if (!is_email($recipient_email)) {
+            continue;
+        }
+
+        $recipient_category_ids = isset($recipient['category_ids']) ? array_map('intval', (array) $recipient['category_ids']) : array();
+        $matches_category = empty($recipient_category_ids) || $category_id <= 0 || in_array($category_id, $recipient_category_ids, true);
+
+        if ($matches_category) {
+            $emails[strtolower($recipient_email)] = $recipient_email;
+        }
+    }
+
+    return array_values($emails);
+}
+
+/**
+ * Resolve event category ID from signup payload and database fallback.
+ *
+ * @param array $signup_data Signup payload.
+ * @return int
+ */
+function task_table_get_signup_notification_event_category_id($signup_data) {
+    $category_id = 0;
+    if (isset($signup_data['category_id'])) {
+        $category_id = (int) $signup_data['category_id'];
+    } elseif (isset($signup_data['categoryId'])) {
+        $category_id = (int) $signup_data['categoryId'];
+    }
+
+    if ($category_id > 0) {
+        return $category_id;
+    }
+
+    $event_id = isset($signup_data['event_id']) ? (int) $signup_data['event_id'] : 0;
+    if ($event_id <= 0) {
+        return task_table_get_default_category_id();
+    }
+
+    global $wpdb;
+    $events_table = $wpdb->prefix . 'task_table_events';
+    $category_id = (int) $wpdb->get_var($wpdb->prepare(
+        "SELECT category_id FROM $events_table WHERE id = %d",
+        $event_id
+    ));
+
+    if ($category_id > 0) {
+        return $category_id;
+    }
+
+    return task_table_get_default_category_id();
+}
+
+/**
  * Send new signup notification to admin
  * 
  * @param array $signup_data The signup data
  * @return bool Whether the email was sent
  */
 function task_table_send_new_signup_notification($signup_data) {
-    $moderator_email = get_option('moderator_email', get_option('admin_email'));
+    $event_category_id = task_table_get_signup_notification_event_category_id($signup_data);
+    $recipient_emails = task_table_get_signup_notification_emails_for_category($event_category_id);
+
+    if (empty($recipient_emails)) {
+        return false;
+    }
+
+    $event_category_line = '';
+    if ($event_category_id > 0) {
+        $category = task_table_get_category($event_category_id);
+        if (!empty($category['name'])) {
+            $event_category_line = 'Kategorie: ' . $category['name'] . "\n";
+        }
+    }
+
     $free_text_section = '';
     if (!empty($signup_data['free_text'])) {
         $clean = trim(wp_strip_all_tags(wp_unslash($signup_data['free_text'])));
@@ -280,16 +534,27 @@ function task_table_send_new_signup_notification($signup_data) {
                 $free_text_section = "Zusätzliche Hinweise:\n" . $clean . "\n\n";
         }
     }
-    return task_table_send_notification(
-        $moderator_email,
-        'new_signup',
-        [
-            'user_name' => $signup_data['user_name'],
-            'user_email' => $signup_data['user_email'],
-            'event_id' => $signup_data['event_id'],
-            'free_text_section' => $free_text_section
-        ]
-    );
+
+    $sent = false;
+    foreach ($recipient_emails as $email) {
+        $result = task_table_send_notification(
+            $email,
+            'new_signup',
+            [
+                'user_name' => $signup_data['user_name'],
+                'user_email' => $signup_data['user_email'],
+                'event_id' => $signup_data['event_id'],
+                'event_category_line' => $event_category_line,
+                'free_text_section' => $free_text_section
+            ]
+        );
+
+        if ($result) {
+            $sent = true;
+        }
+    }
+
+    return $sent;
 }
 
 /**
@@ -412,57 +677,7 @@ function task_table_send_new_event_notification($event_data) {
  * Send notification when a new signup is received
  */
 function task_table_send_signup_notification($signup_data) {
-    $notification_emails = get_option(TASK_TABLE_SIGNUP_NOTIFICATIONS_OPTION, array());
-    
-    if (empty($notification_emails)) {
-        return false;
-    }
-    
-    $event_id = isset($signup_data['event_id']) ? intval($signup_data['event_id']) : 0;
-    $user_name = isset($signup_data['user_name']) ? sanitize_text_field($signup_data['user_name']) : 'Unknown';
-    $user_email = isset($signup_data['user_email']) ? sanitize_email($signup_data['user_email']) : 'Unknown';
-    
-    // Get event details if available
-    global $wpdb;
-    $events_table = $wpdb->prefix . 'task_table_events';
-    $event = $wpdb->get_row($wpdb->prepare(
-        "SELECT * FROM $events_table WHERE id = %d",
-        $event_id
-    ));
-    
-    $event_title = $event ? $event->was_angefragt : 'Unknown Event';
-    
-    $subject = sprintf('New signup received for event: %s', $event_title);
-    
-    $message = sprintf(
-        "Hello,\n\nA new signup has been received for the event.\n\n" .
-        "Event Details:\n" .
-        "- Event: %s\n" .
-        "- Event ID: %d\n\n" .
-        "Signup Details:\n" .
-        "- Name: %s\n" .
-        "- Email: %s\n\n" .
-        "You can review this signup in the WordPress admin area.\n\n" .
-        "Regards,\n" .
-        "Task Table Plugin",
-        $event_title,
-        $event_id,
-        $user_name,
-        $user_email
-    );
-    
-    $headers = array('Content-Type: text/plain; charset=UTF-8');
-    
-    // Send email to each notification recipient
-    $sent = false;
-    foreach ($notification_emails as $email) {
-        $result = wp_mail($email, $subject, $message, $headers);
-        if ($result) {
-            $sent = true;
-        }
-    }
-    
-    return $sent;
+    return task_table_send_new_signup_notification($signup_data);
 }
 
 /**

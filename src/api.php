@@ -234,6 +234,53 @@ function task_table_get_events(WP_REST_Request $request) {
 }
 
 /**
+ * Allowed inline HTML for event text cells.
+ *
+ * Keep this list narrow so editors can format text and links without
+ * introducing layout-breaking block markup in table cells.
+ *
+ * @return array<string, array<string, bool>>
+ */
+function task_table_get_event_text_allowed_tags() {
+    return array(
+        'a' => array(
+            'href' => true,
+            'target' => true,
+            'rel' => true,
+            'title' => true,
+            'class' => true,
+        ),
+        'strong' => array(),
+        'b' => array(),
+        'em' => array(),
+        'i' => array(),
+        'u' => array(),
+        's' => array(),
+        'del' => array(),
+        'mark' => array(),
+        'small' => array(),
+        'sub' => array(),
+        'sup' => array(),
+        'br' => array(),
+        'span' => array(
+            'class' => true,
+        ),
+    );
+}
+
+/**
+ * Sanitize event text values while preserving safe inline formatting.
+ *
+ * @param mixed $value Raw value from request payload.
+ * @return string
+ */
+function task_table_sanitize_event_text($value) {
+    $string_value = is_scalar($value) ? (string) $value : '';
+
+    return wp_kses($string_value, task_table_get_event_text_allowed_tags());
+}
+
+/**
  * Save a new event to the database
  */
 function task_table_save_event(WP_REST_Request $request) {
@@ -255,13 +302,13 @@ function task_table_save_event(WP_REST_Request $request) {
     
     // Sanitize all fields
     $event_data = array(
-        'was_angefragt' => sanitize_text_field($data['wasAngefragt'] ?? ''),
-        'kontext' => sanitize_text_field($data['kontext'] ?? ''),
-        'name_hochschule' => sanitize_text_field($data['nameHochschule'] ?? ''),
-        'tn_anzahl' => sanitize_text_field($data['tnAnzahl'] ?? ''),
-        'zeitpunkt' => sanitize_text_field($data['zeitpunkt'] ?? ''),
-        'auftragdetails' => sanitize_text_field($data['auftragdetails'] ?? ''),
-        'wer_macht' => sanitize_text_field($data['werMacht'] ?? ''),
+        'was_angefragt' => task_table_sanitize_event_text($data['wasAngefragt'] ?? ''),
+        'kontext' => task_table_sanitize_event_text($data['kontext'] ?? ''),
+        'name_hochschule' => task_table_sanitize_event_text($data['nameHochschule'] ?? ''),
+        'tn_anzahl' => task_table_sanitize_event_text($data['tnAnzahl'] ?? ''),
+        'zeitpunkt' => task_table_sanitize_event_text($data['zeitpunkt'] ?? ''),
+        'auftragdetails' => task_table_sanitize_event_text($data['auftragdetails'] ?? ''),
+        'wer_macht' => task_table_sanitize_event_text($data['werMacht'] ?? ''),
         'category_id' => $category_id,
         'archived' => 0,
         'created_at' => current_time('mysql'),
@@ -320,24 +367,24 @@ function task_table_update_event(WP_REST_Request $request) {
     
     // Sanitize and prepare update data - preserve formatting where needed
     $update_data = array(
-        'was_angefragt' => isset($data['was_angefragt']) ? wp_kses_post($data['was_angefragt']) : $existing_event['was_angefragt'],
-        'kontext' => isset($data['kontext']) ? wp_kses_post($data['kontext']) : $existing_event['kontext'],
-        'name_hochschule' => isset($data['name_hochschule']) ? wp_kses_post($data['name_hochschule']) : $existing_event['name_hochschule'],
-        'tn_anzahl' => isset($data['tn_anzahl']) ? wp_kses_post($data['tn_anzahl']) : $existing_event['tn_anzahl'],
-        'zeitpunkt' => isset($data['zeitpunkt']) ? wp_kses_post($data['zeitpunkt']) : $existing_event['zeitpunkt'],
-        'auftragdetails' => isset($data['auftragdetails']) ? wp_kses_post($data['auftragdetails']) : $existing_event['auftragdetails'],
-        'wer_macht' => isset($data['wer_macht']) ? wp_kses_post($data['wer_macht']) : $existing_event['wer_macht'],
+        'was_angefragt' => isset($data['was_angefragt']) ? task_table_sanitize_event_text($data['was_angefragt']) : $existing_event['was_angefragt'],
+        'kontext' => isset($data['kontext']) ? task_table_sanitize_event_text($data['kontext']) : $existing_event['kontext'],
+        'name_hochschule' => isset($data['name_hochschule']) ? task_table_sanitize_event_text($data['name_hochschule']) : $existing_event['name_hochschule'],
+        'tn_anzahl' => isset($data['tn_anzahl']) ? task_table_sanitize_event_text($data['tn_anzahl']) : $existing_event['tn_anzahl'],
+        'zeitpunkt' => isset($data['zeitpunkt']) ? task_table_sanitize_event_text($data['zeitpunkt']) : $existing_event['zeitpunkt'],
+        'auftragdetails' => isset($data['auftragdetails']) ? task_table_sanitize_event_text($data['auftragdetails']) : $existing_event['auftragdetails'],
+        'wer_macht' => isset($data['wer_macht']) ? task_table_sanitize_event_text($data['wer_macht']) : $existing_event['wer_macht'],
         'updated_at' => current_time('mysql')
     );
     
     // Also check for frontend-style field names and use them if present
-    if (isset($data['wasAngefragt'])) $update_data['was_angefragt'] = wp_kses_post($data['wasAngefragt']);
-    if (isset($data['kontext'])) $update_data['kontext'] = wp_kses_post($data['kontext']);
-    if (isset($data['nameHochschule'])) $update_data['name_hochschule'] = wp_kses_post($data['nameHochschule']);
-    if (isset($data['tnAnzahl'])) $update_data['tn_anzahl'] = wp_kses_post($data['tnAnzahl']);
-    if (isset($data['zeitpunkt'])) $update_data['zeitpunkt'] = wp_kses_post($data['zeitpunkt']);
-    if (isset($data['auftragdetails'])) $update_data['auftragdetails'] = wp_kses_post($data['auftragdetails']);
-    if (isset($data['werMacht'])) $update_data['wer_macht'] = wp_kses_post($data['werMacht']);
+    if (isset($data['wasAngefragt'])) $update_data['was_angefragt'] = task_table_sanitize_event_text($data['wasAngefragt']);
+    if (isset($data['kontext'])) $update_data['kontext'] = task_table_sanitize_event_text($data['kontext']);
+    if (isset($data['nameHochschule'])) $update_data['name_hochschule'] = task_table_sanitize_event_text($data['nameHochschule']);
+    if (isset($data['tnAnzahl'])) $update_data['tn_anzahl'] = task_table_sanitize_event_text($data['tnAnzahl']);
+    if (isset($data['zeitpunkt'])) $update_data['zeitpunkt'] = task_table_sanitize_event_text($data['zeitpunkt']);
+    if (isset($data['auftragdetails'])) $update_data['auftragdetails'] = task_table_sanitize_event_text($data['auftragdetails']);
+    if (isset($data['werMacht'])) $update_data['wer_macht'] = task_table_sanitize_event_text($data['werMacht']);
 
     $incoming_category_id = null;
     if (isset($data['category_id'])) {
