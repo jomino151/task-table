@@ -12,6 +12,15 @@ const Edit = ({ attributes, setAttributes }) => {
     const [isLoadingEvents, setIsLoadingEvents] = useState(false);
     const rowUpdateTimers = useRef({});
     const latestFetchCategory = useRef(null);
+    const richTextFormats = ['core/bold', 'core/italic', 'core/link'];
+    const editableFields = [
+        { key: 'wasAngefragt', label: __('Was ist angefragt?', 'task-table'), placeholder: __('Was ist angefragt?', 'task-table') },
+        { key: 'kontext', label: __('Kontext', 'task-table'), placeholder: __('Kontext', 'task-table') },
+        { key: 'nameHochschule', label: __('Name der Hochschule', 'task-table'), placeholder: __('Name der Hochschule', 'task-table') },
+        { key: 'tnAnzahl', label: __('Vorauss. TN-Anzahl', 'task-table'), placeholder: __('Vorauss. TN-Anzahl', 'task-table') },
+        { key: 'zeitpunkt', label: __('Anvisierter Zeitpunkt', 'task-table'), placeholder: __('Anvisierter Zeitpunkt', 'task-table') },
+        { key: 'auftragdetails', label: __('Auftragdetails', 'task-table'), placeholder: __('Auftragdetails', 'task-table'), isWide: true },
+    ];
 
     const activeCategory = categories.find((cat) => cat.id === categoryId);
 
@@ -277,55 +286,64 @@ const Edit = ({ attributes, setAttributes }) => {
                                 </div>
                             )}
                         </div>
-                        <p className="task-table-format-hint">
-                            {__('Formatierungstipp: In allen Textfeldern sind Fett/Kursiv und Links uber die Rich-Text-Werkzeugleiste moglich.', 'task-table')}
-                        </p>
-                        <table className="event-table-editor">
-                            <thead>
-                                <tr>
-                                    <th>{ __('Was ist angefragt?', 'task-table') }</th>
-                                    <th>{ __('Kontext', 'task-table') }</th>
-                                    <th>{ __('Name der Hochschule', 'task-table') }</th>
-                                    <th>{ __('Vorauss. TN-Anzahl', 'task-table') }</th>
-                                    <th>{ __('Anvisierter Zeitpunkt', 'task-table') }</th>
-                                    <th>{ __('Auftragdetails', 'task-table') }</th>
-                                    <th>{ __('Wer macht\'s?', 'task-table') }</th>
-                                    <th>{ __('Aktionen', 'task-table') }</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {rows.map((row, index) => (
-                                    <tr key={index} className={row._pending ? 'pending-row' : ''}>
-                                        <td><RichText value={row.wasAngefragt} onChange={(value) => updateRow(index, 'wasAngefragt', value)} placeholder={ __('Was ist angefragt?', 'task-table') } /></td>
-                                        <td><RichText value={row.kontext} onChange={(value) => updateRow(index, 'kontext', value)} placeholder={ __('Kontext', 'task-table') } /></td>
-                                        <td><RichText value={row.nameHochschule} onChange={(value) => updateRow(index, 'nameHochschule', value)} placeholder={ __('Name der Hochschule', 'task-table') } /></td>
-                                        <td><RichText value={row.tnAnzahl} onChange={(value) => updateRow(index, 'tnAnzahl', value)} placeholder={ __('Vorauss. TN-Anzahl', 'task-table') } /></td>
-                                        <td><RichText value={row.zeitpunkt} onChange={(value) => updateRow(index, 'zeitpunkt', value)} placeholder={ __('Anvisierter Zeitpunkt', 'task-table') } /></td>
-                                        <td><RichText value={row.auftragdetails} onChange={(value) => updateRow(index, 'auftragdetails', value)} placeholder={ __('Auftragdetails', 'task-table') } /></td>
-                                        <td>
-                                            <div>{row.werMacht}</div>
-                                            <div className="button-row">
-                                                <Button disabled variant="secondary">{ __('Anmelden (Vorschau)', 'task-table') }</Button>
+
+                        {rows.length === 0 && !isLoadingEvents && (
+                            <Notice status="info" isDismissible={ false }>
+                                { __('Noch keine Veranstaltungen in dieser Kategorie. Fuge mit "Zeile hinzufügen" den ersten Eintrag hinzu.', 'task-table') }
+                            </Notice>
+                        )}
+
+                        <div className="task-table-editor-list">
+                            {rows.map((row, index) => (
+                                <section key={row.id || `row-${index}`} className={`task-table-editor-card ${row._pending ? 'pending-row' : ''}`}>
+                                    <div className="task-table-editor-card-header">
+                                        <strong>{sprintf(__('Veranstaltung %d', 'task-table'), index + 1)}</strong>
+                                        <div className="task-table-editor-card-actions">
+                                            {row._pending && (
+                                                <span className="task-table-editor-saving">{ __('Wird gespeichert …', 'task-table') }</span>
+                                            )}
+                                            <Button
+                                                isDestructive
+                                                onClick={() => deleteRow(index)}
+                                                variant="tertiary"
+                                                iconSize={16}
+                                                icon="trash"
+                                                title={ __('Zeile löschen', 'task-table') }
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="task-table-editor-fields">
+                                        {editableFields.map((field) => (
+                                            <div key={field.key} className={`task-table-editor-field ${field.isWide ? 'is-wide' : ''}`}>
+                                                <label>{field.label}</label>
+                                                <RichText
+                                                    className="task-table-editor-richtext"
+                                                    value={row[field.key] || ''}
+                                                    onChange={(value) => updateRow(index, field.key, value)}
+                                                    placeholder={field.placeholder}
+                                                    allowedFormats={richTextFormats}
+                                                />
                                             </div>
-                                        </td>
-                                        <td>
-                                            <Button isDestructive onClick={() => deleteRow(index)} variant="tertiary" iconSize={16} icon="trash" title={ __('Zeile löschen', 'task-table') } />
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                        ))}
+                                    </div>
+
+                                    <div className="task-table-editor-signup-preview">
+                                        <span className="task-table-editor-signup-label">{ __('Wer macht\'s? (Vorschau)', 'task-table') }</span>
+                                        <div className="task-table-editor-signup-content">
+                                            <span>{row.werMacht || __('Noch keine bestätigten Anmeldungen.', 'task-table')}</span>
+                                            <Button disabled variant="secondary">{ __('Anmelden (Vorschau)', 'task-table') }</Button>
+                                        </div>
+                                    </div>
+                                </section>
+                            ))}
+                        </div>
+
                         <Button onClick={addRow} variant="primary" className="add-row-button" disabled={!categoryId}>
                             { __('Zeile hinzufügen', 'task-table') }
                         </Button>
                     </>
                 ) : null}
-                <style>{`
-                    .pending-row { background-color: rgba(255, 255, 0, 0.1); }
-                    .task-table-active-category { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
-                    .task-table-format-hint { margin: 0 0 12px; color: #1f2933; font-size: 13px; }
-                    .task-table-inline-category-select .components-select-control__input { max-width: 260px; }
-                `}</style>
             </div>
         </>
     );
