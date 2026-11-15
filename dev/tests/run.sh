@@ -66,7 +66,12 @@ KNOWN_ID=$(sql "SELECT id FROM wp_task_table_subscribers WHERE email='known@exam
 sql "INSERT INTO wp_task_table_subscriber_categories (subscriber_id, category_id, created_at) VALUES ($KNOWN_ID, $CAT, NOW())" >/dev/null
 
 post_json /task-table/v1/subscribers '{"email":"new@example.test"}' >/dev/null; cp "$TMP/body" "$TMP/new.json"
-post_json /task-table/v1/subscribers '{"email":"known@example.test","categories":[999999]}' >/dev/null
+CAT2=$(sql "SELECT id FROM wp_task_table_categories WHERE slug='test-other'")
+if [ -z "$CAT2" ]; then
+  sql "INSERT INTO wp_task_table_categories (name, slug, description, sort_order, created_at, updated_at) VALUES ('Other', 'test-other', '', 99, NOW(), NOW())" >/dev/null
+  CAT2=$(sql "SELECT id FROM wp_task_table_categories WHERE slug='test-other'")
+fi
+post_json /task-table/v1/subscribers "{\"email\":\"known@example.test\",\"categories\":[$CAT2]}" >/dev/null
 check "known and new address get identical responses" "$(cat "$TMP/new.json")" "$(cat "$TMP/body")"
 check "confirmed subscriber's categories unchanged" "$CAT" "$(sql "SELECT GROUP_CONCAT(category_id) FROM wp_task_table_subscriber_categories WHERE subscriber_id=$KNOWN_ID")"
 

@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Task Table
  * Description:       Creates a dynamic table to communicate tasks to multis.
- * Version:           0.1.0
+ * Version:           0.1.1
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Jonas Morawietz
