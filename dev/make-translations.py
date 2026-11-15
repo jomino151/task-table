@@ -16,7 +16,8 @@ SCRIPTS = {
     'task-table-new-event-signup-editor-script': ['src/new-event-signup/index.js', 'src/new-event-signup/edit.js'],
     'task-table-new-event-signup-view-script': ['src/new-event-signup/view.js'],
 }
-LIT = r"""'((?:\\.|[^'\\])*)'"""
+# Single- or double-quoted string literal (Prettier uses double quotes when the text contains ').
+LIT = r"""(?:'((?:\\.|[^'\\])*)'|"((?:\\.|[^"\\])*)")"""
 CALL = re.compile(r"\b(?:__|_x|_n)\(\s*" + LIT)
 
 
@@ -53,7 +54,7 @@ for po in sorted(glob.glob(os.path.join(LANG, '*.po'))):
             if not os.path.exists(path):
                 continue
             for m in CALL.finditer(open(path, encoding='utf-8').read()):
-                s = unescape(m.group(1))
+                s = unescape(m.group(1) if m.group(1) is not None else m.group(2))
                 if (None, s) in entries:
                     msgs[s] = [entries[(None, s)]]
         out = os.path.join(LANG, f'task-table-{locale}-{handle}.json')

@@ -1,133 +1,134 @@
 .wp-block-task-table-task-table {
-    .task-table-active-category {
-        margin-bottom: 16px;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-    }
 
-    .task-table-format-hint {
-        margin: 0 0 12px;
-        color: #1f2933;
-        font-size: 13px;
-    }
+	.task-table-active-category {
+		margin-bottom: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
 
-    .task-table-inline-category-select .components-select-control__input {
-        max-width: 260px;
-    }
+	.task-table-format-hint {
+		margin: 0 0 12px;
+		color: #1f2933;
+		font-size: 13px;
+	}
 
-    .task-table-editor-list {
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
-    }
+	.task-table-inline-category-select .components-select-control__input {
+		max-width: 260px;
+	}
 
-    .task-table-editor-card {
-        border: 1px solid #d0dae3;
-        border-radius: 10px;
-        background: #f8fbff;
-        padding: 14px;
-    }
+	.task-table-editor-list {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
 
-    .task-table-editor-card.pending-row {
-        border-color: #d8ad21;
-        background: #fff8d8;
-    }
+	.task-table-editor-card {
+		border: 1px solid #d0dae3;
+		border-radius: 10px;
+		background: #f8fbff;
+		padding: 14px;
+	}
 
-    .task-table-editor-card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 12px;
-    }
+	.task-table-editor-card.pending-row {
+		border-color: #d8ad21;
+		background: #fff8d8;
+	}
 
-    .task-table-editor-card-actions {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
+	.task-table-editor-card-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 12px;
+	}
 
-    .task-table-editor-saving {
-        font-size: 12px;
-        color: #7a5d00;
-        font-weight: 600;
-    }
+	.task-table-editor-card-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
 
-    .task-table-editor-fields {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 10px;
-    }
+	.task-table-editor-saving {
+		font-size: 12px;
+		color: #7a5d00;
+		font-weight: 600;
+	}
 
-    .task-table-editor-field {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
+	.task-table-editor-fields {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: 10px;
+	}
 
-    .task-table-editor-field.is-wide {
-        grid-column: 1 / -1;
-    }
+	.task-table-editor-field {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
 
-    .task-table-editor-field label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #273746;
-    }
+	.task-table-editor-field.is-wide {
+		grid-column: 1 / -1;
+	}
 
-    .task-table-editor-richtext {
-        min-height: 78px;
-        border: 1px solid #c7d3de;
-        border-radius: 6px;
-        background: #fff;
-        padding: 10px 11px;
-        line-height: 1.4;
-        overflow-wrap: anywhere;
-    }
+	.task-table-editor-field-label {
+		font-size: 12px;
+		font-weight: 600;
+		color: #273746;
+	}
 
-    .task-table-editor-richtext:focus {
-        outline: 2px solid #1e6fb6;
-        border-color: #1e6fb6;
-    }
+	.task-table-editor-richtext {
+		min-height: 78px;
+		border: 1px solid #c7d3de;
+		border-radius: 6px;
+		background: #fff;
+		padding: 10px 11px;
+		line-height: 1.4;
+		overflow-wrap: anywhere;
+	}
 
-    .task-table-editor-signup-preview {
-        margin-top: 12px;
-        padding-top: 10px;
-        border-top: 1px dashed #c6d1dc;
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
+	.task-table-editor-richtext:focus {
+		outline: 2px solid #1e6fb6;
+		border-color: #1e6fb6;
+	}
 
-    .task-table-editor-signup-label {
-        font-size: 12px;
-        font-weight: 600;
-        color: #38526a;
-    }
+	.task-table-editor-signup-preview {
+		margin-top: 12px;
+		padding-top: 10px;
+		border-top: 1px dashed #c6d1dc;
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
 
-    .task-table-editor-signup-content {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        align-items: center;
-        gap: 8px;
-        color: #34495e;
-        font-size: 13px;
-    }
+	.task-table-editor-signup-label {
+		font-size: 12px;
+		font-weight: 600;
+		color: #38526a;
+	}
 
-    .task-table-editor-signup-content .components-button.is-secondary {
-        opacity: 0.7;
-        cursor: not-allowed;
-    }
+	.task-table-editor-signup-content {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		align-items: center;
+		gap: 8px;
+		color: #34495e;
+		font-size: 13px;
+	}
 
-    .add-row-button {
-        margin-top: 1rem;
-        background-color: #007cba;
-        color: white;
-    }
+	.task-table-editor-signup-content .components-button.is-secondary {
+		opacity: 0.7;
+		cursor: not-allowed;
+	}
 
-    .add-row-button:hover {
-        background-color: #006ba1;
-    }
+	.add-row-button {
+		margin-top: 1rem;
+		background-color: #007cba;
+		color: #fff;
+	}
+
+	.add-row-button:hover {
+		background-color: #006ba1;
+	}
 }
