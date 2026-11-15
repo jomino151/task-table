@@ -1,0 +1,36 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"meta": {
+		"title": "Task Table demo",
+		"description": "Installs the Task Table release, seeds two categories with fictional tasks and opens a page with both blocks.",
+		"author": "jomino151",
+		"categories": [
+			"Plugin"
+		]
+	},
+	"landingPage": "/?pagename=open-tasks",
+	"preferredVersions": {
+		"php": "8.3",
+		"wp": "latest"
+	},
+	"features": {
+		"networking": true
+	},
+	"login": true,
+	"steps": [
+		{
+			"step": "installPlugin",
+			"pluginData": {
+				"resource": "url",
+				"url": "https://github.com/jomino151/task-table/releases/download/v1.3.0/task-table-1.3.0.zip"
+			},
+			"options": {
+				"activate": true
+			}
+		},
+		{
+			"step": "runPHP",
+			"code": "<?php\nif ( ! defined( 'ABSPATH' ) ) {\n\trequire_once '/wordpress/wp-load.php';\n}\nglobal $wpdb;\n$now  = current_time( 'mysql' );\n$cats = $wpdb->prefix . 'task_table_categories';\n\n$workshops = task_table_get_default_category_id();\n$wpdb->update( $cats, array( 'name' => 'Workshops', 'slug' => 'workshops' ), array( 'id' => $workshops ) );\n$wpdb->insert( $cats, array( 'name' => 'Talks and panels', 'slug' => 'talks', 'description' => '', 'sort_order' => 1, 'created_at' => $now, 'updated_at' => $now ) );\n$talks = (int) $wpdb->insert_id;\n\n$rows = array(\n\tarray( 'Workshop: Intro to Git', 'Onboarding week', 'Example University', '25', 'March 2027', 'Laptops needed', $workshops ),\n\tarray( 'Workshop: Writing a CV', 'Career service', 'Sample College', '15', 'May 2027', '', $workshops ),\n\tarray( 'Panel discussion', 'Career day', 'Sample College', '80', 'April 2027', 'Three speakers wanted', $talks ),\n\tarray( 'Talk: Open source in research', 'Lecture series', 'Test Institute', '40', 'June 2027', '', $talks ),\n);\nforeach ( $rows as $r ) {\n\t$wpdb->insert(\n\t\t$wpdb->prefix . 'task_table_events',\n\t\tarray(\n\t\t\t'was_angefragt'   => $r[0],\n\t\t\t'kontext'         => $r[1],\n\t\t\t'name_hochschule' => $r[2],\n\t\t\t'tn_anzahl'       => $r[3],\n\t\t\t'zeitpunkt'       => $r[4],\n\t\t\t'auftragdetails'  => $r[5],\n\t\t\t'wer_macht'       => '',\n\t\t\t'category_id'     => $r[6],\n\t\t\t'archived'        => 0,\n\t\t\t'created_at'      => $now,\n\t\t\t'updated_at'      => $now,\n\t\t)\n\t);\n}\n\nwp_insert_post(\n\tarray(\n\t\t'post_type'    => 'page',\n\t\t'post_status'  => 'publish',\n\t\t'post_title'   => 'Open tasks',\n\t\t'post_name'    => 'open-tasks',\n\t\t'post_content' => '<!-- wp:task-table/task-table {\"categoryId\":' . $workshops . ',\"align\":\"wide\"} /-->'\n\t\t\t. '<!-- wp:task-table/task-table {\"categoryId\":' . $talks . ',\"align\":\"wide\"} /-->'\n\t\t\t. '<!-- wp:task-table/new-event-signup /-->',\n\t)\n);\n"
+		}
+	]
+}

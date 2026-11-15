@@ -6,7 +6,26 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+- On screens narrower than 768px, each task row is shown as a card of
+  label and value pairs, with the "Sign up" button always visible. Wide
+  screens keep the table.
+- The subscribe form's email field has a label for screen readers.
+
 ### Changed
+- The signup form is a native dialog: it can be used with the keyboard
+  alone, keeps focus inside while open, closes with Escape or a click on
+  the backdrop and returns focus to the button that opened it. Screen
+  readers announce its title and the result of a signup.
+- Buttons in the table and the dialog are at least 44px tall on touch
+  screens.
+- The default category "General" is shown translated (front end, emails,
+  subscription page) as long as it has not been renamed.
+- The admin screens load their styles and scripts from `admin/admin.css`
+  and `admin/admin.js`, only on the plugin's own screens, instead of
+  printing them inline on every request. They look the same as before.
+- Adding a subscriber in wp-admin shows the new entry and the notice
+  directly instead of reloading the page.
 - English is now the source language everywhere. The front end, the email
   templates, the email settings screen and the block editor used German
   source strings; they are now English and the German moved into the
@@ -19,6 +38,10 @@ All notable changes to this project are documented here. The format follows
 - Block editor and subscribe form scripts now load the plugin's bundled
   German translation (block scripts only looked in `wp-content/languages`).
 - The "Sign up" button no longer overflows its table column.
+- The front-end script no longer writes a message to the browser console
+  on every page.
+- The "choose at least one category" alert on the Email Settings screen shows
+  quotes instead of `&quot;`.
 
 ## [1.2.0] - 2026-11-15
 
