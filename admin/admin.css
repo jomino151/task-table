@@ -1,0 +1,758 @@
+/**
+ * Styles for the Task Table admin screens (enqueued only on those screens).
+ */
+
+.task-table-admin {
+	--tt-surface: #fff;
+	--tt-surface-muted: #f6f7f7;
+	--tt-border: #d1d5db;
+	--tt-border-strong: #b6bec9;
+	--tt-text: #1d2327;
+	--tt-text-muted: #5f6c81;
+	--tt-primary: #2271b1;
+	--tt-primary-muted: #e1effa;
+	--tt-radius: 10px;
+	color: var(--tt-text);
+}
+
+.task-table-admin .tt-page-header {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 24px;
+	margin-bottom: 28px;
+}
+
+.task-table-admin .tt-page-title h1 {
+	margin: 0;
+	font-size: 26px;
+	line-height: 1.2;
+}
+
+.task-table-admin .tt-page-title p {
+	margin-top: 6px;
+	margin-bottom: 0;
+	color: var(--tt-text-muted);
+	max-width: 460px;
+}
+
+.task-table-admin .tt-page-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+}
+
+.task-table-admin .tt-card-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: 18px;
+	margin-bottom: 28px;
+}
+
+.task-table-admin .tt-card {
+	background: var(--tt-surface);
+	border: 1px solid var(--tt-border);
+	border-radius: var(--tt-radius);
+	padding: 18px 20px;
+	box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+	position: relative;
+}
+
+.task-table-admin .tt-card h3 {
+	margin: 0;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--tt-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.task-table-admin .tt-card-value {
+	font-size: 32px;
+	font-weight: 600;
+	margin-top: 12px;
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+}
+
+.task-table-admin .tt-card-value small {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--tt-text-muted);
+}
+
+.task-table-admin .tt-card-meta {
+	margin-top: 14px;
+	font-size: 13px;
+	color: var(--tt-text-muted);
+}
+
+.task-table-admin .tt-toolbar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 16px;
+	margin-bottom: 18px;
+	flex-wrap: wrap;
+}
+
+.task-table-admin .tt-pill-toggle {
+	display: inline-flex;
+	background: var(--tt-surface);
+	border: 1px solid var(--tt-border);
+	border-radius: 999px;
+	padding: 4px;
+	gap: 4px;
+}
+
+.task-table-admin .tt-pill-toggle a {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	padding: 6px 16px;
+	font-size: 13px;
+	font-weight: 500;
+	border-radius: 999px;
+	color: var(--tt-text-muted);
+	text-decoration: none;
+}
+
+.task-table-admin .tt-pill-toggle a.is-active {
+	background: var(--tt-primary);
+	color: #fff;
+}
+
+.task-table-admin .tt-toolbar .tt-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.task-table-admin .tt-filters {
+	background: var(--tt-surface);
+	border: 1px solid var(--tt-border);
+	border-radius: var(--tt-radius);
+	padding: 18px 20px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 16px;
+	align-items: flex-end;
+	margin-bottom: 22px;
+}
+
+.task-table-admin .tt-filter-group {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 200px;
+}
+
+.task-table-admin .tt-filter-group label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--tt-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.task-table-admin .tt-filter-group input,
+.task-table-admin .tt-filter-group select {
+	min-height: 36px;
+}
+
+.task-table-admin .tt-filter-actions {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+}
+
+.task-table-admin .tt-filter-actions .button {
+	box-shadow: none;
+	min-height: 36px;
+	display: inline-flex;
+	align-items: center;
+}
+
+.task-table-admin .tt-filter-actions .button:focus,
+.task-table-admin .tt-filter-actions .button:focus-visible {
+	box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(34, 113, 177, 0.45);
+}
+
+.task-table-admin .tt-filter-actions .button-link {
+	padding-left: 0;
+}
+
+.task-table-admin .tt-empty-state {
+	background: var(--tt-surface);
+	border: 1px dashed var(--tt-border-strong);
+	border-radius: var(--tt-radius);
+	padding: 36px 40px;
+	text-align: center;
+}
+
+.task-table-admin .tt-empty-state h3 {
+	margin: 0 0 12px;
+	font-size: 20px;
+}
+
+.task-table-admin .tt-empty-state p {
+	max-width: 420px;
+	margin: 0 auto 18px;
+	color: var(--tt-text-muted);
+}
+
+.task-table-admin .tt-empty-state .button {
+	margin: 0 6px;
+}
+
+.task-table-admin table.tt-table {
+	border: 1px solid var(--tt-border);
+	border-radius: var(--tt-radius);
+	overflow: hidden;
+	background: var(--tt-surface);
+}
+
+.task-table-admin table.tt-table thead th {
+	background: var(--tt-surface-muted);
+	font-weight: 600;
+	color: var(--tt-text-muted);
+}
+
+.task-table-admin table.tt-table tbody tr:hover {
+	background: #f8fbff;
+}
+
+.task-table-admin .tt-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 12px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: capitalize;
+}
+
+.task-table-admin .tt-pill.is-pending {
+	background: #fff4de;
+	color: #8a5300;
+}
+
+.task-table-admin .tt-pill.is-approved {
+	background: #e6f4ea;
+	color: #0b6b34;
+}
+
+.task-table-admin .tt-pill.is-denied {
+	background: #fde8e8;
+	color: #b42318;
+}
+
+.task-table-admin .tt-pill.is-archived {
+	background: #edf2f7;
+	color: #4a5667;
+}
+
+.task-table-admin .tt-pill.is-active {
+	background: var(--tt-primary-muted);
+	color: var(--tt-primary);
+}
+
+.task-table-admin .tt-pill.is-unconfirmed {
+	background: #ebe9fe;
+	color: #4338ca;
+}
+
+.task-table-admin .tt-actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.task-table-admin .tt-actions .button {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.task-table-admin .tt-actions .button .dashicons {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.task-table-admin .tt-actions .button.is-destructive {
+	background: #d63638;
+	color: #fff;
+	border-color: #b32d2e;
+}
+
+.task-table-admin .tt-section {
+	margin-bottom: 32px;
+}
+
+.task-table-admin .tt-section h2 {
+	margin-bottom: 16px;
+}
+
+.task-table-admin .tt-inline-notice {
+	border-radius: 8px;
+	padding: 12px 16px;
+	margin-bottom: 20px;
+}
+
+.task-table-admin .tt-inline-notice.success {
+	background: #effaf3;
+	border-left: 4px solid #1a7f37;
+}
+
+.task-table-admin .tt-inline-notice.error {
+	background: #fdf3f1;
+	border-left: 4px solid #d63638;
+}
+
+.task-table-admin .tt-columns {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 20px;
+	margin-bottom: 32px;
+}
+
+.task-table-admin .tt-form-card {
+	background: var(--tt-surface);
+	border: 1px solid var(--tt-border);
+	border-radius: var(--tt-radius);
+	padding: 20px 22px;
+	box-shadow: 0 6px 18px rgba(15, 23, 42, 0.05);
+}
+
+.task-table-admin .tt-form-card h2,
+.task-table-admin .tt-form-card h3 {
+	margin-top: 0;
+}
+
+.task-table-admin .tt-status-tabs {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.task-table-admin .tt-status-tabs a {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	background: var(--tt-surface-muted);
+	color: var(--tt-text-muted);
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.task-table-admin .tt-status-tabs a.is-current {
+	background: var(--tt-primary);
+	color: #fff;
+	border-color: var(--tt-primary);
+}
+
+.task-table-admin .tt-tag {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	background: var(--tt-primary-muted);
+	color: var(--tt-primary);
+	border-radius: 999px;
+	padding: 4px 10px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.task-table-admin .tt-tag button {
+	border: none;
+	background: none;
+	color: inherit;
+	cursor: pointer;
+	padding: 0;
+}
+
+.task-table-admin .email-tags-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	border: 1px solid var(--tt-border);
+	border-radius: var(--tt-radius);
+	padding: 10px 12px;
+	min-height: 44px;
+	background: var(--tt-surface-muted);
+}
+
+.task-table-admin .email-tag {
+	background: var(--tt-primary-muted);
+	border: 1px solid var(--tt-primary);
+	border-radius: 999px;
+	padding: 4px 10px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+}
+
+.task-table-admin .email-tag .remove-email {
+	border: none;
+	background: none;
+	color: var(--tt-primary);
+	font-size: 16px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.task-table-admin .email-input-container {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.task-table-admin .email-input-container input[type="email"] {
+	min-width: 240px;
+}
+
+.task-table-admin .signup-free-text {
+	max-width: 320px;
+	white-space: normal;
+	overflow-wrap: anywhere; /* same as the deprecated word-break: break-word */
+}
+
+.task-table-admin .tt-table-scroll {
+	overflow-x: auto;
+	border-radius: var(--tt-radius);
+}
+
+.task-table-admin .tt-signups-table {
+	table-layout: auto;
+	min-width: 1000px;
+}
+
+.task-table-admin .tt-signups-table th:nth-child(1),
+.task-table-admin .tt-signups-table td:nth-child(1) {
+	width: 15%;
+	min-width: 170px;
+}
+
+.task-table-admin .tt-signups-table th:nth-child(2),
+.task-table-admin .tt-signups-table td:nth-child(2) {
+	width: 15%;
+	min-width: 180px;
+}
+
+.task-table-admin .tt-signups-table th:nth-child(3),
+.task-table-admin .tt-signups-table td:nth-child(3) {
+	width: 42%;
+	min-width: 240px;
+}
+
+.task-table-admin .tt-signups-table th:nth-child(4),
+.task-table-admin .tt-signups-table td:nth-child(4) {
+	width: 8%;
+	min-width: 110px;
+}
+
+.task-table-admin .tt-signups-table th:nth-child(5),
+.task-table-admin .tt-signups-table td:nth-child(5) {
+	width: 10%;
+	min-width: 130px;
+}
+
+.task-table-admin .tt-signups-table th:nth-child(6),
+.task-table-admin .tt-signups-table td:nth-child(6) {
+	width: 10%;
+	min-width: 170px;
+}
+
+.task-table-admin .tt-signups-table .signup-free-text {
+	max-width: none;
+}
+
+.task-table-admin .tt-export-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 24px;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease-in-out;
+}
+
+.task-table-admin .tt-export-modal.is-open {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.task-table-admin .tt-export-modal__overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.45);
+}
+
+.task-table-admin .tt-export-modal__dialog {
+	position: relative;
+	background: var(--tt-surface);
+	border-radius: var(--tt-radius);
+	border: 1px solid var(--tt-border);
+	box-shadow: 0 18px 45px rgba(15, 23, 42, 0.22);
+	max-width: 560px;
+	width: 100%;
+	padding: 28px 32px;
+	z-index: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 18px;
+}
+
+.task-table-admin .tt-export-modal__close {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	border: 0;
+	background: none;
+	color: var(--tt-text-muted);
+	font-size: 24px;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.task-table-admin .tt-export-modal__close:hover,
+.task-table-admin .tt-export-modal__close:focus {
+	color: var(--tt-text);
+}
+
+.task-table-admin .tt-export-modal__title {
+	margin: 0;
+	font-size: 22px;
+}
+
+.task-table-admin .tt-export-modal__intro {
+	margin: 0;
+	color: var(--tt-text-muted);
+	font-size: 14px;
+}
+
+.task-table-admin .tt-export-fieldset {
+	border: 1px solid var(--tt-border);
+	border-radius: 8px;
+	padding: 16px;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.task-table-admin .tt-export-fieldset legend {
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--tt-text-muted);
+	padding: 0 6px;
+}
+
+.task-table-admin .tt-export-option {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.task-table-admin .tt-export-field {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.task-table-admin .tt-export-field > label,
+.task-table-admin .tt-export-field legend {
+	font-size: 12px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--tt-text-muted);
+}
+
+.task-table-admin .tt-export-checkbox-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 8px;
+}
+
+.task-table-admin .tt-export-checkbox-grid label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 13px;
+}
+
+.task-table-admin .tt-export-help {
+	font-size: 12px;
+	color: var(--tt-text-muted);
+	margin: 0;
+}
+
+.task-table-admin .tt-export-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 16px;
+}
+
+.task-table-admin .tt-export-actions .button.button-primary {
+	min-width: 120px;
+}
+
+body.tt-export-modal-open {
+	overflow: hidden;
+}
+
+@media (max-width: 782px) {
+
+	.task-table-admin .tt-page-actions,
+	.task-table-admin .tt-toolbar {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.task-table-admin .tt-filters {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.task-table-admin .tt-filter-group,
+	.task-table-admin .tt-filter-actions {
+		width: 100%;
+	}
+
+	.task-table-admin table.tt-table {
+		display: block;
+		overflow-x: auto;
+	}
+
+	.task-table-admin .tt-export-modal__dialog {
+		padding: 24px 20px;
+		max-width: 100%;
+	}
+}
+
+/* Email Settings: recipient editor and template tabs. */
+.task-table-admin .tt-toolbar.tt-toolbar--start {
+	justify-content: flex-start;
+}
+
+.task-table-admin h2.tt-section-label {
+	margin: 0;
+	font-size: 16px;
+	font-weight: 600;
+	color: var(--tt-text-muted);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.task-table-admin .email-recipients-container {
+	margin-bottom: 24px;
+}
+
+.task-table-admin .tt-recipient-list {
+	display: grid;
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.task-table-admin .tt-recipient-row {
+	display: flex;
+	justify-content: space-between;
+	gap: 12px;
+	align-items: flex-start;
+	border: 1px solid var(--tt-border);
+	border-radius: 10px;
+	padding: 12px;
+}
+
+.task-table-admin .tt-recipient-row__categories {
+	margin-top: 8px;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.task-table-admin .tt-form-card.tt-recipient-add {
+	margin: 0;
+	padding: 16px;
+	border: 1px solid var(--tt-border);
+	border-radius: 10px;
+}
+
+.task-table-admin .tt-form-card.tt-recipient-add h3 {
+	margin: 0 0 10px;
+}
+
+.task-table-admin .tt-recipient-add .email-input-container {
+	margin-bottom: 10px;
+}
+
+.task-table-admin label.tt-recipient-all {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 10px;
+}
+
+.task-table-admin .tt-recipient-categories {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 4px;
+}
+
+.task-table-admin .tt-recipient-categories label {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.task-table-admin p.description.tt-recipient-help {
+	margin-top: 12px;
+	color: var(--tt-text-muted);
+}
+
+.task-table-admin h2.tt-templates-heading {
+	margin: 0 0 16px;
+	font-size: 18px;
+}
+
+.task-table-admin .email-templates-tabs {
+	margin-bottom: 18px;
+}
+
+.task-table-admin p.tt-placeholders-intro {
+	margin-top: 0;
+}
+
+/* Subscribers: category checkboxes in the "Add New Subscriber" form. */
+.task-table-admin label.tt-category-option {
+	display: inline-block;
+	margin-right: 12px;
+	margin-bottom: 6px;
+}
+
+/* Categories: the per-row delete form. */
+.task-table-admin form.tt-inline-form {
+	display: inline-block;
+}

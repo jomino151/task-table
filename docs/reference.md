@@ -59,7 +59,8 @@ uninstall.php                removes tables, options and capabilities
 src/api.php                  REST routes, signup/subscribe handling, export
 src/subscriptions.php        signed manage/unsubscribe links (RFC 8058)
 src/email-notifications.php  templates and sending
-src/admin-pages.php          wp-admin screens
+src/admin/                   wp-admin screens: loader.php (menu, assets), one file per screen
+admin/                       admin screen stylesheet and script
 src/database.php             schema, migrations, categories
 src/task-table/              table block (editor, render, signup modal)
 src/new-event-signup/        subscription block
