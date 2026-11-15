@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [1.2.0] - unreleased
+## [1.2.0] - 2026-11-15
 
 ### Security
 - **Missing authorization on the events export endpoint (CWE-862).**
@@ -74,3 +74,6 @@ All notable changes to this project are documented here. The format follows
 
 - Last version before this changelog. The repository header said 0.1.0 while
   deployments reported 1.1.0; it's the same code.
+
+[1.2.0]: https://github.com/jomino151/task-table/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/jomino151/task-table/releases/tag/v1.1.0
