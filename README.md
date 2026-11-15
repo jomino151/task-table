@@ -92,6 +92,11 @@ composer install && vendor/bin/phpcs   # WordPress coding standards
 
 CI runs PHP 7.4/8.4 lint, PHPCS, a gitleaks history scan and both test suites on every pull request.
 
+To release, bump the version in `task-table.php`, `readme.txt` and `package.json`, add the entries to
+`CHANGELOG.md` and `readme.txt`, merge to `main`, check with `dev/release-check.sh 1.3.0`, then push
+the tag (`git tag v1.3.0 && git push origin v1.3.0`). The release workflow runs CI on the tag and
+publishes the GitHub release with the tested zip and the changelog section as notes.
+
 ## Changelog
 
 All notable changes are listed in [CHANGELOG.md](CHANGELOG.md).
