@@ -508,9 +508,14 @@ function task_table_print_admin_styles() {
             word-break: break-word;
         }
 
+        .task-table-admin .tt-table-scroll {
+            overflow-x: auto;
+            border-radius: var(--tt-radius);
+        }
+
         .task-table-admin .tt-signups-table {
             table-layout: auto;
-            min-width: 1120px;
+            min-width: 1000px;
         }
 
         .task-table-admin .tt-signups-table th:nth-child(1),
@@ -528,7 +533,7 @@ function task_table_print_admin_styles() {
         .task-table-admin .tt-signups-table th:nth-child(3),
         .task-table-admin .tt-signups-table td:nth-child(3) {
             width: 42%;
-            min-width: 340px;
+            min-width: 240px;
         }
 
         .task-table-admin .tt-signups-table th:nth-child(4),
@@ -802,7 +807,7 @@ function task_table_admin_dashboard_page() {
         $latest_ts = strtotime($latest_event_date);
         if ($latest_ts) {
             /* translators: %s: human readable time difference */
-            $latest_event_meta = sprintf(__('Letztes Event erstellt vor %s', 'task-table'), human_time_diff($latest_ts, current_time('timestamp')));
+            $latest_event_meta = sprintf(__('Last event created %s ago', 'task-table'), human_time_diff($latest_ts, current_time('timestamp')));
         }
     }
 
@@ -1428,7 +1433,7 @@ function task_table_admin_signups_page() {
         </form>
 
         <?php if (!empty($signups)): ?>
-            <table class="wp-list-table widefat striped tt-table tt-signups-table">
+            <div class="tt-table-scroll"><table class="wp-list-table widefat striped tt-table tt-signups-table">
                 <thead>
                     <tr>
                         <th scope="col"><?php _e('Signup', 'task-table'); ?></th>
@@ -1513,7 +1518,7 @@ function task_table_admin_signups_page() {
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
-            </table>
+            </table></div>
         <?php else: ?>
             <div class="tt-empty-state">
                 <h3><?php _e('No signups match your filters', 'task-table'); ?></h3>

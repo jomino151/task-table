@@ -1,55 +1,56 @@
-=== task-Table ===
-Contributors:      Jonas Morawietz
-Tags:              block
-Tested up to:      6.7
+=== Task Table ===
+Contributors:      jomino151
+Tags:              volunteers, tasks, events, signup, block
+Requires at least: 6.7
+Tested up to:      7.1
+Requires PHP:      7.4
 Stable tag:        0.1.1
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
-Creates a dynamic table to communicate task to multis.
+Publish a table of open tasks or event requests, let volunteers sign up, and notify subscribers about new entries.
 
 == Description ==
 
-This is the long description. No limit, and you can use Markdown (as well as in the following sections).
+Task Table adds two blocks:
 
-For backwards compatibility, if this section is missing, the full length of the short description will be used, and
-Markdown parsed.
+* **Task Table** shows open tasks or event requests per category. Visitors sign up for an entry in a modal, and moderators approve or deny the signup in wp-admin.
+* **Subscribe to new events** is a double opt-in form. Subscribers get an email when a new entry is published in the categories they chose, and every email contains a link to change categories or unsubscribe.
+
+Admin screens cover events (with archive and Excel export), signups, subscribers, categories and editable email templates.
+
+The front end is in German; the admin ships English strings with a German translation. Everything uses the `task-table` text domain.
+
+Source, development setup and security policy: https://github.com/jomino151/task-table
 
 == Installation ==
 
-This section describes how to install the plugin and get it working.
-
-e.g.
-
-1. Upload the plugin files to the `/wp-content/plugins/task-table` directory, or install the plugin through the WordPress plugins screen directly.
-1. Activate the plugin through the 'Plugins' screen in WordPress
-
+1. Upload the plugin zip through Plugins → Add New → Upload Plugin, or copy the built plugin to `/wp-content/plugins/task-table`.
+2. Activate it.
+3. Create categories under Task Table → Categories and add the blocks to a page.
 
 == Frequently Asked Questions ==
 
-= A question that someone might have =
+= Who can edit events? =
 
-An answer to that question.
+Users with the `manage_task_table` capability (administrators by default).
 
-= What about foo bar? =
+= How do subscribers unsubscribe? =
 
-Answer to foo bar dilemma.
+Every notification email contains a personal link to manage or cancel the subscription. Mail clients that support one-click unsubscribe (RFC 8058) show their own button as well.
 
-== Screenshots ==
+= Can I rename the columns? =
 
-1. This screen shot description corresponds to screenshot-1.(png|jpg|jpeg|gif). Note that the screenshot is taken from
-the /assets directory or the directory that contains the stable readme.txt (tags or trunk). Screenshots in the /assets
-directory take precedence. For example, `/assets/screenshot-1.png` would win over `/tags/4.3/screenshot-1.png`
-(or jpg, jpeg, gif).
-2. This is the second screen shot
+Yes, with the `task_table_column_labels` filter.
 
 == Changelog ==
 
+= 0.1.1 =
+* Security: the events export endpoint now requires the `manage_task_table` capability. Before, any logged-in user could download all events (CWE-862).
+* Security: rate limits, input validation and no subscriber enumeration on the public endpoints. Confirmation links expire.
+* New: self-service unsubscribe and category management links, with one-click List-Unsubscribe.
+* New: German translation shipped as .po/.mo, translatable front-end strings, filterable column labels, uninstall cleanup.
+* Fix: the REST export returns a valid file, the admin script loads, and email templates no longer gain backslashes.
+
 = 0.1.0 =
-* Release
-
-== Arbitrary section ==
-
-You may provide arbitrary sections, in the same format as the ones above. This may be of use for extremely complicated
-plugins where more information needs to be conveyed that doesn't fit into the categories of "description" or
-"installation." Arbitrary sections will be shown below the built-in sections outlined above.
+* Initial release.

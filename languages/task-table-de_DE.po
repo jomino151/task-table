@@ -645,3 +645,6 @@ msgstr "Archivstatus konnte nicht geändert werden"
 
 msgid "Forbidden"
 msgstr "Keine Berechtigung"
+
+msgid "Last event created %s ago"
+msgstr "Letztes Event erstellt vor %s"

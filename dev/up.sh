@@ -70,7 +70,7 @@ if ! wp core is-installed >/dev/null 2>&1; then
   wp user create subscriber subscriber@example.test --role=subscriber --user_pass=subscriber
   wp user create editor editor@example.test --role=editor --user_pass=editor
   wp post create --post_type=page --post_status=publish --post_title="Task Table" \
-    --post_content='<!-- wp:task-table/task-table /--><!-- wp:task-table/new-event-signup /-->'
+    --post_content='<!-- wp:task-table/task-table {"align":"wide"} /--><!-- wp:task-table/new-event-signup /-->'
   wp eval-file wp-content/plugins/task-table/dev/seed.php
 fi
 

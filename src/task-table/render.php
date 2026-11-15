@@ -39,7 +39,7 @@ if ($has_archived_col) {
     }
 }
 
-echo '<div class="wp-block-task-table-task-table">';
+echo '<div ' . get_block_wrapper_attributes() . '>';
 if (!empty($category_name)) {
     echo '<h3 class="task-table-category-heading">' . esc_html($category_name) . '</h3>';
 }

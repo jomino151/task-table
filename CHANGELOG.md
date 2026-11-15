@@ -22,7 +22,29 @@ All notable changes to this project are documented here. The format follows
   signups for archived events.
 - Public error responses no longer include database error messages.
 
+### Added (privacy)
+- Self-service subscription management: every new-event email contains an
+  HMAC-signed link to change categories or unsubscribe (which deletes the
+  address), plus RFC 8058 one-click `List-Unsubscribe` headers. Subscribing
+  again with an already confirmed address emails that address its link.
+- `uninstall.php` removes the plugin's tables (including all personal data),
+  options, rate-limit transients and capabilities.
+
+### Changed
+- German translations ship as `languages/task-table-de_DE.po/.mo` loaded with
+  `load_plugin_textdomain()`. They replace a runtime gettext filter that forced
+  German on every site. Front-end, modal, block and email strings are
+  translatable, and column labels can be changed with `task_table_column_labels`.
+- The admin menu is called "Aufgabentabelle" in German instead of "Multi-Tabelle".
+  Notification emails now use the column labels ("Name der Hochschule:"
+  instead of "Hochschule:").
+- The table block supports wide and full alignment.
+
 ### Fixed
+- Email template settings were saved without `wp_unslash()`, so quotes gained
+  backslashes.
+- The signup modal's backdrop only covered the content column in block themes.
+- The signups admin table clipped the Actions column. It now scrolls.
 - The REST export returned the spreadsheet JSON-encoded, and the default XLSX
   format crashed with a fatal error (`wp_tempnam()` is not loaded on REST
   requests). It now returns a valid file.
@@ -35,7 +57,8 @@ All notable changes to this project are documented here. The format follows
 - Local development stack (`dev/up.sh`: WordPress, MariaDB and Mailpit through
   podman or docker) and an integration test suite (`dev/tests/run.sh`).
 - Filters: `task_table_rate_limit`, `task_table_client_ip`,
-  `task_table_confirmation_token_ttl`.
+  `task_table_confirmation_token_ttl`, `task_table_column_labels`.
+- English README, SECURITY.md, LICENSE and screenshots.
 
 ## [0.1.0]
 
