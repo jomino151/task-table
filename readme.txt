@@ -4,7 +4,7 @@ Tags:              volunteers, tasks, events, signup, block
 Requires at least: 6.7
 Tested up to:      7.1
 Requires PHP:      7.4
-Stable tag:        1.2.0
+Stable tag:        1.3.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,13 @@ Every notification email contains a personal link to manage or cancel the subscr
 Yes, with the `task_table_column_labels` filter.
 
 == Changelog ==
+
+= 1.3.0 =
+* New: on phones each task is shown as a card with its "Sign up" button; larger touch targets.
+* New: the signup form is an accessible dialog (keyboard, focus handling, screen reader labels); the subscribe field has a label.
+* Change: English source strings everywhere, German moved into the bundled translations. German sites see the same text.
+* Change: admin styles and scripts load from files, only on the plugin's screens.
+* Fix: block scripts load the bundled German translation, no console output on the front end, the "Sign up" button fits its column.
 
 = 1.2.0 =
 * Security: the events export endpoint now requires the `manage_task_table` capability. Before, any logged-in user could download all events (CWE-862).

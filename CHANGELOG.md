@@ -6,6 +6,8 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-16
+
 ### Added
 - On screens narrower than 768px, each task row is shown as a card of
   label and value pairs, with the "Sign up" button always visible. Wide
@@ -114,5 +116,7 @@ All notable changes to this project are documented here. The format follows
 - Last version before this changelog. The repository header said 0.1.0 while
   deployments reported 1.1.0; it's the same code.
 
+[Unreleased]: https://github.com/jomino151/task-table/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/jomino151/task-table/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/jomino151/task-table/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/jomino151/task-table/releases/tag/v1.1.0
