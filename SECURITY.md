@@ -4,7 +4,8 @@
 
 | Version  | Supported |
 |----------|-----------|
-| 1.2.x (latest release) | Yes |
+| 1.3.x (latest release) | Yes |
+| 1.2.x    | No, please update |
 | < 1.2.0  | No, contains a known vulnerability ([CHANGELOG](CHANGELOG.md)) |
 
 Only the latest release receives security fixes. Please update before reporting.

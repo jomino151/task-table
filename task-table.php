@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Task Table
  * Description:       Publish a table of open tasks or event requests, let volunteers sign up, and notify subscribers about new entries.
- * Version:           1.2.0
+ * Version:           1.3.0
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Jonas Morawietz

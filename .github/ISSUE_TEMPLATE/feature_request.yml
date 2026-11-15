@@ -1,0 +1,14 @@
+name: Feature request
+description: Suggest a change. The project is maintained in spare time, so new features are unlikely.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
