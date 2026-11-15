@@ -4,8 +4,8 @@
 
 | Version  | Supported |
 |----------|-----------|
-| 0.1.x (latest release) | Yes |
-| < 0.1.1  | No, contains a known vulnerability ([CHANGELOG](CHANGELOG.md)) |
+| 1.2.x (latest release) | Yes |
+| < 1.2.0  | No, contains a known vulnerability ([CHANGELOG](CHANGELOG.md)) |
 
 Only the latest release receives security fixes. Please update before reporting.
 
@@ -48,4 +48,4 @@ listed in the README.
 
 | ID | Summary | Affected | Fixed |
 |----|---------|----------|-------|
-| _pending_ | Missing authorization on `GET /task-table/v1/events/export` (CWE-862): any logged-in user could export all events | `<= 0.1.0` | `0.1.1` |
+| _pending_ | Missing authorization on `GET /task-table/v1/events/export` (CWE-862): any logged-in user could export all events | `<= 1.1.0` | `1.2.0` |

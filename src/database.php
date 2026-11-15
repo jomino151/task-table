@@ -346,6 +346,23 @@ function task_table_maybe_upgrade_schema() {
         update_option('task_table_db_version', '1.6');
         $current_version = '1.6';
     }
+
+    // Upgrade to 1.7: email templates used to be saved without wp_unslash(), so quotes were
+    // stored as \" and sent to people that way. Remove that one level of escaping once.
+    if (version_compare($current_version, '1.7', '<')) {
+        $template_options = $wpdb->get_col($wpdb->prepare(
+            "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE %s",
+            $wpdb->esc_like('task_table_email_') . '%'
+        ));
+        foreach ($template_options as $option_name) {
+            $value = get_option($option_name);
+            if (is_string($value) && preg_match('/\\\\[\'"\\\\]/', $value)) {
+                update_option($option_name, wp_unslash($value));
+            }
+        }
+        update_option('task_table_db_version', '1.7');
+        $current_version = '1.7';
+    }
 }
 add_action('plugins_loaded', 'task_table_maybe_upgrade_schema');
 

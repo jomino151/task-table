@@ -2,7 +2,7 @@
 /**
  * Plugin Name:       Task Table
  * Description:       Publish a table of open tasks or event requests, let volunteers sign up, and notify subscribers about new entries.
- * Version:           0.1.1
+ * Version:           1.2.0
  * Requires at least: 6.7
  * Requires PHP:      7.4
  * Author:            Jonas Morawietz
@@ -244,6 +244,10 @@ function task_table_handle_frontend_confirmation() {
     if (!$email || !$token) {
         return; // Silent fail to avoid revealing info
     }
+    if (!defined('DONOTCACHEPAGE')) {
+        define('DONOTCACHEPAGE', true);
+    }
+    nocache_headers();
     $result = task_table_confirm_subscription_token($email, $token);
     if ($result === 'confirmed') {
         wp_die(esc_html__('Danke! Dein Abo wurde bestätigt.', 'task-table'), esc_html__('Abo bestätigt', 'task-table'), ['response' => 200]);

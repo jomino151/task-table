@@ -2,7 +2,7 @@
 # This file is distributed under the same license as the plugin (GPL-2.0-or-later).
 msgid ""
 msgstr ""
-"Project-Id-Version: Task Table 0.1.1\n"
+"Project-Id-Version: Task Table 1.2.0\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"

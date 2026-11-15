@@ -112,9 +112,9 @@ and support placeholders such as `{event_title}`, `{user_name}`,
 - Event text is filtered with a narrow `wp_kses` allowlist on save and on output.
 - Exports write every cell as a string, so spreadsheet formulas aren't evaluated.
 
-**Advisory:** versions `<= 0.1.0` let any logged-in user, including the
+**Advisory:** versions `<= 1.1.0` let any logged-in user, including the
 Subscriber role, download all events through the export endpoint (CWE-862, fixed
-in 0.1.1). See [CHANGELOG.md](CHANGELOG.md) and the repository's security advisories.
+in 1.2.0). See [CHANGELOG.md](CHANGELOG.md) and the repository's security advisories.
 
 To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
@@ -134,7 +134,7 @@ dev/down.sh               # remove containers and volumes
 
 Logins: `admin/admin`, `editor/editor`, `subscriber/subscriber`. All mail is
 caught by Mailpit at http://localhost:8025. `dev/repro-export-authz.sh` is the
-standalone reproduction for the 0.1.0 export vulnerability.
+standalone reproduction for the 1.1.0 export vulnerability.
 
 ### Translations
 

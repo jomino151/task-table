@@ -88,6 +88,9 @@ function task_table_handle_subscription_management() {
         return;
     }
 
+    if (!defined('DONOTCACHEPAGE')) {
+        define('DONOTCACHEPAGE', true); // Page caches (e.g. WP Super Cache) must never store these pages.
+    }
     nocache_headers();
     header('X-Robots-Tag: noindex, nofollow');
     header('Referrer-Policy: no-referrer');

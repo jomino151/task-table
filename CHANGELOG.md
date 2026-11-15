@@ -4,7 +4,7 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.1.1] - unreleased
+## [1.2.0] - unreleased
 
 ### Security
 - **Missing authorization on the events export endpoint (CWE-862).**
@@ -12,7 +12,7 @@ All notable changes to this project are documented here. The format follows
   user, including the Subscriber role. Such users could download all events,
   archived ones included, together with internal fields and the names of
   approved volunteers. The endpoint now requires the `manage_task_table`
-  capability. Affects versions `<= 0.1.0`.
+  capability. Affects versions `<= 1.1.0`.
 - Subscribe endpoint: identical responses for new and existing addresses (no
   subscriber enumeration). Unauthenticated requests can no longer change a
   confirmed subscriber's categories. Rate limited per IP and per address.
@@ -41,6 +41,8 @@ All notable changes to this project are documented here. The format follows
 - The table block supports wide and full alignment.
 
 ### Fixed
+- Email templates already stored with backslashes before quotes are cleaned up
+  once on update (database version 1.7).
 - Email template settings were saved without `wp_unslash()`, so quotes gained
   backslashes.
 - The signup modal's backdrop only covered the content column in block themes.
@@ -60,6 +62,7 @@ All notable changes to this project are documented here. The format follows
   `task_table_confirmation_token_ttl`, `task_table_column_labels`.
 - English README, SECURITY.md, LICENSE and screenshots.
 
-## [0.1.0]
+## [1.1.0]
 
-- Initial version.
+- Last version before this changelog. The repository header said 0.1.0 while
+  deployments reported 1.1.0; it's the same code.

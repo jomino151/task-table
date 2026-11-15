@@ -4,7 +4,7 @@ Tags:              volunteers, tasks, events, signup, block
 Requires at least: 6.7
 Tested up to:      7.1
 Requires PHP:      7.4
-Stable tag:        0.1.1
+Stable tag:        1.2.0
 License:           GPL-2.0-or-later
 License URI:       https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,12 +45,12 @@ Yes, with the `task_table_column_labels` filter.
 
 == Changelog ==
 
-= 0.1.1 =
+= 1.2.0 =
 * Security: the events export endpoint now requires the `manage_task_table` capability. Before, any logged-in user could download all events (CWE-862).
 * Security: rate limits, input validation and no subscriber enumeration on the public endpoints. Confirmation links expire.
 * New: self-service unsubscribe and category management links, with one-click List-Unsubscribe.
 * New: German translation shipped as .po/.mo, translatable front-end strings, filterable column labels, uninstall cleanup.
 * Fix: the REST export returns a valid file, the admin script loads, and email templates no longer gain backslashes.
 
-= 0.1.0 =
+= 1.1.0 =
 * Initial release.
