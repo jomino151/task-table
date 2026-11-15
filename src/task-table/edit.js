@@ -115,7 +115,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 				setCategoryError(
 					__( 'Could not load categories.', 'task-table' )
 				);
-				// eslint-disable-next-line no-console
+				// eslint-disable-next-line no-console -- surface failed REST calls in the browser console
 				console.error( 'Task Table: could not load categories', error );
 			} finally {
 				setIsLoadingCategories( false );
@@ -163,7 +163,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 				setAttributes( { rows: formattedEvents } );
 			}
 		} catch ( error ) {
-			// eslint-disable-next-line no-console
+			// eslint-disable-next-line no-console -- surface failed REST calls in the browser console
 			console.error( 'Task Table: could not load events:', error );
 		} finally {
 			if ( latestFetchCategory.current === currentCategoryId ) {
@@ -216,8 +216,9 @@ const Edit = ( { attributes, setAttributes } ) => {
 			} );
 			setAttributes( { rows: updatedRows } );
 		} catch ( error ) {
+			// eslint-disable-next-line no-console -- surface failed REST calls in the browser console
 			console.error(
-				'Task Table: Zeile konnte nicht in der Datenbank gespeichert werden:',
+				'Task Table: could not save the row to the database:',
 				error
 			);
 		}
@@ -282,8 +283,9 @@ const Edit = ( { attributes, setAttributes } ) => {
 					setAttributes( { rows: refreshedRows } );
 				}
 			} catch ( error ) {
+				// eslint-disable-next-line no-console -- surface failed REST calls in the browser console
 				console.error(
-					'Task Table: Zeile konnte nicht in der Datenbank aktualisiert werden:',
+					'Task Table: could not update the row in the database:',
 					error
 				);
 			}
@@ -293,6 +295,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 	// Delete row
 	const deleteRow = async ( index ) => {
 		if (
+			// eslint-disable-next-line no-alert -- a native confirm is enough for a destructive editor action
 			window.confirm(
 				__( 'Do you really want to delete this event?', 'task-table' )
 			)
@@ -310,6 +313,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 					method: 'DELETE',
 				} );
 			} catch ( error ) {
+				// eslint-disable-next-line no-console -- surface failed REST calls in the browser console
 				console.error(
 					'Task Table: could not delete the row from the database:',
 					error
@@ -345,9 +349,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 					title={ __( 'Category', 'task-table' ) }
 					initialOpen={ true }
 				>
-					{ isLoadingCategories ? (
-						<Spinner />
-					) : categories.length > 0 ? (
+					{ isLoadingCategories && <Spinner /> }
+					{ ! isLoadingCategories && categories.length > 0 && (
 						<SelectControl
 							label={ __( 'Task category', 'task-table' ) }
 							value={ categoryId ? String( categoryId ) : '' }
@@ -366,7 +369,8 @@ const Edit = ( { attributes, setAttributes } ) => {
 							] }
 							onChange={ handleCategoryChange }
 						/>
-					) : (
+					) }
+					{ ! isLoadingCategories && categories.length === 0 && (
 						<Notice status="warning" isDismissible={ false }>
 							{ __(
 								'No categories available. Create one in the Task Table admin area.',
@@ -414,6 +418,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 							{ activeCategory ? (
 								<strong>
 									{ sprintf(
+										/* translators: %s: category name */
 										__(
 											'Active category: %s',
 											'task-table'
@@ -476,6 +481,7 @@ const Edit = ( { attributes, setAttributes } ) => {
 									<div className="task-table-editor-card-header">
 										<strong>
 											{ sprintf(
+												/* translators: %d: position of the event in the table, starting at 1 */
 												__( 'Event %d', 'task-table' ),
 												index + 1
 											) }
@@ -511,8 +517,14 @@ const Edit = ( { attributes, setAttributes } ) => {
 												key={ field.key }
 												className={ `task-table-editor-field ${ field.isWide ? 'is-wide' : '' }` }
 											>
-												<label>{ field.label }</label>
+												<span
+													id={ `task-table-field-${ index }-${ field.key }` }
+													className="task-table-editor-field-label"
+												>
+													{ field.label }
+												</span>
 												<RichText
+													aria-labelledby={ `task-table-field-${ index }-${ field.key }` }
 													className="task-table-editor-richtext"
 													value={
 														row[ field.key ] || ''

@@ -52,6 +52,19 @@ jobs:
         # Errors fail the build. Warnings (interpolated table names, see phpcs.xml.dist) are shown as annotations.
         run: vendor/bin/phpcs -q --report=checkstyle --runtime-set ignore_warnings_on_exit 1 | cs2pr --graceful-warnings
 
+  js-css-lint:
+    name: JS and SCSS lint (wp-scripts)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run lint:js
+      - run: npm run lint:css
+
   secrets:
     name: Secret scan (gitleaks, full history)
     runs-on: ubuntu-24.04
@@ -96,7 +109,7 @@ jobs:
   plugin-zip:
     name: Plugin zip
     runs-on: ubuntu-24.04
-    needs: [php-lint, phpcs, integration]
+    needs: [php-lint, phpcs, js-css-lint, integration]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

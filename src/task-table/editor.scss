@@ -71,7 +71,7 @@
 		grid-column: 1 / -1;
 	}
 
-	.task-table-editor-field label {
+	.task-table-editor-field-label {
 		font-size: 12px;
 		font-weight: 600;
 		color: #273746;
@@ -125,7 +125,7 @@
 	.add-row-button {
 		margin-top: 1rem;
 		background-color: #007cba;
-		color: white;
+		color: #fff;
 	}
 
 	.add-row-button:hover {

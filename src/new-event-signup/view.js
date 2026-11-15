@@ -12,17 +12,18 @@ const initSignupForm = ( container ) => {
 	const form = container.querySelector( '.event-notification-form' );
 	const emailInput = container.querySelector( '.subscriber-email' );
 	const messageEl = container.querySelector( '.subscription-message' );
-	const submitButton = container.querySelector( '.subscription-button' );
 	const restUrl = container.dataset.restUrl;
 	const restNonce = container.dataset.restNonce;
-	const categoryInputs = Array.from(
-		container.querySelectorAll( '.subscriber-category' )
-	);
 
 	if ( ! form || ! emailInput || ! messageEl || ! restUrl ) {
 		container.dataset.initialized = 'true';
 		return;
 	}
+
+	const submitButton = container.querySelector( '.subscription-button' );
+	const categoryInputs = Array.from(
+		container.querySelectorAll( '.subscriber-category' )
+	);
 
 	const resetMessage = () => {
 		messageEl.classList.remove( 'is-visible', 'is-success', 'is-error' );
@@ -102,6 +103,7 @@ const initSignupForm = ( container ) => {
 				);
 			}
 		} catch ( error ) {
+			// eslint-disable-next-line no-console -- keep the cause visible when the request fails
 			console.error( 'Task Table subscription error:', error );
 			showMessage(
 				__(
@@ -139,7 +141,7 @@ if ( document.readyState === 'loading' ) {
 // Support for Ajax-rendered content (e.g., when block is inserted dynamically)
 document.addEventListener( 'task-table:new-event-signup:init', ( event ) => {
 	const { target } = event;
-	if ( target instanceof HTMLElement ) {
+	if ( target instanceof window.HTMLElement ) {
 		initSignupForm( target );
 	}
 } );

@@ -44,7 +44,8 @@
 				position: static !important;
 				opacity: 1 !important;
 				pointer-events: auto !important;
-				clip: auto;
+				// Undo themes that hide checkboxes with the legacy clip technique.
+				clip: auto; // stylelint-disable-line property-no-deprecated
 				height: 18px;
 				width: 18px;
 				appearance: auto;

@@ -329,7 +329,8 @@
 	position: fixed;
 	inset: 0;
 	z-index: 1000;
-	// Block themes give direct children of constrained layouts a max-width and auto margins.
+	// Block themes give direct children of constrained layouts a max-width
+	// and auto margins.
 	max-width: none !important;
 	margin: 0 !important;
 	display: flex;
