@@ -1,0 +1,23 @@
+{
+    "name": "jomino151/task-table",
+    "description": "WordPress plugin: publish open tasks, collect volunteer signups and notify subscribers.",
+    "type": "wordpress-plugin",
+    "license": "GPL-2.0-or-later",
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "wp-coding-standards/wpcs": "^3.1",
+        "phpcompatibility/phpcompatibility-wp": "^2.1"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    },
+    "scripts": {
+        "lint": "find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
+        "phpcs": "phpcs"
+    }
+}

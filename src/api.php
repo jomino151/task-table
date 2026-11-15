@@ -246,7 +246,7 @@ function task_table_handle_signup_submission( WP_REST_Request $request ) {
 	);
 
 	if ( $result === false ) {
-		error_log( 'Database insert failed: ' . $wpdb->last_error );
+		error_log( 'Database insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- operational log for site admins.
 		return new WP_REST_Response(
 			array(
 				'success' => false,
@@ -358,10 +358,10 @@ function task_table_get_events( WP_REST_Request $request ) {
             ORDER BY e.created_at DESC";
 
 	if ( ! empty( $params ) ) {
-		$sql = $wpdb->prepare( $sql, $params );
+		$sql = $wpdb->prepare( $sql, $params ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 	}
 
-	$events = $wpdb->get_results( $sql, ARRAY_A );
+	$events = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
 	$formatted = array_map(
 		function ( $event ) {
@@ -733,7 +733,7 @@ function task_table_add_subscriber( WP_REST_Request $request ) {
 		);
 
 		if ( $result === false ) {
-			error_log( 'Task Table: subscriber insert failed: ' . $wpdb->last_error );
+			error_log( 'Task Table: subscriber insert failed: ' . $wpdb->last_error ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- operational log for site admins.
 			return new WP_REST_Response(
 				array(
 					'success' => false,
@@ -782,7 +782,7 @@ function task_table_confirm_subscription_token( $email, $token ) {
 		return 'invalid';
 	}
 
-	$issued_at = strtotime( (string) ( $row->updated_at ?: $row->created_at ) );
+	$issued_at = strtotime( (string) ( ! empty( $row->updated_at ) ? $row->updated_at : $row->created_at ) );
 	if ( $issued_at && $issued_at + task_table_get_confirmation_token_ttl() < strtotime( current_time( 'mysql' ) ) ) {
 		return 'invalid';
 	}
@@ -952,8 +952,8 @@ add_action( 'save_post', 'task_table_send_pending_event_notifications', 20, 3 );
 function task_table_event_is_complete( $event ) {
 	$title   = isset( $event['was_angefragt'] ) ? $event['was_angefragt'] : ( $event['wasAngefragt'] ?? '' );
 	$context = isset( $event['kontext'] ) ? $event['kontext'] : ( $event['kontext'] ?? '' );
-	$title   = trim( strip_tags( (string) $title ) );
-	$context = trim( strip_tags( (string) $context ) );
+	$title   = trim( wp_strip_all_tags( (string) $title ) );
+	$context = trim( wp_strip_all_tags( (string) $context ) );
 	return ( $title !== '' && $context !== '' );
 }
 
@@ -1190,7 +1190,7 @@ function task_table_generate_events_spreadsheet( $archived_param = null, $format
 		$sql          = call_user_func_array( array( $wpdb, 'prepare' ), $prepare_args );
 	}
 
-	$rows    = $wpdb->get_results( $sql, ARRAY_A );
+	$rows    = $wpdb->get_results( $sql, ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 	$headers = array( 'id', 'was_angefragt', 'kontext', 'name_hochschule', 'tn_anzahl', 'zeitpunkt', 'auftragdetails', 'wer_macht', 'category_id', 'category_name', 'archived', 'created_at', 'updated_at' );
 
 	if ( $format === 'xml' || ! class_exists( 'ZipArchive' ) ) {
@@ -1220,26 +1220,26 @@ function task_table_generate_events_spreadsheet( $archived_param = null, $format
 
 	// Build XLSX
 	$sheet_rows_xml  = '';
-	$rowIndex        = 1;
-	$colIndex        = 1;
-	$sheet_rows_xml .= '<row r="' . $rowIndex . '">';
+	$row_index       = 1;
+	$col_index       = 1;
+	$sheet_rows_xml .= '<row r="' . $row_index . '">';
 	foreach ( $headers as $h ) {
-		$sheet_rows_xml .= '<c r="' . task_table_xlsx_cell_ref( $colIndex, $rowIndex ) . '" t="inlineStr"><is><t>' . task_table_xlsx_escape( $h ) . '</t></is></c>';
-		++$colIndex;
+		$sheet_rows_xml .= '<c r="' . task_table_xlsx_cell_ref( $col_index, $row_index ) . '" t="inlineStr"><is><t>' . task_table_xlsx_escape( $h ) . '</t></is></c>';
+		++$col_index;
 	}
 	$sheet_rows_xml .= '</row>';
-	++$rowIndex;
+	++$row_index;
 	foreach ( $rows as $r ) {
-		$sheet_rows_xml .= '<row r="' . $rowIndex . '">';
-		$colIndex        = 1;
+		$sheet_rows_xml .= '<row r="' . $row_index . '">';
+		$col_index       = 1;
 		foreach ( $headers as $h ) {
 			$val             = isset( $r[ $h ] ) ? (string) $r[ $h ] : '';
 			$val             = preg_replace( "/\r\n?|\n/", "\n", $val );
-			$sheet_rows_xml .= '<c r="' . task_table_xlsx_cell_ref( $colIndex, $rowIndex ) . '" t="inlineStr"><is><t>' . task_table_xlsx_escape( $val ) . '</t></is></c>';
-			++$colIndex;
+			$sheet_rows_xml .= '<c r="' . task_table_xlsx_cell_ref( $col_index, $row_index ) . '" t="inlineStr"><is><t>' . task_table_xlsx_escape( $val ) . '</t></is></c>';
+			++$col_index;
 		}
 		$sheet_rows_xml .= '</row>';
-		++$rowIndex;
+		++$row_index;
 	}
 	$sheet_xml         = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheetData>' . $sheet_rows_xml . '</sheetData></worksheet>';
 	$workbook_xml      = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Events" sheetId="1" r:id="rId1"/></sheets></workbook>';
@@ -1266,8 +1266,8 @@ function task_table_generate_events_spreadsheet( $archived_param = null, $format
 	$zip->addFromString( 'xl/_rels/workbook.xml.rels', $workbook_rels_xml );
 	$zip->addFromString( 'xl/styles.xml', $styles_xml );
 	$zip->close();
-	$content = file_get_contents( $tmp );
-	@unlink( $tmp );
+	$content = file_get_contents( $tmp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local temp file.
+	wp_delete_file( $tmp );
 	return array(
 		'content'      => $content,
 		'filename'     => 'task-table-events.xlsx',
@@ -1302,10 +1302,10 @@ function task_table_generate_events_excel_xml( $archived_param = null, $filters 
  */
 function task_table_admin_post_export_events() {
 	if ( ! is_user_logged_in() || ! current_user_can( 'manage_task_table' ) ) {
-		wp_die( __( 'You do not have permission to export events.', 'task-table' ), 403 );
+		wp_die( esc_html__( 'You do not have permission to export events.', 'task-table' ), 403 );
 	}
 	if ( ! isset( $_GET['_wpnonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'task_table_export_events' ) ) {
-		wp_die( __( 'Security check failed.', 'task-table' ), 403 );
+		wp_die( esc_html__( 'Security check failed.', 'task-table' ), 403 );
 	}
 	$request_params = wp_unslash( $_GET );
 	$archived       = isset( $request_params['archived'] ) ? $request_params['archived'] : null;

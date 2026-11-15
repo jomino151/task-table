@@ -79,6 +79,7 @@ function task_table_get_list_unsubscribe_headers( $subscriber_id, $email ) {
  * Handle ?task_table_subscription=manage|unsubscribe requests.
  */
 function task_table_handle_subscription_management() {
+	// phpcs:disable WordPress.Security.NonceVerification -- authenticated by the HMAC signature in the link (see task_table_subscription_signature()); a nonce would expire and break links in old emails.
 	if ( ! isset( $_GET['task_table_subscription'] ) ) {
 		return;
 	}
@@ -89,7 +90,7 @@ function task_table_handle_subscription_management() {
 	}
 
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
-		define( 'DONOTCACHEPAGE', true ); // Page caches (e.g. WP Super Cache) must never store these pages.
+		define( 'DONOTCACHEPAGE', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- constant read by page-cache plugins.
 	}
 	nocache_headers();
 	header( 'X-Robots-Tag: noindex, nofollow' );
@@ -138,6 +139,7 @@ function task_table_handle_subscription_management() {
 	}
 
 	task_table_render_subscription_manage_page( $subscriber, $mode, ! empty( $saved ) );
+	// phpcs:enable WordPress.Security.NonceVerification
 }
 add_action( 'template_redirect', 'task_table_handle_subscription_management', 5 );
 

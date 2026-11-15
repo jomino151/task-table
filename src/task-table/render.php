@@ -43,7 +43,7 @@ if ( $has_archived_col ) {
 	$events = $wpdb->get_results( "SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A );
 }
 
-echo '<div ' . get_block_wrapper_attributes() . '>';
+echo '<div ' . get_block_wrapper_attributes() . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core escapes the attributes.
 if ( ! empty( $category_name ) ) {
 	echo '<h3 class="task-table-category-heading">' . esc_html( $category_name ) . '</h3>';
 }
@@ -92,12 +92,12 @@ echo '<tbody>';
 if ( ! empty( $events ) ) {
 	foreach ( $events as $event ) {
 		echo '<tr>';
-		echo '<td class="tt-col-request">' . $render_event_cell( $event['was_angefragt'] ) . '</td>';
-		echo '<td class="tt-col-context">' . $render_event_cell( $event['kontext'] ) . '</td>';
-		echo '<td class="tt-col-university">' . $render_event_cell( $event['name_hochschule'] ) . '</td>';
-		echo '<td class="tt-col-tn"><span class="tt-tn-value">' . $render_event_cell( $event['tn_anzahl'] ) . '</span></td>';
-		echo '<td class="tt-col-time">' . $render_event_cell( $event['zeitpunkt'] ) . '</td>';
-		echo '<td class="tt-col-details">' . $render_event_cell( $event['auftragdetails'] ) . '</td>';
+		echo '<td class="tt-col-request">' . wp_kses( $render_event_cell( $event['was_angefragt'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-context">' . wp_kses( $render_event_cell( $event['kontext'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-university">' . wp_kses( $render_event_cell( $event['name_hochschule'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-tn"><span class="tt-tn-value">' . wp_kses( $render_event_cell( $event['tn_anzahl'] ), task_table_get_event_text_allowed_tags() ) . '</span></td>';
+		echo '<td class="tt-col-time">' . wp_kses( $render_event_cell( $event['zeitpunkt'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-details">' . wp_kses( $render_event_cell( $event['auftragdetails'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
 		// Fetch approved sign-ups for this event.
 		$signups_table = $wpdb->prefix . 'task_table_signups';
 		$signups       = $wpdb->get_results(
@@ -107,19 +107,19 @@ if ( ! empty( $events ) ) {
 			)
 		);
 
-		$hasApproved = ! empty( $signups );
+		$has_approved = ! empty( $signups );
 
 		// Combined column: approved names on top, signup button below.
 		echo '<td class="tt-col-signups">';
 		echo '<div class="tt-signup-stack">';
-		if ( $hasApproved ) {
+		if ( $has_approved ) {
 			echo '<div class="approved-signups">';
 			foreach ( $signups as $signup ) {
 				echo '<span class="approved-person">' . esc_html( $signup->user_name ) . '</span>';
 			}
 			echo '</div>';
 		}
-		echo '<button class="event-signup" data-event-id="' . esc_attr( $event['id'] ) . '" data-has-approved="' . ( $hasApproved ? '1' : '0' ) . '">' . esc_html__( 'Anmelden', 'task-table' ) . '</button>';
+		echo '<button class="event-signup" data-event-id="' . esc_attr( $event['id'] ) . '" data-has-approved="' . ( $has_approved ? '1' : '0' ) . '">' . esc_html__( 'Anmelden', 'task-table' ) . '</button>';
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
@@ -128,7 +128,7 @@ if ( ! empty( $events ) ) {
 	// Updated colspan to match the combined signups/action column.
 	$empty_message = __( 'Noch keine Veranstaltungen hinzugefügt.', 'task-table' );
 	if ( ! empty( $category_name ) ) {
-		$empty_message = sprintf( __( 'Noch keine Veranstaltungen in der Kategorie “%s”.', 'task-table' ), $category_name );
+		$empty_message = sprintf( /* translators: %s: category name */ __( 'Noch keine Veranstaltungen in der Kategorie “%s”.', 'task-table' ), $category_name );
 	}
 	echo '<tr><td colspan="7">' . esc_html( $empty_message ) . '</td></tr>';
 }
@@ -300,7 +300,7 @@ if (!window.taskTableScriptLoaded) {
                     credentials: "same-origin",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-WP-Nonce": "' . $nonce . '"
+                        "X-WP-Nonce": "' . esc_js( $nonce ) . '"
                     },
                     body: JSON.stringify({
                         event_id: eventId,

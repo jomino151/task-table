@@ -760,7 +760,7 @@ function task_table_admin_dashboard_page() {
 				),
 				array( 'id' => $event_id )
 			);
-			echo '<div class="notice notice-success is-dismissible"><p>' . ( $archived_val ? __( 'Event archived.', 'task-table' ) : __( 'Event restored.', 'task-table' ) ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . ( $archived_val ? esc_html__( 'Event archived.', 'task-table' ) : esc_html__( 'Event restored.', 'task-table' ) ) . '</p></div>';
 		}
 	}
 
@@ -794,7 +794,7 @@ function task_table_admin_dashboard_page() {
             $where_clause
             ORDER BY e.created_at DESC";
 
-	$events = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A );
+	$events = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
 	// Aggregate stats
 	$pending_signups = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $signups_table WHERE status = 'pending'" );
@@ -807,7 +807,7 @@ function task_table_admin_dashboard_page() {
 		$latest_ts = strtotime( $latest_event_date );
 		if ( $latest_ts ) {
 			/* translators: %s: human readable time difference */
-			$latest_event_meta = sprintf( __( 'Last event created %s ago', 'task-table' ), human_time_diff( $latest_ts, current_time( 'timestamp' ) ) );
+			$latest_event_meta = sprintf( /* translators: %s: human-readable time span */ __( 'Last event created %s ago', 'task-table' ), human_time_diff( $latest_ts, strtotime( current_time( 'mysql' ) ) ) );
 		}
 	}
 
@@ -854,7 +854,7 @@ function task_table_admin_dashboard_page() {
 	<div class="wrap task-table-admin">
 		<div class="tt-page-header">
 			<div class="tt-page-title">
-				<h1><?php _e( 'Task Table Dashboard', 'task-table' ); ?></h1>
+				<h1><?php esc_html_e( 'Task Table Dashboard', 'task-table' ); ?></h1>
 				<p>
 					<?php
 					echo $show_archived
@@ -865,14 +865,14 @@ function task_table_admin_dashboard_page() {
 			</div>
 			<div class="tt-page-actions">
 				<a class="button button-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-signups' ) ); ?>">
-					<?php _e( 'Manage Signups', 'task-table' ); ?>
+					<?php esc_html_e( 'Manage Signups', 'task-table' ); ?>
 				</a>
 				<button type="button" class="button button-primary" id="tt-export-open">
-					<?php _e( 'Download Excel', 'task-table' ); ?>
+					<?php esc_html_e( 'Download Excel', 'task-table' ); ?>
 				</button>
 				<noscript>
 					<a class="button button-primary" href="<?php echo esc_url( $export_fallback_url ); ?>" target="_blank" rel="noopener">
-						<?php _e( 'Download Excel', 'task-table' ); ?>
+						<?php esc_html_e( 'Download Excel', 'task-table' ); ?>
 					</a>
 				</noscript>
 			</div>
@@ -882,31 +882,31 @@ function task_table_admin_dashboard_page() {
 			<div class="tt-export-modal__overlay" data-tt-export-close></div>
 			<div class="tt-export-modal__dialog" role="dialog" aria-modal="true" aria-labelledby="tt-export-modal-title">
 				<button type="button" class="tt-export-modal__close" data-tt-export-close aria-label="<?php esc_attr_e( 'Close export dialog', 'task-table' ); ?>">&times;</button>
-				<h2 class="tt-export-modal__title" id="tt-export-modal-title"><?php _e( 'Customize Excel export', 'task-table' ); ?></h2>
-				<p class="tt-export-modal__intro"><?php _e( 'Choose exactly which events to include before downloading.', 'task-table' ); ?></p>
+				<h2 class="tt-export-modal__title" id="tt-export-modal-title"><?php esc_html_e( 'Customize Excel export', 'task-table' ); ?></h2>
+				<p class="tt-export-modal__intro"><?php esc_html_e( 'Choose exactly which events to include before downloading.', 'task-table' ); ?></p>
 				<form method="get" action="<?php echo esc_url( $export_action_url ); ?>" target="_blank" class="tt-export-form">
 					<?php wp_nonce_field( 'task_table_export_events' ); ?>
 					<input type="hidden" name="action" value="task_table_export_events">
 
 					<fieldset class="tt-export-fieldset">
-						<legend><?php _e( 'Event status', 'task-table' ); ?></legend>
+						<legend><?php esc_html_e( 'Event status', 'task-table' ); ?></legend>
 						<label class="tt-export-option">
 							<input type="radio" name="archived" value="all">
-							<span><?php _e( 'All events', 'task-table' ); ?></span>
+							<span><?php esc_html_e( 'All events', 'task-table' ); ?></span>
 						</label>
 						<label class="tt-export-option">
 							<input type="radio" name="archived" value="0" <?php checked( $export_default_archived, '0' ); ?>>
-							<span><?php _e( 'Active events only', 'task-table' ); ?></span>
+							<span><?php esc_html_e( 'Active events only', 'task-table' ); ?></span>
 						</label>
 						<label class="tt-export-option">
 							<input type="radio" name="archived" value="1" <?php checked( $export_default_archived, '1' ); ?>>
-							<span><?php _e( 'Archived events only', 'task-table' ); ?></span>
+							<span><?php esc_html_e( 'Archived events only', 'task-table' ); ?></span>
 						</label>
 					</fieldset>
 
 					<div class="tt-export-field">
-						<label for="tt-export-categories"><?php _e( 'Categories (optional)', 'task-table' ); ?></label>
-						<p class="tt-export-help"><?php _e( 'Leave blank to include every category.', 'task-table' ); ?></p>
+						<label for="tt-export-categories"><?php esc_html_e( 'Categories (optional)', 'task-table' ); ?></label>
+						<p class="tt-export-help"><?php esc_html_e( 'Leave blank to include every category.', 'task-table' ); ?></p>
 						<?php if ( ! empty( $categories ) ) : ?>
 							<div class="tt-export-checkbox-grid" id="tt-export-categories">
 								<?php foreach ( $categories as $category ) : ?>
@@ -917,27 +917,27 @@ function task_table_admin_dashboard_page() {
 								<?php endforeach; ?>
 							</div>
 						<?php else : ?>
-							<p class="tt-export-help"><?php _e( 'No categories available yet.', 'task-table' ); ?></p>
+							<p class="tt-export-help"><?php esc_html_e( 'No categories available yet.', 'task-table' ); ?></p>
 						<?php endif; ?>
 					</div>
 
 					<div class="tt-export-field">
-						<label for="tt-export-search"><?php _e( 'Search filter (optional)', 'task-table' ); ?></label>
+						<label for="tt-export-search"><?php esc_html_e( 'Search filter (optional)', 'task-table' ); ?></label>
 						<input type="text" id="tt-export-search" name="tt_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Filter by keyword', 'task-table' ); ?>">
-						<p class="tt-export-help"><?php _e( 'Matches event title, university, or assignee.', 'task-table' ); ?></p>
+						<p class="tt-export-help"><?php esc_html_e( 'Matches event title, university, or assignee.', 'task-table' ); ?></p>
 					</div>
 
 					<div class="tt-export-field">
-						<label for="tt-export-format"><?php _e( 'File format', 'task-table' ); ?></label>
+						<label for="tt-export-format"><?php esc_html_e( 'File format', 'task-table' ); ?></label>
 						<select id="tt-export-format" name="format">
-							<option value="xlsx"><?php _e( 'Excel (.xlsx)', 'task-table' ); ?></option>
-							<option value="xml"><?php _e( 'Legacy Excel (.xls)', 'task-table' ); ?></option>
+							<option value="xlsx"><?php esc_html_e( 'Excel (.xlsx)', 'task-table' ); ?></option>
+							<option value="xml"><?php esc_html_e( 'Legacy Excel (.xls)', 'task-table' ); ?></option>
 						</select>
 					</div>
 
 					<div class="tt-export-actions">
-						<button type="button" class="button button-link" data-tt-export-close><?php _e( 'Cancel', 'task-table' ); ?></button>
-						<button type="submit" class="button button-primary"><?php _e( 'Download', 'task-table' ); ?></button>
+						<button type="button" class="button button-link" data-tt-export-close><?php esc_html_e( 'Cancel', 'task-table' ); ?></button>
+						<button type="submit" class="button button-primary"><?php esc_html_e( 'Download', 'task-table' ); ?></button>
 					</div>
 				</form>
 			</div>
@@ -949,9 +949,9 @@ function task_table_admin_dashboard_page() {
 				<div class="tt-card-value">
 					<?php echo count( $events ); ?>
 					<?php if ( $filters_applied ) : ?>
-						<small><?php _e( 'matching filters', 'task-table' ); ?></small>
+						<small><?php esc_html_e( 'matching filters', 'task-table' ); ?></small>
 					<?php else : ?>
-						<small><?php _e( 'total', 'task-table' ); ?></small>
+						<small><?php esc_html_e( 'total', 'task-table' ); ?></small>
 					<?php endif; ?>
 				</div>
 				<?php if ( $latest_event_meta ) : ?>
@@ -959,32 +959,32 @@ function task_table_admin_dashboard_page() {
 				<?php endif; ?>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Active Events', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Active Events', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $active_total ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Currently visible to users', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Currently visible to users', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Archived Events', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Archived Events', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $archived_total ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Stored for historical reference', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Stored for historical reference', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Pending Signups', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Pending Signups', 'task-table' ); ?></h3>
 				<div class="tt-card-value">
 					<?php echo esc_html( $pending_signups ); ?>
 					<?php if ( $pending_signups > 0 ) : ?>
-						<small><?php _e( 'needs review', 'task-table' ); ?></small>
+						<small><?php esc_html_e( 'needs review', 'task-table' ); ?></small>
 					<?php else : ?>
-						<small><?php _e( 'all caught up', 'task-table' ); ?></small>
+						<small><?php esc_html_e( 'all caught up', 'task-table' ); ?></small>
 					<?php endif; ?>
 				</div>
 				<div class="tt-card-meta">
 					<?php if ( $pending_signups > 0 ) : ?>
 						<a class="button button-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-signups&status=pending' ) ); ?>">
-							<?php _e( 'Review queue', 'task-table' ); ?>
+							<?php esc_html_e( 'Review queue', 'task-table' ); ?>
 						</a>
 					<?php else : ?>
-						<?php _e( 'Great job! Nothing waiting for approval.', 'task-table' ); ?>
+						<?php esc_html_e( 'Great job! Nothing waiting for approval.', 'task-table' ); ?>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -993,11 +993,11 @@ function task_table_admin_dashboard_page() {
 		<div class="tt-toolbar">
 			<div class="tt-pill-toggle" role="tablist" aria-label="<?php esc_attr_e( 'Toggle between active and archived events', 'task-table' ); ?>">
 				<a class="<?php echo $show_archived ? '' : 'is-active'; ?>" href="<?php echo esc_url( remove_query_arg( array( 'archived', 'tt_category', 'tt_search' ) ) ); ?>">
-					<?php _e( 'Active Events', 'task-table' ); ?>
+					<?php esc_html_e( 'Active Events', 'task-table' ); ?>
 					<span class="tt-pill tt-pill-inline is-active"><?php echo esc_html( $active_total ); ?></span>
 				</a>
 				<a class="<?php echo $show_archived ? 'is-active' : ''; ?>" href="<?php echo esc_url( add_query_arg( array( 'archived' => '1' ), remove_query_arg( array( 'tt_category', 'tt_search' ) ) ) ); ?>">
-					<?php _e( 'Archived Events', 'task-table' ); ?>
+					<?php esc_html_e( 'Archived Events', 'task-table' ); ?>
 					<span class="tt-pill tt-pill-inline is-archived"><?php echo esc_html( $archived_total ); ?></span>
 				</a>
 			</div>
@@ -1009,13 +1009,13 @@ function task_table_admin_dashboard_page() {
 				<input type="hidden" name="archived" value="1">
 			<?php endif; ?>
 			<div class="tt-filter-group">
-				<label for="tt-dashboard-search"><?php _e( 'Search', 'task-table' ); ?></label>
+				<label for="tt-dashboard-search"><?php esc_html_e( 'Search', 'task-table' ); ?></label>
 				<input type="search" id="tt-dashboard-search" name="tt_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Search by event, university, or assignee', 'task-table' ); ?>">
 			</div>
 			<div class="tt-filter-group">
-				<label for="tt-dashboard-category"><?php _e( 'Category', 'task-table' ); ?></label>
+				<label for="tt-dashboard-category"><?php esc_html_e( 'Category', 'task-table' ); ?></label>
 				<select id="tt-dashboard-category" name="tt_category">
-					<option value="0"><?php _e( 'All categories', 'task-table' ); ?></option>
+					<option value="0"><?php esc_html_e( 'All categories', 'task-table' ); ?></option>
 					<?php foreach ( $categories as $category ) : ?>
 						<option value="<?php echo esc_attr( $category['id'] ); ?>" <?php selected( $selected_category === (int) $category['id'] ); ?>>
 							<?php echo esc_html( $category['name'] ); ?>
@@ -1024,9 +1024,9 @@ function task_table_admin_dashboard_page() {
 				</select>
 			</div>
 			<div class="tt-filter-actions">
-				<button type="submit" class="button button-primary"><?php _e( 'Apply Filters', 'task-table' ); ?></button>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Apply Filters', 'task-table' ); ?></button>
 				<?php if ( $filters_applied ) : ?>
-					<a class="button button-link" href="<?php echo esc_url( $base_admin_url ); ?>"><?php _e( 'Reset', 'task-table' ); ?></a>
+					<a class="button button-link" href="<?php echo esc_url( $base_admin_url ); ?>"><?php esc_html_e( 'Reset', 'task-table' ); ?></a>
 				<?php endif; ?>
 			</div>
 		</form>
@@ -1035,13 +1035,13 @@ function task_table_admin_dashboard_page() {
 			<table class="wp-list-table widefat fixed striped tt-table">
 				<thead>
 					<tr>
-						<th scope="col"><?php _e( 'Event', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'University', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Schedule', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Category', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Assignee', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Created', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Actions', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Event', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'University', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Schedule', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Category', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Assignee', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Created', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Actions', 'task-table' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1051,11 +1051,11 @@ function task_table_admin_dashboard_page() {
 						?>
 						<tr>
 							<td>
-								<?php echo $event['was_angefragt'] !== '' ? $render_event_cell( $event['was_angefragt'] ) : '&mdash;'; ?>
-								<div class="description"><?php printf( esc_html__( 'Event ID %s', 'task-table' ), esc_html( $event['id'] ) ); ?></div>
+								<?php echo $event['was_angefragt'] !== '' ? wp_kses( $render_event_cell( $event['was_angefragt'] ), task_table_get_event_text_allowed_tags() ) : '&mdash;'; ?>
+								<div class="description"><?php printf( /* translators: %s: event ID */ esc_html__( 'Event ID %s', 'task-table' ), esc_html( $event['id'] ) ); ?></div>
 							</td>
-							<td><?php echo $event['name_hochschule'] !== '' ? $render_event_cell( $event['name_hochschule'] ) : '&mdash;'; ?></td>
-							<td><?php echo $event['zeitpunkt'] !== '' ? $render_event_cell( $event['zeitpunkt'] ) : '&mdash;'; ?></td>
+							<td><?php echo $event['name_hochschule'] !== '' ? wp_kses( $render_event_cell( $event['name_hochschule'] ), task_table_get_event_text_allowed_tags() ) : '&mdash;'; ?></td>
+							<td><?php echo $event['zeitpunkt'] !== '' ? wp_kses( $render_event_cell( $event['zeitpunkt'] ), task_table_get_event_text_allowed_tags() ) : '&mdash;'; ?></td>
 							<td>
 								<?php if ( ! empty( $event['category_name'] ) ) : ?>
 									<span class="tt-pill is-active"><?php echo esc_html( $event['category_name'] ); ?></span>
@@ -1065,16 +1065,16 @@ function task_table_admin_dashboard_page() {
 							</td>
 							<td>
 								<?php if ( $event['wer_macht'] !== '' ) : ?>
-									<span class="tt-pill is-approved"><?php echo $render_event_cell( $event['wer_macht'] ); ?></span>
+									<span class="tt-pill is-approved"><?php echo wp_kses( $render_event_cell( $event['wer_macht'] ), task_table_get_event_text_allowed_tags() ); ?></span>
 								<?php else : ?>
-									<span class="tt-pill is-pending"><?php _e( 'Unassigned', 'task-table' ); ?></span>
+									<span class="tt-pill is-pending"><?php esc_html_e( 'Unassigned', 'task-table' ); ?></span>
 								<?php endif; ?>
 							</td>
 							<td>
 								<?php if ( $created_timestamp ) : ?>
 									<div><?php echo esc_html( date_i18n( get_option( 'date_format' ), $created_timestamp ) ); ?></div>
 									<div class="description">
-										<?php printf( esc_html__( '%s ago', 'task-table' ), human_time_diff( $created_timestamp, current_time( 'timestamp' ) ) ); ?>
+										<?php printf( /* translators: %s: human-readable time span, e.g. "3 days" */ esc_html__( '%s ago', 'task-table' ), esc_html( human_time_diff( $created_timestamp, strtotime( current_time( 'mysql' ) ) ) ) ); ?>
 									</div>
 								<?php else : ?>
 									&mdash;
@@ -1098,7 +1098,7 @@ function task_table_admin_dashboard_page() {
 									?>
 																				" onclick="return confirm('<?php echo esc_js( __( 'Archive this event?', 'task-table' ) ); ?>');">
 										<span class="dashicons dashicons-archive"></span>
-										<?php _e( 'Archive', 'task-table' ); ?>
+										<?php esc_html_e( 'Archive', 'task-table' ); ?>
 									</a>
 								<?php else : ?>
 									<a class="button button-secondary" href="
@@ -1117,7 +1117,7 @@ function task_table_admin_dashboard_page() {
 									?>
 																				" onclick="return confirm('<?php echo esc_js( __( 'Restore this event?', 'task-table' ) ); ?>');">
 										<span class="dashicons dashicons-image-rotate"></span>
-										<?php _e( 'Restore', 'task-table' ); ?>
+										<?php esc_html_e( 'Restore', 'task-table' ); ?>
 									</a>
 								<?php endif; ?>
 							</td>
@@ -1130,15 +1130,15 @@ function task_table_admin_dashboard_page() {
 				<h3><?php echo $show_archived ? esc_html__( 'No archived events match your filters', 'task-table' ) : esc_html__( 'No events yet', 'task-table' ); ?></h3>
 				<p>
 					<?php if ( $filters_applied ) : ?>
-						<?php _e( 'Try broadening your filters or reset them to see the full list again.', 'task-table' ); ?>
+						<?php esc_html_e( 'Try broadening your filters or reset them to see the full list again.', 'task-table' ); ?>
 					<?php else : ?>
-						<?php _e( 'New submissions will appear here automatically. Use the signup form to collect your first requests.', 'task-table' ); ?>
+						<?php esc_html_e( 'New submissions will appear here automatically. Use the signup form to collect your first requests.', 'task-table' ); ?>
 					<?php endif; ?>
 				</p>
 				<div class="tt-actions">
-					<a class="button button-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-signups' ) ); ?>"><?php _e( 'Go to Signups', 'task-table' ); ?></a>
+					<a class="button button-secondary" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-signups' ) ); ?>"><?php esc_html_e( 'Go to Signups', 'task-table' ); ?></a>
 					<?php if ( $filters_applied ) : ?>
-						<a class="button" href="<?php echo esc_url( $base_admin_url ); ?>"><?php _e( 'Reset Filters', 'task-table' ); ?></a>
+						<a class="button" href="<?php echo esc_url( $base_admin_url ); ?>"><?php esc_html_e( 'Reset Filters', 'task-table' ); ?></a>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -1288,7 +1288,7 @@ function task_table_admin_signups_page() {
 						array( 'id' => $signup->event_id )
 					);
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Anmeldung angenommen.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Anmeldung angenommen.', 'task-table' ) . '</p></div>';
 				} elseif ( $action === 'deny' ) {
 					$wpdb->update(
 						$signups_table,
@@ -1301,10 +1301,10 @@ function task_table_admin_signups_page() {
 
 					task_table_send_denial_notification( $signup );
 
-					echo '<div class="notice notice-info is-dismissible"><p>' . __( 'Anmeldung abgelehnt.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Anmeldung abgelehnt.', 'task-table' ) . '</p></div>';
 				} elseif ( $action === 'delete' ) {
 					$wpdb->delete( $signups_table, array( 'id' => $signup_id ) );
-					echo '<div class="notice notice-info is-dismissible"><p>' . __( 'Signup deleted.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Signup deleted.', 'task-table' ) . '</p></div>';
 				}
 			}
 		}
@@ -1344,7 +1344,7 @@ function task_table_admin_signups_page() {
             $where_clause
             ORDER BY s.created_at DESC";
 
-	$signups = ! empty( $params ) ? $wpdb->get_results( $wpdb->prepare( $sql, $params ) ) : $wpdb->get_results( $sql );
+	$signups = ! empty( $params ) ? $wpdb->get_results( $wpdb->prepare( $sql, $params ) ) : $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
 	$status_counts_raw = $wpdb->get_results( "SELECT status, COUNT(*) AS total FROM $signups_table GROUP BY status", OBJECT_K );
 	$status_totals     = array(
@@ -1389,42 +1389,42 @@ function task_table_admin_signups_page() {
 	<div class="wrap task-table-admin">
 		<div class="tt-page-header">
 			<div class="tt-page-title">
-				<h1><?php _e( 'Manage Event Signups', 'task-table' ); ?></h1>
-				<p><?php _e( 'Review incoming signups, capture important details, and keep conversations moving with quick approve or deny actions.', 'task-table' ); ?></p>
+				<h1><?php esc_html_e( 'Manage Event Signups', 'task-table' ); ?></h1>
+				<p><?php esc_html_e( 'Review incoming signups, capture important details, and keep conversations moving with quick approve or deny actions.', 'task-table' ); ?></p>
 			</div>
 		</div>
 
 		<div class="tt-card-grid">
 			<div class="tt-card">
-				<h3><?php _e( 'Total Signups', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Total Signups', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $total_signups ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Across all statuses', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Across all statuses', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Pending', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Pending', 'task-table' ); ?></h3>
 				<div class="tt-card-value">
 					<?php echo esc_html( $status_totals['pending'] ); ?>
 					<?php if ( $status_totals['pending'] > 0 ) : ?>
-						<small><?php _e( 'awaiting review', 'task-table' ); ?></small>
+						<small><?php esc_html_e( 'awaiting review', 'task-table' ); ?></small>
 					<?php endif; ?>
 				</div>
 				<div class="tt-card-meta">
 					<?php if ( $status_totals['pending'] > 0 ) : ?>
-						<a class="button button-secondary" href="<?php echo esc_url( add_query_arg( array( 'status' => 'pending' ), $reset_url ) ); ?>"><?php _e( 'Jump to queue', 'task-table' ); ?></a>
+						<a class="button button-secondary" href="<?php echo esc_url( add_query_arg( array( 'status' => 'pending' ), $reset_url ) ); ?>"><?php esc_html_e( 'Jump to queue', 'task-table' ); ?></a>
 					<?php else : ?>
-						<?php _e( 'All requests are processed.', 'task-table' ); ?>
+						<?php esc_html_e( 'All requests are processed.', 'task-table' ); ?>
 					<?php endif; ?>
 				</div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Approved', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Approved', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $status_totals['approved'] ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Assignments already confirmed', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Assignments already confirmed', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Denied', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Denied', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $status_totals['denied'] ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Requests you declined', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Requests you declined', 'task-table' ); ?></div>
 			</div>
 		</div>
 
@@ -1459,13 +1459,13 @@ function task_table_admin_signups_page() {
 				<input type="hidden" name="status" value="<?php echo esc_attr( $status_filter ); ?>">
 			<?php endif; ?>
 			<div class="tt-filter-group">
-				<label for="tt-signup-search"><?php _e( 'Search', 'task-table' ); ?></label>
+				<label for="tt-signup-search"><?php esc_html_e( 'Search', 'task-table' ); ?></label>
 				<input type="search" id="tt-signup-search" name="tt_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Search by name, email, or event', 'task-table' ); ?>">
 			</div>
 			<div class="tt-filter-actions">
-				<button type="submit" class="button button-primary"><?php _e( 'Apply Search', 'task-table' ); ?></button>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Apply Search', 'task-table' ); ?></button>
 				<?php if ( $filters_applied ) : ?>
-					<a class="button button-link" href="<?php echo esc_url( $reset_url ); ?>"><?php _e( 'Reset Filters', 'task-table' ); ?></a>
+					<a class="button button-link" href="<?php echo esc_url( $reset_url ); ?>"><?php esc_html_e( 'Reset Filters', 'task-table' ); ?></a>
 				<?php endif; ?>
 			</div>
 		</form>
@@ -1474,12 +1474,12 @@ function task_table_admin_signups_page() {
 			<div class="tt-table-scroll"><table class="wp-list-table widefat striped tt-table tt-signups-table">
 				<thead>
 					<tr>
-						<th scope="col"><?php _e( 'Signup', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Event', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Details', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Status', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Submitted', 'task-table' ); ?></th>
-						<th scope="col"><?php _e( 'Actions', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Signup', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Event', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Details', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Status', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Submitted', 'task-table' ); ?></th>
+						<th scope="col"><?php esc_html_e( 'Actions', 'task-table' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -1520,11 +1520,11 @@ function task_table_admin_signups_page() {
 							<td>
 								<?php
 								$event_title_markup = $render_event_cell( $signup->was_angefragt );
-								echo $event_title_markup !== '' ? $event_title_markup : '&mdash;';
+								echo '' !== $event_title_markup ? wp_kses( $event_title_markup, task_table_get_event_text_allowed_tags() ) : '&mdash;';
 								?>
 							</td>
 							<td class="signup-free-text">
-								<?php echo $notes_markup; ?>
+								<?php echo wp_kses( $notes_markup, array( 'br' => array() ) ); ?>
 							</td>
 							<td>
 								<span class="tt-pill <?php echo esc_attr( $status_class ); ?>"><?php echo esc_html( $status_label ); ?></span>
@@ -1532,7 +1532,7 @@ function task_table_admin_signups_page() {
 							<td>
 								<?php if ( $created_timestamp ) : ?>
 									<div><?php echo esc_html( date_i18n( get_option( 'date_format' ), $created_timestamp ) ); ?></div>
-									<div class="description"><?php printf( esc_html__( '%s ago', 'task-table' ), human_time_diff( $created_timestamp, current_time( 'timestamp' ) ) ); ?></div>
+									<div class="description"><?php printf( /* translators: %s: human-readable time span, e.g. "3 days" */ esc_html__( '%s ago', 'task-table' ), esc_html( human_time_diff( $created_timestamp, strtotime( current_time( 'mysql' ) ) ) ) ); ?></div>
 								<?php else : ?>
 									&mdash;
 								<?php endif; ?>
@@ -1541,16 +1541,16 @@ function task_table_admin_signups_page() {
 								<?php if ( $signup->status === 'pending' ) : ?>
 									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=task-table-signups&action=approve&signup_id=' . $signup->id ), 'task_table_signup_approve_' . $signup->id ) ); ?>" class="button button-secondary">
 										<span class="dashicons dashicons-yes"></span>
-										<?php _e( 'Approve', 'task-table' ); ?>
+										<?php esc_html_e( 'Approve', 'task-table' ); ?>
 									</a>
 									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=task-table-signups&action=deny&signup_id=' . $signup->id ), 'task_table_signup_deny_' . $signup->id ) ); ?>" class="button button-secondary">
 										<span class="dashicons dashicons-dismiss"></span>
-										<?php _e( 'Deny', 'task-table' ); ?>
+										<?php esc_html_e( 'Deny', 'task-table' ); ?>
 									</a>
 								<?php endif; ?>
 								<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=task-table-signups&action=delete&signup_id=' . $signup->id ), 'task_table_signup_delete_' . $signup->id ) ); ?>" class="button is-destructive" onclick="return confirm('<?php echo esc_js( __( 'Are you sure you want to delete this signup?', 'task-table' ) ); ?>');">
 									<span class="dashicons dashicons-trash"></span>
-									<?php _e( 'Delete', 'task-table' ); ?>
+									<?php esc_html_e( 'Delete', 'task-table' ); ?>
 								</a>
 							</td>
 						</tr>
@@ -1559,16 +1559,16 @@ function task_table_admin_signups_page() {
 			</table></div>
 		<?php else : ?>
 			<div class="tt-empty-state">
-				<h3><?php _e( 'No signups match your filters', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'No signups match your filters', 'task-table' ); ?></h3>
 				<p>
 					<?php if ( $filters_applied ) : ?>
-						<?php _e( 'Try adjusting your search or switch to the “All” tab to see every request.', 'task-table' ); ?>
+						<?php esc_html_e( 'Try adjusting your search or switch to the “All” tab to see every request.', 'task-table' ); ?>
 					<?php else : ?>
-						<?php _e( 'Once users submit the form, their requests will appear here instantly.', 'task-table' ); ?>
+						<?php esc_html_e( 'Once users submit the form, their requests will appear here instantly.', 'task-table' ); ?>
 					<?php endif; ?>
 				</p>
 				<div class="tt-actions">
-					<a class="button" href="<?php echo esc_url( $reset_url ); ?>"><?php _e( 'Reset Filters', 'task-table' ); ?></a>
+					<a class="button" href="<?php echo esc_url( $reset_url ); ?>"><?php esc_html_e( 'Reset Filters', 'task-table' ); ?></a>
 				</div>
 			</div>
 		<?php endif; ?>
@@ -1608,7 +1608,7 @@ function task_table_admin_subscribers_page() {
 		if ( wp_verify_nonce( $nonce, 'task_table_delete_subscriber_' . $subscriber_id ) ) {
 			$wpdb->delete( $subscriber_categories_table, array( 'subscriber_id' => $subscriber_id ) );
 			$wpdb->delete( $subscribers_table, array( 'id' => $subscriber_id ) );
-			echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Subscriber deleted.', 'task-table' ) . '</p></div>';
+			echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Subscriber deleted.', 'task-table' ) . '</p></div>';
 		}
 	}
 
@@ -1654,8 +1654,8 @@ function task_table_admin_subscribers_page() {
 
 	$subscribers_sql = "SELECT * FROM $subscribers_table $where_clause ORDER BY created_at DESC";
 	$subscribers     = ! empty( $search_params )
-		? $wpdb->get_results( $wpdb->prepare( $subscribers_sql, $search_params ) )
-		: $wpdb->get_results( $subscribers_sql );
+		? $wpdb->get_results( $wpdb->prepare( $subscribers_sql, $search_params ) ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
+		: $wpdb->get_results( $subscribers_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
 	$total_subscribers     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $subscribers_table" );
 	$confirmed_subscribers = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $subscribers_table WHERE confirmed = 1" );
@@ -1677,8 +1677,8 @@ function task_table_admin_subscribers_page() {
 	<div class="wrap task-table-admin">
 		<div class="tt-page-header">
 			<div class="tt-page-title">
-				<h1><?php _e( 'Manage Subscribers', 'task-table' ); ?></h1>
-				<p><?php _e( 'Keep your mailing list clean and transparent. Tag subscribers with categories, resend confirmations, and add team members manually.', 'task-table' ); ?></p>
+				<h1><?php esc_html_e( 'Manage Subscribers', 'task-table' ); ?></h1>
+				<p><?php esc_html_e( 'Keep your mailing list clean and transparent. Tag subscribers with categories, resend confirmations, and add team members manually.', 'task-table' ); ?></p>
 			</div>
 		</div>
 
@@ -1688,7 +1688,7 @@ function task_table_admin_subscribers_page() {
 
 		<div class="tt-card-grid">
 			<div class="tt-card">
-				<h3><?php _e( 'Total Subscribers', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Total Subscribers', 'task-table' ); ?></h3>
 				<div class="tt-card-value">
 					<?php echo esc_html( $total_subscribers ); ?>
 					<?php if ( $last_subscriber_date ) : ?>
@@ -1696,62 +1696,62 @@ function task_table_admin_subscribers_page() {
 						<?php
 						if ( $latest_ts ) :
 							?>
-							<small><?php printf( esc_html__( '%s ago', 'task-table' ), human_time_diff( $latest_ts, current_time( 'timestamp' ) ) ); ?></small><?php endif; ?>
+							<small><?php printf( /* translators: %s: human-readable time span, e.g. "3 days" */ esc_html__( '%s ago', 'task-table' ), esc_html( human_time_diff( $latest_ts, strtotime( current_time( 'mysql' ) ) ) ) ); ?></small><?php endif; ?>
 					<?php endif; ?>
 				</div>
-				<div class="tt-card-meta"><?php _e( 'Contacts who opted in', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Contacts who opted in', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Confirmed', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Confirmed', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $confirmed_subscribers ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Actively receiving updates', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Actively receiving updates', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Awaiting Confirmation', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Awaiting Confirmation', 'task-table' ); ?></h3>
 				<div class="tt-card-value">
 					<?php echo esc_html( $awaiting_confirmation ); ?>
 					<?php if ( $awaiting_confirmation > 0 ) : ?>
-						<small><?php _e( 'needs follow-up', 'task-table' ); ?></small>
+						<small><?php esc_html_e( 'needs follow-up', 'task-table' ); ?></small>
 					<?php endif; ?>
 				</div>
-				<div class="tt-card-meta"><?php _e( 'Invite them to confirm or resend the email.', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Invite them to confirm or resend the email.', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Categories', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Categories', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( count( $categories ) ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Ways to segment your audience', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Ways to segment your audience', 'task-table' ); ?></div>
 			</div>
 		</div>
 
 		<form method="get" class="tt-filters" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>">
 			<input type="hidden" name="page" value="task-table-subscribers">
 			<div class="tt-filter-group">
-				<label for="tt-subscriber-search"><?php _e( 'Search', 'task-table' ); ?></label>
+				<label for="tt-subscriber-search"><?php esc_html_e( 'Search', 'task-table' ); ?></label>
 				<input type="search" id="tt-subscriber-search" name="tt_search" value="<?php echo esc_attr( $search_term ); ?>" placeholder="<?php esc_attr_e( 'Search by email or ID', 'task-table' ); ?>">
 			</div>
 			<div class="tt-filter-actions">
-				<button type="submit" class="button button-primary"><?php _e( 'Apply Search', 'task-table' ); ?></button>
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Apply Search', 'task-table' ); ?></button>
 				<?php if ( $filters_applied ) : ?>
-					<a class="button button-link" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-subscribers' ) ); ?>"><?php _e( 'Reset', 'task-table' ); ?></a>
+					<a class="button button-link" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-subscribers' ) ); ?>"><?php esc_html_e( 'Reset', 'task-table' ); ?></a>
 				<?php endif; ?>
 			</div>
 		</form>
 
 		<div class="tt-section">
-			<h2><?php _e( 'Subscriber List', 'task-table' ); ?></h2>
+			<h2><?php esc_html_e( 'Subscriber List', 'task-table' ); ?></h2>
 			<?php if ( isset( $_GET['action'] ) && $_GET['action'] === 'edit-categories' && ! $editing_subscriber ) : ?>
-				<div class="tt-inline-notice error"><p><?php _e( 'Subscriber not found.', 'task-table' ); ?></p></div>
+				<div class="tt-inline-notice error"><p><?php esc_html_e( 'Subscriber not found.', 'task-table' ); ?></p></div>
 			<?php endif; ?>
 
 			<?php if ( ! empty( $subscribers ) ) : ?>
 				<table class="wp-list-table widefat fixed striped tt-table">
 					<thead>
 						<tr>
-							<th scope="col"><?php _e( 'Subscriber', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Categories', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Status', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Added', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Actions', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Subscriber', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Categories', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Status', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Added', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Actions', 'task-table' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -1786,7 +1786,7 @@ function task_table_admin_subscribers_page() {
 								<td>
 									<?php if ( $created_timestamp ) : ?>
 										<div><?php echo esc_html( date_i18n( get_option( 'date_format' ), $created_timestamp ) ); ?></div>
-										<div class="description"><?php printf( esc_html__( '%s ago', 'task-table' ), human_time_diff( $created_timestamp, current_time( 'timestamp' ) ) ); ?></div>
+										<div class="description"><?php printf( /* translators: %s: human-readable time span, e.g. "3 days" */ esc_html__( '%s ago', 'task-table' ), esc_html( human_time_diff( $created_timestamp, strtotime( current_time( 'mysql' ) ) ) ) ); ?></div>
 									<?php else : ?>
 										&mdash;
 									<?php endif; ?>
@@ -1795,7 +1795,7 @@ function task_table_admin_subscribers_page() {
 									<?php if ( ! $confirmed ) : ?>
 										<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=task-table-subscribers&action=resend&subscriber_id=' . $subscriber->id ), 'task_table_resend_subscriber_' . $subscriber->id ) ); ?>" class="button button-secondary">
 											<span class="dashicons dashicons-email-alt"></span>
-											<?php _e( 'Resend', 'task-table' ); ?>
+											<?php esc_html_e( 'Resend', 'task-table' ); ?>
 										</a>
 									<?php endif; ?>
 									<a href="
@@ -1813,11 +1813,11 @@ function task_table_admin_subscribers_page() {
 									?>
 												" class="button button-secondary">
 										<span class="dashicons dashicons-category"></span>
-										<?php _e( 'Categories', 'task-table' ); ?>
+										<?php esc_html_e( 'Categories', 'task-table' ); ?>
 									</a>
 									<a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin.php?page=task-table-subscribers&action=delete&subscriber_id=' . $subscriber->id ), 'task_table_delete_subscriber_' . $subscriber->id ) ); ?>" class="button is-destructive" onclick="return confirm('<?php echo esc_js( __( 'Are you sure you want to delete this subscriber?', 'task-table' ) ); ?>');">
 										<span class="dashicons dashicons-trash"></span>
-										<?php _e( 'Delete', 'task-table' ); ?>
+										<?php esc_html_e( 'Delete', 'task-table' ); ?>
 									</a>
 								</td>
 							</tr>
@@ -1826,17 +1826,17 @@ function task_table_admin_subscribers_page() {
 				</table>
 			<?php else : ?>
 				<div class="tt-empty-state">
-					<h3><?php _e( 'No subscribers found', 'task-table' ); ?></h3>
+					<h3><?php esc_html_e( 'No subscribers found', 'task-table' ); ?></h3>
 					<p>
 						<?php if ( $filters_applied ) : ?>
-							<?php _e( 'No subscriber matches your search. Try another email or reset the filters.', 'task-table' ); ?>
+							<?php esc_html_e( 'No subscriber matches your search. Try another email or reset the filters.', 'task-table' ); ?>
 						<?php else : ?>
-							<?php _e( 'Add your first subscriber manually or wait for someone to confirm via the signup form.', 'task-table' ); ?>
+							<?php esc_html_e( 'Add your first subscriber manually or wait for someone to confirm via the signup form.', 'task-table' ); ?>
 						<?php endif; ?>
 					</p>
 					<?php if ( $filters_applied ) : ?>
 						<div class="tt-actions">
-							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-subscribers' ) ); ?>"><?php _e( 'Reset Filters', 'task-table' ); ?></a>
+							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-subscribers' ) ); ?>"><?php esc_html_e( 'Reset Filters', 'task-table' ); ?></a>
 						</div>
 					<?php endif; ?>
 				</div>
@@ -1846,13 +1846,13 @@ function task_table_admin_subscribers_page() {
 		<div class="tt-columns">
 			<?php if ( $editing_subscriber ) : ?>
 				<div class="tt-form-card">
-					<h3><?php printf( esc_html__( 'Edit Categories for %s', 'task-table' ), esc_html( $editing_subscriber->email ) ); ?></h3>
+					<h3><?php printf( /* translators: %s: subscriber email address */ esc_html__( 'Edit Categories for %s', 'task-table' ), esc_html( $editing_subscriber->email ) ); ?></h3>
 					<form method="post" action="">
 						<?php wp_nonce_field( 'task_table_update_subscriber_categories' ); ?>
 						<input type="hidden" name="task_table_update_subscriber_categories" value="1">
 						<input type="hidden" name="subscriber_id" value="<?php echo esc_attr( $editing_subscriber->id ); ?>">
 						<fieldset>
-							<legend class="screen-reader-text"><?php _e( 'Categories', 'task-table' ); ?></legend>
+							<legend class="screen-reader-text"><?php esc_html_e( 'Categories', 'task-table' ); ?></legend>
 							<?php if ( ! empty( $categories ) ) : ?>
 								<?php foreach ( $categories as $category ) : ?>
 									<label>
@@ -1861,32 +1861,32 @@ function task_table_admin_subscribers_page() {
 									</label><br>
 								<?php endforeach; ?>
 							<?php else : ?>
-								<p><?php _e( 'No categories available.', 'task-table' ); ?></p>
+								<p><?php esc_html_e( 'No categories available.', 'task-table' ); ?></p>
 							<?php endif; ?>
 						</fieldset>
 						<p class="submit">
-							<button type="submit" class="button button-primary"><?php _e( 'Save Categories', 'task-table' ); ?></button>
-							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-subscribers' ) ); ?>"><?php _e( 'Cancel', 'task-table' ); ?></a>
+							<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Categories', 'task-table' ); ?></button>
+							<a class="button" href="<?php echo esc_url( admin_url( 'admin.php?page=task-table-subscribers' ) ); ?>"><?php esc_html_e( 'Cancel', 'task-table' ); ?></a>
 						</p>
 					</form>
 				</div>
 			<?php endif; ?>
 
 			<div class="tt-form-card">
-				<h3><?php _e( 'Add New Subscriber', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Add New Subscriber', 'task-table' ); ?></h3>
 				<form method="post" action="">
 					<?php wp_nonce_field( 'task_table_add_subscriber', 'task_table_add_subscriber_nonce' ); ?>
 					<p>
-						<label for="subscriber_email" class="screen-reader-text"><?php _e( 'Email', 'task-table' ); ?></label>
+						<label for="subscriber_email" class="screen-reader-text"><?php esc_html_e( 'Email', 'task-table' ); ?></label>
 						<input type="email" name="subscriber_email" id="subscriber_email" class="regular-text" placeholder="<?php esc_attr_e( 'Email address', 'task-table' ); ?>" required>
 					</p>
 					<p>
 						<label>
 							<input type="checkbox" name="subscriber_confirmed" id="subscriber_confirmed" value="1">
-							<?php _e( 'Mark as confirmed', 'task-table' ); ?>
+							<?php esc_html_e( 'Mark as confirmed', 'task-table' ); ?>
 						</label>
 					</p>
-					<p><?php _e( 'Categories', 'task-table' ); ?></p>
+					<p><?php esc_html_e( 'Categories', 'task-table' ); ?></p>
 					<div>
 						<?php
 						$preselected = isset( $_POST['subscriber_categories'] ) ? array_map( 'intval', (array) $_POST['subscriber_categories'] ) : array();
@@ -1900,11 +1900,11 @@ function task_table_admin_subscribers_page() {
 								</label>
 							<?php endforeach; ?>
 						<?php else : ?>
-							<p><?php _e( 'No categories available. Please create one first.', 'task-table' ); ?></p>
+							<p><?php esc_html_e( 'No categories available. Please create one first.', 'task-table' ); ?></p>
 						<?php endif; ?>
 					</div>
 					<p class="submit">
-						<input type="submit" name="submit" class="button button-primary" value="<?php _e( 'Add Subscriber', 'task-table' ); ?>">
+						<input type="submit" name="submit" class="button button-primary" value="<?php esc_attr_e( 'Add Subscriber', 'task-table' ); ?>">
 					</p>
 				</form>
 			</div>
@@ -1928,7 +1928,7 @@ function task_table_admin_subscribers_page() {
 				);
 
 				if ( $exists ) {
-					echo '<div class="notice notice-error is-dismissible"><p>' . __( 'This email is already subscribed.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'This email is already subscribed.', 'task-table' ) . '</p></div>';
 				} else {
 					$wpdb->insert(
 						$subscribers_table,
@@ -1944,12 +1944,12 @@ function task_table_admin_subscribers_page() {
 						task_table_sync_subscriber_categories( $new_id, $category_ids );
 					}
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . __( 'Subscriber added successfully.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Subscriber added successfully.', 'task-table' ) . '</p></div>';
 					echo '<script>window.location.href = window.location.href;</script>';
 				}
 			} else {
 				// Fix: Corrected the PHP syntax in the error message
-				echo '<div class="notice notice-error is-dismissible"><p>' . __( 'Please enter a valid email address.', 'task-table' ) . '</p></div>';
+				echo '<div class="notice notice-error is-dismissible"><p>' . esc_html__( 'Please enter a valid email address.', 'task-table' ) . '</p></div>';
 			}
 		}
 	}
@@ -2116,8 +2116,8 @@ function task_table_admin_categories_page() {
 	<div class="wrap task-table-admin">
 		<div class="tt-page-header">
 			<div class="tt-page-title">
-				<h1><?php _e( 'Task Categories', 'task-table' ); ?></h1>
-				<p><?php _e( 'Group your events into meaningful segments. Categories power signup filters, subscriber preferences, and email targeting.', 'task-table' ); ?></p>
+				<h1><?php esc_html_e( 'Task Categories', 'task-table' ); ?></h1>
+				<p><?php esc_html_e( 'Group your events into meaningful segments. Categories power signup filters, subscriber preferences, and email targeting.', 'task-table' ); ?></p>
 			</div>
 		</div>
 
@@ -2142,68 +2142,68 @@ function task_table_admin_categories_page() {
 
 		<div class="tt-card-grid">
 			<div class="tt-card">
-				<h3><?php _e( 'Categories', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Categories', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( count( $categories ) ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Ready to organize your workload', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Ready to organize your workload', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Events Tagged', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Events Tagged', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $total_events ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Events currently assigned to categories', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Events currently assigned to categories', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
-				<h3><?php _e( 'Subscriber Preferences', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Subscriber Preferences', 'task-table' ); ?></h3>
 				<div class="tt-card-value"><?php echo esc_html( $total_subscribers ); ?></div>
-				<div class="tt-card-meta"><?php _e( 'Category selections saved by subscribers', 'task-table' ); ?></div>
+				<div class="tt-card-meta"><?php esc_html_e( 'Category selections saved by subscribers', 'task-table' ); ?></div>
 			</div>
 		</div>
 
 		<div class="tt-columns">
 			<div class="tt-form-card">
-				<h3><?php _e( 'Add New Category', 'task-table' ); ?></h3>
+				<h3><?php esc_html_e( 'Add New Category', 'task-table' ); ?></h3>
 				<form method="post">
 					<?php wp_nonce_field( 'task_table_add_category', 'task_table_add_category_nonce' ); ?>
 					<p>
-						<label for="category_name" class="screen-reader-text"><?php _e( 'Name', 'task-table' ); ?></label>
+						<label for="category_name" class="screen-reader-text"><?php esc_html_e( 'Name', 'task-table' ); ?></label>
 						<input type="text" name="category_name" id="category_name" class="regular-text" placeholder="<?php esc_attr_e( 'Category name', 'task-table' ); ?>" required>
 					</p>
 					<p>
-						<label for="category_slug" class="screen-reader-text"><?php _e( 'Slug', 'task-table' ); ?></label>
+						<label for="category_slug" class="screen-reader-text"><?php esc_html_e( 'Slug', 'task-table' ); ?></label>
 						<input type="text" name="category_slug" id="category_slug" class="regular-text" placeholder="<?php esc_attr_e( 'Slug (optional)', 'task-table' ); ?>">
 					</p>
 					<p>
-						<label for="category_description" class="screen-reader-text"><?php _e( 'Description', 'task-table' ); ?></label>
+						<label for="category_description" class="screen-reader-text"><?php esc_html_e( 'Description', 'task-table' ); ?></label>
 						<textarea name="category_description" id="category_description" class="large-text" rows="3" placeholder="<?php esc_attr_e( 'Short description (optional)', 'task-table' ); ?>"></textarea>
 					</p>
-					<p class="submit"><button type="submit" class="button button-primary"><?php _e( 'Add Category', 'task-table' ); ?></button></p>
+					<p class="submit"><button type="submit" class="button button-primary"><?php esc_html_e( 'Add Category', 'task-table' ); ?></button></p>
 				</form>
 			</div>
 
 			<?php if ( $editing_category ) : ?>
 				<div class="tt-form-card">
-					<h3><?php _e( 'Edit Category', 'task-table' ); ?></h3>
+					<h3><?php esc_html_e( 'Edit Category', 'task-table' ); ?></h3>
 					<form method="post">
 						<?php wp_nonce_field( 'task_table_update_category', 'task_table_update_category_nonce' ); ?>
 						<input type="hidden" name="category_id" value="<?php echo esc_attr( $editing_category['id'] ); ?>">
 						<p>
-							<label for="edit_category_name" class="screen-reader-text"><?php _e( 'Name', 'task-table' ); ?></label>
+							<label for="edit_category_name" class="screen-reader-text"><?php esc_html_e( 'Name', 'task-table' ); ?></label>
 							<input type="text" name="category_name" id="edit_category_name" class="regular-text" value="<?php echo esc_attr( $editing_category['name'] ); ?>" required>
 						</p>
 						<p>
-							<label for="edit_category_slug" class="screen-reader-text"><?php _e( 'Slug', 'task-table' ); ?></label>
+							<label for="edit_category_slug" class="screen-reader-text"><?php esc_html_e( 'Slug', 'task-table' ); ?></label>
 							<input type="text" name="category_slug" id="edit_category_slug" class="regular-text" value="<?php echo esc_attr( $editing_category['slug'] ); ?>">
 						</p>
 						<p>
-							<label for="edit_category_description" class="screen-reader-text"><?php _e( 'Description', 'task-table' ); ?></label>
+							<label for="edit_category_description" class="screen-reader-text"><?php esc_html_e( 'Description', 'task-table' ); ?></label>
 							<textarea name="category_description" id="edit_category_description" class="large-text" rows="3"><?php echo esc_textarea( $editing_category['description'] ); ?></textarea>
 						</p>
 						<p>
-							<label for="edit_category_sort_order" class="screen-reader-text"><?php _e( 'Sort Order', 'task-table' ); ?></label>
+							<label for="edit_category_sort_order" class="screen-reader-text"><?php esc_html_e( 'Sort Order', 'task-table' ); ?></label>
 							<input type="number" name="category_sort_order" id="edit_category_sort_order" value="<?php echo esc_attr( $editing_category['sort_order'] ); ?>" step="1">
 						</p>
 						<p class="submit">
-							<button type="submit" class="button button-primary"><?php _e( 'Save Changes', 'task-table' ); ?></button>
-							<a href="<?php echo esc_url( remove_query_arg( 'edit' ) ); ?>" class="button"><?php _e( 'Cancel', 'task-table' ); ?></a>
+							<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Changes', 'task-table' ); ?></button>
+							<a href="<?php echo esc_url( remove_query_arg( 'edit' ) ); ?>" class="button"><?php esc_html_e( 'Cancel', 'task-table' ); ?></a>
 						</p>
 					</form>
 				</div>
@@ -2211,22 +2211,22 @@ function task_table_admin_categories_page() {
 		</div>
 
 		<div class="tt-section">
-			<h2><?php _e( 'Existing Categories', 'task-table' ); ?></h2>
+			<h2><?php esc_html_e( 'Existing Categories', 'task-table' ); ?></h2>
 			<?php if ( empty( $categories ) ) : ?>
 				<div class="tt-empty-state">
-					<h3><?php _e( 'No categories yet', 'task-table' ); ?></h3>
-					<p><?php _e( 'Create at least one category to start grouping events and subscribers.', 'task-table' ); ?></p>
+					<h3><?php esc_html_e( 'No categories yet', 'task-table' ); ?></h3>
+					<p><?php esc_html_e( 'Create at least one category to start grouping events and subscribers.', 'task-table' ); ?></p>
 				</div>
 			<?php else : ?>
 				<table class="wp-list-table widefat fixed striped tt-table">
 					<thead>
 						<tr>
-							<th scope="col"><?php _e( 'Name', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Slug', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Sort Order', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Events', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Subscribers', 'task-table' ); ?></th>
-							<th scope="col"><?php _e( 'Actions', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Name', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Slug', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Sort Order', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Events', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Subscribers', 'task-table' ); ?></th>
+							<th scope="col"><?php esc_html_e( 'Actions', 'task-table' ); ?></th>
 						</tr>
 					</thead>
 					<tbody>
@@ -2247,7 +2247,7 @@ function task_table_admin_categories_page() {
 								<td class="tt-actions">
 									<a href="<?php echo esc_url( add_query_arg( array( 'edit' => $category['id'] ) ) ); ?>" class="button button-secondary">
 										<span class="dashicons dashicons-edit"></span>
-										<?php _e( 'Edit', 'task-table' ); ?>
+										<?php esc_html_e( 'Edit', 'task-table' ); ?>
 									</a>
 									<?php if ( $has_alternative_categories ) : ?>
 										<?php
@@ -2265,13 +2265,13 @@ function task_table_admin_categories_page() {
 											<input type="hidden" name="reassign_category_id" value="<?php echo esc_attr( $reassign_category_id ); ?>">
 											<button type="submit" class="button is-destructive" onclick="return confirm('<?php echo esc_js( __( 'Delete this category? Associated items will be reassigned automatically.', 'task-table' ) ); ?>');">
 												<span class="dashicons dashicons-trash"></span>
-												<?php _e( 'Delete', 'task-table' ); ?>
+												<?php esc_html_e( 'Delete', 'task-table' ); ?>
 											</button>
 										</form>
 									<?php else : ?>
 										<button type="button" class="button is-destructive" disabled>
 											<span class="dashicons dashicons-trash"></span>
-											<?php _e( 'Delete', 'task-table' ); ?>
+											<?php esc_html_e( 'Delete', 'task-table' ); ?>
 										</button>
 									<?php endif; ?>
 								</td>
@@ -2310,7 +2310,7 @@ function task_table_admin_email_settings_page() {
 		if ( isset( $_POST['signup_notification_recipients_b64'] ) ) {
 			$encoded_payload = trim( (string) wp_unslash( $_POST['signup_notification_recipients_b64'] ) );
 			if ( $encoded_payload !== '' ) {
-				$decoded_payload = base64_decode( $encoded_payload, true );
+				$decoded_payload = base64_decode( $encoded_payload, true ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- the settings form base64-encodes its JSON payload.
 				if ( is_string( $decoded_payload ) ) {
 					$raw_recipients = json_decode( $decoded_payload, true );
 					if ( is_array( $raw_recipients ) ) {
@@ -2350,7 +2350,7 @@ function task_table_admin_email_settings_page() {
 			task_table_save_signup_notification_recipients( $legacy_recipients );
 		}
 
-		echo '<div class="notice notice-success is-dismissible"><p>' . __( 'E-Mail-Einstellungen gespeichert.', 'task-table' ) . '</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'E-Mail-Einstellungen gespeichert.', 'task-table' ) . '</p></div>';
 	}
 
 	$templates       = task_table_get_email_templates();
@@ -2374,8 +2374,8 @@ function task_table_admin_email_settings_page() {
 	<div class="wrap task-table-admin">
 		<div class="tt-page-header">
 			<div class="tt-page-title">
-				<h1><?php _e( 'E-Mail-Einstellungen', 'task-table' ); ?></h1>
-				<p><?php _e( 'Passe die Benachrichtigungen und automatischen Antworten an, damit jede Nachricht im richtigen Ton an die richtige Person geht.', 'task-table' ); ?></p>
+				<h1><?php esc_html_e( 'E-Mail-Einstellungen', 'task-table' ); ?></h1>
+				<p><?php esc_html_e( 'Passe die Benachrichtigungen und automatischen Antworten an, damit jede Nachricht im richtigen Ton an die richtige Person geht.', 'task-table' ); ?></p>
 			</div>
 		</div>
 
@@ -2384,7 +2384,7 @@ function task_table_admin_email_settings_page() {
 
 			<div class="tt-toolbar" style="justify-content: flex-start;">
 				<h2 style="margin:0; font-size: 16px; font-weight:600; color: var(--tt-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-					<?php _e( 'Benachrichtigungsempfänger', 'task-table' ); ?>
+					<?php esc_html_e( 'Benachrichtigungsempfänger', 'task-table' ); ?>
 				</h2>
 			</div>
 
@@ -2392,19 +2392,19 @@ function task_table_admin_email_settings_page() {
 				<div id="signup-recipient-list" style="display:grid; gap:12px; margin-bottom:16px;"></div>
 
 				<div class="tt-form-card" style="margin:0; padding:16px; border:1px solid var(--tt-border); border-radius:10px;">
-					<h3 style="margin:0 0 10px;"><?php _e( 'Empfänger hinzufügen', 'task-table' ); ?></h3>
+					<h3 style="margin:0 0 10px;"><?php esc_html_e( 'Empfänger hinzufügen', 'task-table' ); ?></h3>
 
 					<div class="email-input-container" style="margin-bottom:10px;">
 						<input type="email" id="new_email" placeholder="<?php esc_attr_e( 'Neue E-Mail-Adresse hinzufügen', 'task-table' ); ?>" class="regular-text">
 						<button type="button" id="add_signup_recipient" class="button button-secondary">
 							<span class="dashicons dashicons-plus-alt"></span>
-							<?php _e( 'Hinzufügen', 'task-table' ); ?>
+							<?php esc_html_e( 'Hinzufügen', 'task-table' ); ?>
 						</button>
 					</div>
 
 					<label style="display:inline-flex; align-items:center; gap:8px; margin-bottom:10px;">
 						<input type="checkbox" id="recipient_all_categories" checked>
-						<?php _e( 'Alle Kategorien', 'task-table' ); ?>
+						<?php esc_html_e( 'Alle Kategorien', 'task-table' ); ?>
 					</label>
 
 					<div id="recipient-category-picker" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px;">
@@ -2416,7 +2416,7 @@ function task_table_admin_email_settings_page() {
 								</label>
 							<?php endforeach; ?>
 						<?php else : ?>
-							<span class="description"><?php _e( 'Keine Kategorien verfügbar.', 'task-table' ); ?></span>
+							<span class="description"><?php esc_html_e( 'Keine Kategorien verfügbar.', 'task-table' ); ?></span>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -2426,21 +2426,21 @@ function task_table_admin_email_settings_page() {
 				<input type="hidden" name="moderator_emails" id="moderator_emails" value="">
 
 				<p class="description" style="margin-top:12px; color: var(--tt-text-muted);">
-					<?php _e( 'Lege für jede Adresse fest, ob sie alle neuen Anmeldungen oder nur Anmeldungen bestimmter Kategorien erhalten soll.', 'task-table' ); ?>
+					<?php esc_html_e( 'Lege für jede Adresse fest, ob sie alle neuen Anmeldungen oder nur Anmeldungen bestimmter Kategorien erhalten soll.', 'task-table' ); ?>
 				</p>
 			</div>
 
 			<h2 style="margin: 0 0 16px; font-size: 18px;">
-				<?php _e( 'E-Mail-Vorlagen', 'task-table' ); ?>
+				<?php esc_html_e( 'E-Mail-Vorlagen', 'task-table' ); ?>
 			</h2>
 
 			<div class="email-templates-tabs tt-pill-toggle" style="margin-bottom:18px;">
 				<a href="#general-settings" class="nav-tab is-active" data-tab="general-settings">
-					<?php _e( 'Platzhalter', 'task-table' ); ?>
+					<?php esc_html_e( 'Platzhalter', 'task-table' ); ?>
 				</a>
 				<?php foreach ( array_keys( $templates ) as $tab_key ) : ?>
 					<?php $tab_label = isset( $template_labels[ $tab_key ] ) ? $template_labels[ $tab_key ] : ucwords( str_replace( '_', ' ', $tab_key ) ); ?>
-					<a href="#template-<?php echo $tab_key; ?>" class="nav-tab" data-tab="template-<?php echo esc_attr( $tab_key ); ?>">
+					<a href="#template-<?php echo esc_attr( $tab_key ); ?>" class="nav-tab" data-tab="template-<?php echo esc_attr( $tab_key ); ?>">
 						<?php echo esc_html( $tab_label ); ?>
 					</a>
 				<?php endforeach; ?>
@@ -2448,40 +2448,40 @@ function task_table_admin_email_settings_page() {
 
 			<div id="general-settings" class="email-template-tab" style="display: block;">
 				<p style="margin-top:0;">
-					<?php _e( 'Nutze diese Platzhalter in jeder Vorlage, um Nachrichten automatisch zu personalisieren. Beim Versand werden sie durch die passenden Werte ersetzt.', 'task-table' ); ?>
+					<?php esc_html_e( 'Nutze diese Platzhalter in jeder Vorlage, um Nachrichten automatisch zu personalisieren. Beim Versand werden sie durch die passenden Werte ersetzt.', 'task-table' ); ?>
 				</p>
 				<ul class="task-table-placeholders">
-					<li><code>{site_name}</code> - <?php _e( 'Seitenname', 'task-table' ); ?></li>
-					<li><code>{user_name}</code> - <?php _e( 'Name der Person (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{user_email}</code> - <?php _e( 'E-Mail-Adresse der Person (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_title}</code> - <?php _e( 'Titel der Veranstaltung (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_details}</code> - <?php _e( 'Details zur Veranstaltung (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_id}</code> - <?php _e( 'Veranstaltungs-ID (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_category_line}</code> - <?php _e( 'Kategorie als Textzeile (nur neue Anmeldung)', 'task-table' ); ?></li>
-					<li><code>{confirmation_link}</code> - <?php _e( 'Bestätigungslink (nur Abo-E-Mails)', 'task-table' ); ?></li>
-					<li><code>{manage_link}</code> - <?php _e( 'Link zum Verwalten/Abmelden (neue Veranstaltung, Abo verwalten; wird sonst automatisch angehängt)', 'task-table' ); ?></li>
+					<li><code>{site_name}</code> - <?php esc_html_e( 'Seitenname', 'task-table' ); ?></li>
+					<li><code>{user_name}</code> - <?php esc_html_e( 'Name der Person (falls vorhanden)', 'task-table' ); ?></li>
+					<li><code>{user_email}</code> - <?php esc_html_e( 'E-Mail-Adresse der Person (falls vorhanden)', 'task-table' ); ?></li>
+					<li><code>{event_title}</code> - <?php esc_html_e( 'Titel der Veranstaltung (falls vorhanden)', 'task-table' ); ?></li>
+					<li><code>{event_details}</code> - <?php esc_html_e( 'Details zur Veranstaltung (falls vorhanden)', 'task-table' ); ?></li>
+					<li><code>{event_id}</code> - <?php esc_html_e( 'Veranstaltungs-ID (falls vorhanden)', 'task-table' ); ?></li>
+					<li><code>{event_category_line}</code> - <?php esc_html_e( 'Kategorie als Textzeile (nur neue Anmeldung)', 'task-table' ); ?></li>
+					<li><code>{confirmation_link}</code> - <?php esc_html_e( 'Bestätigungslink (nur Abo-E-Mails)', 'task-table' ); ?></li>
+					<li><code>{manage_link}</code> - <?php esc_html_e( 'Link zum Verwalten/Abmelden (neue Veranstaltung, Abo verwalten; wird sonst automatisch angehängt)', 'task-table' ); ?></li>
 				</ul>
 			</div>
 
 			<?php foreach ( $templates as $template_key => $template ) : ?>
-				<div id="template-<?php echo $template_key; ?>" class="email-template-tab" style="display: none;">
+				<div id="template-<?php echo esc_attr( $template_key ); ?>" class="email-template-tab" style="display: none;">
 					<?php $template_title = isset( $template_labels[ $template_key ] ) ? $template_labels[ $template_key ] : ucwords( str_replace( '_', ' ', $template_key ) ); ?>
-					<h3><?php echo esc_html( $template_title ); ?> <?php _e( 'Vorlage', 'task-table' ); ?></h3>
+					<h3><?php echo esc_html( $template_title ); ?> <?php esc_html_e( 'Vorlage', 'task-table' ); ?></h3>
 					<table class="form-table">
 						<tr>
 							<th scope="row">
-								<label for="task_table_email_<?php echo $template_key; ?>_subject"><?php _e( 'Betreff', 'task-table' ); ?></label>
+								<label for="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject"><?php esc_html_e( 'Betreff', 'task-table' ); ?></label>
 							</th>
 							<td>
-								<input type="text" name="task_table_email_<?php echo $template_key; ?>_subject" id="task_table_email_<?php echo $template_key; ?>_subject" class="large-text" value="<?php echo esc_attr( get_option( "task_table_email_{$template_key}_subject", $template['subject'] ) ); ?>">
+								<input type="text" name="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject" id="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject" class="large-text" value="<?php echo esc_attr( get_option( "task_table_email_{$template_key}_subject", $template['subject'] ) ); ?>">
 							</td>
 						</tr>
 						<tr>
 							<th scope="row">
-								<label for="task_table_email_<?php echo $template_key; ?>_message"><?php _e( 'Nachricht', 'task-table' ); ?></label>
+								<label for="task_table_email_<?php echo esc_attr( $template_key ); ?>_message"><?php esc_html_e( 'Nachricht', 'task-table' ); ?></label>
 							</th>
 							<td>
-								<textarea name="task_table_email_<?php echo $template_key; ?>_message" id="task_table_email_<?php echo $template_key; ?>_message" class="large-text" rows="10"><?php echo esc_textarea( get_option( "task_table_email_{$template_key}_message", $template['message'] ) ); ?></textarea>
+								<textarea name="task_table_email_<?php echo esc_attr( $template_key ); ?>_message" id="task_table_email_<?php echo esc_attr( $template_key ); ?>_message" class="large-text" rows="10"><?php echo esc_textarea( get_option( "task_table_email_{$template_key}_message", $template['message'] ) ); ?></textarea>
 							</td>
 						</tr>
 					</table>
@@ -2489,7 +2489,7 @@ function task_table_admin_email_settings_page() {
 			<?php endforeach; ?>
 
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php _e( 'Änderungen speichern', 'task-table' ); ?>">
+				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Änderungen speichern', 'task-table' ); ?>">
 			</p>
 		</form>
 	</div>

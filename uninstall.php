@@ -15,8 +15,8 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 global $wpdb;
 
-foreach ( array( 'task_table_subscriber_categories', 'task_table_subscribers', 'task_table_signups', 'task_table_events', 'task_table_categories' ) as $table ) {
-	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}{$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- constant names
+foreach ( array( 'task_table_subscriber_categories', 'task_table_subscribers', 'task_table_signups', 'task_table_events', 'task_table_categories' ) as $task_table_table ) {
+	$wpdb->query( "DROP TABLE IF EXISTS {$wpdb->prefix}{$task_table_table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- constant names
 }
 
 $wpdb->query(
@@ -28,7 +28,7 @@ $wpdb->query(
 	)
 );
 
-foreach ( wp_roles()->role_objects as $role ) {
-	$role->remove_cap( 'manage_task_table' );
-	$role->remove_cap( 'edit_task_table_events' );
+foreach ( wp_roles()->role_objects as $task_table_role ) {
+	$task_table_role->remove_cap( 'manage_task_table' );
+	$task_table_role->remove_cap( 'edit_task_table_events' );
 }

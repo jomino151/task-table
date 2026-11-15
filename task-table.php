@@ -235,6 +235,7 @@ register_deactivation_hook( __FILE__, 'task_table_deactivation' );
  * Handle front-end confirmation links (non-REST fallback)
  */
 function task_table_handle_frontend_confirmation() {
+	// phpcs:disable WordPress.Security.NonceVerification -- authenticated by the double opt-in token from the email; a nonce would expire before people click the link.
 	if ( ! isset( $_GET['task_table_confirm_subscription'] ) ) {
 		return;
 	}
@@ -244,7 +245,7 @@ function task_table_handle_frontend_confirmation() {
 		return; // Silent fail to avoid revealing info
 	}
 	if ( ! defined( 'DONOTCACHEPAGE' ) ) {
-		define( 'DONOTCACHEPAGE', true );
+		define( 'DONOTCACHEPAGE', true ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- constant read by page-cache plugins.
 	}
 	nocache_headers();
 	$result = task_table_confirm_subscription_token( $email, $token );
@@ -254,5 +255,6 @@ function task_table_handle_frontend_confirmation() {
 		wp_die( esc_html__( 'Technischer Fehler: Bestätigung konnte nicht gespeichert werden.', 'task-table' ), esc_html__( 'Fehler', 'task-table' ), array( 'response' => 500 ) );
 	}
 	wp_die( esc_html__( 'Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet.', 'task-table' ), esc_html__( 'Ungültiger Link', 'task-table' ), array( 'response' => 400 ) );
+	// phpcs:enable WordPress.Security.NonceVerification
 }
 add_action( 'template_redirect', 'task_table_handle_frontend_confirmation' );

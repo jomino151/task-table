@@ -160,7 +160,7 @@ function task_table_get_event_details( $event_id ) {
 	);
 
 	if ( ! $event ) {
-		error_log( 'Could not find event data for event ID ' . $event_id );
+		error_log( 'Could not find event data for event ID ' . $event_id ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- operational log for site admins.
 		return false;
 	}
 
@@ -198,27 +198,27 @@ function task_table_format_event_details( $event_data ) {
 	$details = __( 'Veranstaltungsinformationen:', 'task-table' ) . "\n";
 
 	if ( ! empty( $event_data['wasAngefragt'] ) ) {
-		$details .= task_table_email_label( 'was_angefragt' ) . strip_tags( wp_unslash( $event_data['wasAngefragt'] ) ) . "\n";
+		$details .= task_table_email_label( 'was_angefragt' ) . wp_strip_all_tags( wp_unslash( $event_data['wasAngefragt'] ) ) . "\n";
 	}
 
 	if ( ! empty( $event_data['kontext'] ) ) {
-		$details .= task_table_email_label( 'kontext' ) . strip_tags( wp_unslash( $event_data['kontext'] ) ) . "\n";
+		$details .= task_table_email_label( 'kontext' ) . wp_strip_all_tags( wp_unslash( $event_data['kontext'] ) ) . "\n";
 	}
 
 	if ( ! empty( $event_data['nameHochschule'] ) ) {
-			$details .= task_table_email_label( 'name_hochschule' ) . strip_tags( wp_unslash( $event_data['nameHochschule'] ) ) . "\n";
+			$details .= task_table_email_label( 'name_hochschule' ) . wp_strip_all_tags( wp_unslash( $event_data['nameHochschule'] ) ) . "\n";
 	}
 
 	if ( ! empty( $event_data['tnAnzahl'] ) ) {
-		$details .= task_table_email_label( 'tn_anzahl' ) . strip_tags( wp_unslash( $event_data['tnAnzahl'] ) ) . "\n";
+		$details .= task_table_email_label( 'tn_anzahl' ) . wp_strip_all_tags( wp_unslash( $event_data['tnAnzahl'] ) ) . "\n";
 	}
 
 	if ( ! empty( $event_data['zeitpunkt'] ) ) {
-			$details .= task_table_email_label( 'zeitpunkt' ) . strip_tags( wp_unslash( $event_data['zeitpunkt'] ) ) . "\n";
+			$details .= task_table_email_label( 'zeitpunkt' ) . wp_strip_all_tags( wp_unslash( $event_data['zeitpunkt'] ) ) . "\n";
 	}
 
 	if ( ! empty( $event_data['auftragdetails'] ) ) {
-		$details .= task_table_email_label( 'auftragdetails' ) . strip_tags( wp_unslash( $event_data['auftragdetails'] ) ) . "\n";
+		$details .= task_table_email_label( 'auftragdetails' ) . wp_strip_all_tags( wp_unslash( $event_data['auftragdetails'] ) ) . "\n";
 	}
 
 	$category_id = 0;
@@ -251,11 +251,11 @@ function task_table_send_approval_notification( $signup ) {
 
 	// Add event title if available
 	$event_title = ! empty( $event_data['wasAngefragt'] ) ?
-	strip_tags( wp_unslash( $event_data['wasAngefragt'] ) ) :
-	sprintf( __( 'Veranstaltung #%d', 'task-table' ), $signup->event_id );
+	wp_strip_all_tags( wp_unslash( $event_data['wasAngefragt'] ) ) :
+	sprintf( /* translators: %d: event ID */ __( 'Veranstaltung #%d', 'task-table' ), $signup->event_id );
 
 	// Log for debugging
-	error_log( 'Sending approval email for event: ' . $event_title );
+	error_log( 'Sending approval email for event: ' . $event_title ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- operational log for site admins.
 
 	return task_table_send_notification(
 		$signup->user_email,
@@ -279,16 +279,16 @@ function task_table_send_denial_notification( $signup ) {
 	// Get event details from database
 	$event_data  = task_table_get_event_details( $signup->event_id );
 	$event_title = ! empty( $event_data['wasAngefragt'] ) ?
-	strip_tags( wp_unslash( $event_data['wasAngefragt'] ) ) :
-	sprintf( __( 'Veranstaltung #%d', 'task-table' ), $signup->event_id );
+	wp_strip_all_tags( wp_unslash( $event_data['wasAngefragt'] ) ) :
+	sprintf( /* translators: %d: event ID */ __( 'Veranstaltung #%d', 'task-table' ), $signup->event_id );
 
 	// Include basic event details in denial emails too
 	$event_details = '';
 	if ( ! empty( $event_data['nameHochschule'] ) ) {
-		$event_details .= task_table_email_label( 'name_hochschule' ) . strip_tags( wp_unslash( $event_data['nameHochschule'] ) ) . "\n";
+		$event_details .= task_table_email_label( 'name_hochschule' ) . wp_strip_all_tags( wp_unslash( $event_data['nameHochschule'] ) ) . "\n";
 	}
 	if ( ! empty( $event_data['zeitpunkt'] ) ) {
-		$event_details .= task_table_email_label( 'zeitpunkt' ) . strip_tags( wp_unslash( $event_data['zeitpunkt'] ) ) . "\n";
+		$event_details .= task_table_email_label( 'zeitpunkt' ) . wp_strip_all_tags( wp_unslash( $event_data['zeitpunkt'] ) ) . "\n";
 	}
 
 	return task_table_send_notification(
@@ -660,7 +660,7 @@ function task_table_send_new_event_notification( $event_data ) {
 			);
 		}
 
-		$recipient_emails = $wpdb->get_results( $recipient_query );
+		$recipient_emails = $wpdb->get_results( $recipient_query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 	}
 
 	// Deduplicate emails (case-insensitive)
@@ -685,8 +685,8 @@ function task_table_send_new_event_notification( $event_data ) {
 
 		// Prepare email contents
 		$event_title = ! empty( $normalized_event['wasAngefragt'] ) ?
-			strip_tags( $normalized_event['wasAngefragt'] ) :
-			sprintf( __( 'Neue Veranstaltung #%d', 'task-table' ), (int) ( $normalized_event['id'] ?? 0 ) );
+			wp_strip_all_tags( $normalized_event['wasAngefragt'] ) :
+			sprintf( /* translators: %d: event ID */ __( 'Neue Veranstaltung #%d', 'task-table' ), (int) ( $normalized_event['id'] ?? 0 ) );
 
 	$event_details = task_table_format_event_details( $normalized_event );
 
