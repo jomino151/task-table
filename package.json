@@ -26,6 +26,10 @@
 			{
 				"from": "src/templates",
 				"to": "build/templates"
+			},
+			{
+				"from": "src/admin",
+				"to": "build/admin"
 			}
 		]
 	}

@@ -29,7 +29,7 @@ require_once TASK_TABLE_PLUGIN_DIR . 'build/database.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'build/email-notifications.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'build/api.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'build/subscriptions.php';
-require_once TASK_TABLE_PLUGIN_DIR . 'build/admin-pages.php';
+require_once TASK_TABLE_PLUGIN_DIR . 'build/admin/loader.php';
 
 /**
  * Load translations shipped in /languages (de_DE for the English admin strings).
@@ -179,22 +179,6 @@ function task_table_enqueue_frontend_styles() {
 	}
 }
 add_action( 'wp_enqueue_scripts', 'task_table_enqueue_frontend_styles' );
-
-/**
- * Enqueue admin scripts and styles
- */
-function task_table_admin_enqueue_scripts( $hook ) {
-	if ( strpos( $hook, 'task-table' ) !== false ) {
-		wp_enqueue_script(
-			'task-table-admin',
-			TASK_TABLE_PLUGIN_URL . 'admin/admin.js',
-			array( 'jquery' ),
-			filemtime( TASK_TABLE_PLUGIN_DIR . 'admin/admin.js' ),
-			true
-		);
-	}
-}
-add_action( 'admin_enqueue_scripts', 'task_table_admin_enqueue_scripts' );
 
 /**
  * Pass AJAX URL to front-end scripts
