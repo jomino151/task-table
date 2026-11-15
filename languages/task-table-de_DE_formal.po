@@ -1,0 +1,650 @@
+# German translation for the Task Table plugin.
+# This file is distributed under the same license as the plugin (GPL-2.0-or-later).
+msgid ""
+msgstr ""
+"Project-Id-Version: Task Table 1.2.0\n"
+"Language: de_DE_formal\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Domain: task-table\n"
+
+msgid "Task Table"
+msgstr "Aufgabentabelle"
+
+msgid "Events"
+msgstr "Veranstaltungen"
+
+msgid "Signups"
+msgstr "Anmeldungen"
+
+msgid "Subscribers"
+msgstr "Abonnenten"
+
+msgid "Categories"
+msgstr "Kategorien"
+
+msgid "Email Settings"
+msgstr "E-Mail Einstellungen"
+
+msgid "Task Table Dashboard"
+msgstr "Aufgabentabelle – Übersicht"
+
+msgid "Browse your archive of completed and past events. Refine the list with filters or export a snapshot for your records."
+msgstr "Durchsuche dein Archiv abgeschlossener und vergangener Veranstaltungen. Verfeinere die Liste mit Filtern oder exportiere einen Schnappschuss für deine Unterlagen."
+
+msgid "Stay on top of upcoming and in-progress events. Filter, export, and act on signups without leaving this screen."
+msgstr "Bleib über momentane Veranstaltungen auf dem Laufenden. Filter, exportiere und bearbeite Anmeldungen, hier auf dieser Seite."
+
+msgid "Manage Signups"
+msgstr "Anmeldungen verwalten"
+
+msgid "Download Excel"
+msgstr "Excel herunterladen"
+
+msgid "Customize Excel export"
+msgstr "Excel-Export anpassen"
+
+msgid "Choose exactly which events to include before downloading."
+msgstr "Wähle aus, welche Veranstaltungen du downloaden möchtest."
+
+msgid "Event status"
+msgstr "Veranstaltungsstatus"
+
+msgid "All events"
+msgstr "Alle Veranstaltungen"
+
+msgid "Active events only"
+msgstr "Nur aktive Veranstaltungen"
+
+msgid "Archived events only"
+msgstr "Nur archivierte Veranstaltungen"
+
+msgid "Categories (optional)"
+msgstr "Kategorien (optional)"
+
+msgid "Leave blank to include every category."
+msgstr "Leer lassen für alle Kategorien."
+
+msgid "No categories available yet."
+msgstr "Noch keine Kategorien verfügbar."
+
+msgid "Search filter (optional)"
+msgstr "Suchfilter (optional)"
+
+msgid "Filter by keyword"
+msgstr "Nach Stichwort filtern"
+
+msgid "Matches event title, university, or assignee."
+msgstr "Veranstaltungstitel, Hochschule etc."
+
+msgid "File format"
+msgstr "Dateiformat"
+
+msgid "Excel (.xlsx)"
+msgstr "Excel (.xlsx)"
+
+msgid "Legacy Excel (.xls)"
+msgstr "Klassisches Excel (.xls)"
+
+msgid "Download"
+msgstr "Herunterladen"
+
+msgid "Close export dialog"
+msgstr "Export-Dialog schließen"
+
+msgid "Archived in view"
+msgstr "Archiviert"
+
+msgid "Active in view"
+msgstr "Aktiv"
+
+msgid "matching filters"
+msgstr "passende Filter"
+
+msgid "total"
+msgstr "gesamt"
+
+msgid "Active Events"
+msgstr "Aktive Veranstaltungen"
+
+msgid "Currently visible to users"
+msgstr "Derzeit für Nutzer sichtbar"
+
+msgid "Archived Events"
+msgstr "Archivierte Veranstaltungen"
+
+msgid "Stored for historical reference"
+msgstr "Für Referenz gespeichert"
+
+msgid "Pending Signups"
+msgstr "Ausstehende Anmeldungen"
+
+msgid "needs review"
+msgstr "unbearbeitet"
+
+msgid "all caught up"
+msgstr "alles erledigt"
+
+msgid "Review queue"
+msgstr "Warteschlange ansehen"
+
+msgid "Great job! Nothing waiting for approval."
+msgstr "Super! Nichts wartet auf Freigabe."
+
+msgid "Toggle between active and archived events"
+msgstr "Zwischen aktiven und archivierten Veranstaltungen wechseln"
+
+msgid "Search"
+msgstr "Suche"
+
+msgid "Search by event, university, or assignee"
+msgstr "Suche nach Veranstaltung"
+
+msgid "Category"
+msgstr "Kategorie"
+
+msgid "All categories"
+msgstr "Alle Kategorien"
+
+msgid "Apply Filters"
+msgstr "Filter anwenden"
+
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+msgid "Event"
+msgstr "Veranstaltung"
+
+msgid "University"
+msgstr "Hochschule"
+
+msgid "Schedule"
+msgstr "Zeitplan"
+
+msgid "Assignee"
+msgstr "Zuständig"
+
+msgid "Created"
+msgstr "Erstellt"
+
+msgid "Actions"
+msgstr "Aktionen"
+
+msgid "Event ID %s"
+msgstr ""
+
+msgid "Unassigned"
+msgstr "Nicht zugewiesen"
+
+msgid "%s ago"
+msgstr "vor %s"
+
+msgid "Archive this event?"
+msgstr "Diese Veranstaltung archivieren?"
+
+msgid "Archive"
+msgstr "Archivieren"
+
+msgid "Restore this event?"
+msgstr "Diese Veranstaltung wiederherstellen?"
+
+msgid "Restore"
+msgstr "Wiederherstellen"
+
+msgid "Event archived."
+msgstr "Veranstaltung archiviert."
+
+msgid "Event restored."
+msgstr "Veranstaltung wiederhergestellt."
+
+msgid "No archived events match your filters"
+msgstr "Keine archivierten Veranstaltungen passen zu deinen Filtern"
+
+msgid "No events yet"
+msgstr "Noch keine Veranstaltungen"
+
+msgid "Try broadening your filters or reset them to see the full list again."
+msgstr "Erweitere deine Filter oder setze sie zurück um die komplette Liste zu sehen."
+
+msgid "New submissions will appear here automatically. Use the signup form to collect your first requests."
+msgstr "Neue Einreichungen erscheinen hier automatisch. Nutze das Anmeldeformular für die ersten Anfragen."
+
+msgid "Go to Signups"
+msgstr "Zu den Anmeldungen"
+
+msgid "Reset Filters"
+msgstr "Filter zurücksetzen"
+
+msgid "Manage Event Signups"
+msgstr "Veranstaltungs-Anmeldungen verwalten"
+
+msgid "Review incoming signups, capture important details, and keep conversations moving with quick approve or deny actions."
+msgstr "Prüfe eingehende Anmeldungen, erfasse wichtige Details und halte den Ablauf mit schnellen Freigaben oder Ablehnungen am Laufen."
+
+msgid "Total Signups"
+msgstr "Anmeldungen gesamt"
+
+msgid "Across all statuses"
+msgstr "Über alle Status"
+
+msgid "Pending"
+msgstr "Ausstehend"
+
+msgid "awaiting review"
+msgstr "wartet auf Prüfung"
+
+msgid "Jump to queue"
+msgstr "Zur Warteschlange"
+
+msgid "All requests are processed."
+msgstr "Alle Anfragen sind bearbeitet."
+
+msgid "Approved"
+msgstr "Angenommen"
+
+msgid "Assignments already confirmed"
+msgstr "Zuweisungen bereits bestätigt"
+
+msgid "Denied"
+msgstr "Abgelehnt"
+
+msgid "Requests you declined"
+msgstr "Abgelehnte Anfragen"
+
+msgid "Filter signups by status"
+msgstr "Anmeldungen nach Status filtern"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Signup"
+msgstr "Anmeldung"
+
+msgid "Details"
+msgstr "Details"
+
+msgid "Status"
+msgstr "Status"
+
+msgid "Submitted"
+msgstr "Eingereicht"
+
+msgid "Approve"
+msgstr "Annehmen"
+
+msgid "Deny"
+msgstr "Ablehnen"
+
+msgid "Are you sure you want to delete this signup?"
+msgstr "Diese Anmeldung wirklich löschen?"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "Signup approved."
+msgstr "Anmeldung angenommen."
+
+msgid "Signup denied."
+msgstr "Anmeldung abgelehnt."
+
+msgid "Signup deleted."
+msgstr "Anmeldung gelöscht."
+
+msgid "No signups match your filters"
+msgstr "Keine Anmeldungen entsprechen deinen Filtern"
+
+msgid "Try adjusting your search or switch to the “All” tab to see every request."
+msgstr "Passe deine Suche an oder wechsle auf „Alle“, um jede Anfrage zu sehen."
+
+msgid "Once users submit the form, their requests will appear here instantly."
+msgstr "Sobald Nutzer das Formular absenden, erscheinen ihre Anfragen hier sofort."
+
+msgid "Manage Subscribers"
+msgstr "Abonnenten verwalten"
+
+msgid "Keep your mailing list clean and transparent. Tag subscribers with categories, resend confirmations, and add team members manually."
+msgstr "Halte deine Mailingliste sauber und übersichtlich. Weise Kategorien zu, sende Bestätigungen erneut und füge Teammitglieder manuell hinzu."
+
+msgid "Subscriber categories updated."
+msgstr "Abonnentenkategorien aktualisiert."
+
+msgid "Subscriber deleted."
+msgstr "Abonnent gelöscht."
+
+msgid "Confirmation email resent."
+msgstr "Bestätigungs-E-Mail erneut gesendet."
+
+msgid "Total Subscribers"
+msgstr "Abonnenten gesamt"
+
+msgid "Contacts who opted in"
+msgstr "Kontakte mit Opt-in"
+
+msgid "Confirmed"
+msgstr "Bestätigt"
+
+msgid "Actively receiving updates"
+msgstr "Erhalten aktiv Updates"
+
+msgid "Awaiting Confirmation"
+msgstr "Bestätigung ausstehend"
+
+msgid "needs follow-up"
+msgstr "Nachfassen nötig"
+
+msgid "Invite them to confirm or resend the email."
+msgstr "Bitte um Bestätigung oder sende die E-Mail erneut."
+
+msgid "Ways to segment your audience"
+msgstr "Optionen zur Unterteilung"
+
+msgid "Search by email or ID"
+msgstr "Suche nach E-Mail oder ID"
+
+msgid "Apply Search"
+msgstr "Suche anwenden"
+
+msgid "Subscriber List"
+msgstr "Abonnentenliste"
+
+msgid "Subscriber not found."
+msgstr "Abonnent nicht gefunden."
+
+msgid "Subscriber"
+msgstr "Abonnent"
+
+msgid "Added"
+msgstr "Hinzugefügt"
+
+msgid "Resend"
+msgstr "Erneut senden"
+
+msgid "Are you sure you want to delete this subscriber?"
+msgstr "Diesen Abonnenten wirklich löschen?"
+
+msgid "No subscribers found"
+msgstr "Keine Abonnenten gefunden"
+
+msgid "No subscriber matches your search. Try another email or reset the filters."
+msgstr "Kein Abonnent entspricht deiner Suche. Andere E-Mail versuchen oder Filter zurücksetzen."
+
+msgid "Add your first subscriber manually or wait for someone to confirm via the signup form."
+msgstr "Füge den ersten Abonnenten manuell hinzu oder warte auf eine Bestätigung über das Formular."
+
+msgid "Edit Categories for %s"
+msgstr "Kategorien für %s bearbeiten"
+
+msgid "No categories available."
+msgstr "Keine Kategorien verfügbar."
+
+msgid "Save Categories"
+msgstr "Kategorien speichern"
+
+msgid "Cancel"
+msgstr "Abbrechen"
+
+msgid "Add New Subscriber"
+msgstr "Neuen Abonnenten hinzufügen"
+
+msgid "Email"
+msgstr "E-Mail"
+
+msgid "Email address"
+msgstr "E-Mail-Adresse"
+
+msgid "Mark as confirmed"
+msgstr "Als bestätigt markieren"
+
+msgid "No categories available. Please create one first."
+msgstr "Keine Kategorien vorhanden. Bitte zuerst eine erstellen."
+
+msgid "Add Subscriber"
+msgstr "Abonnent hinzufügen"
+
+msgid "This email is already subscribed."
+msgstr "Diese E-Mail ist bereits eingetragen."
+
+msgid "Subscriber added successfully."
+msgstr "Abonnent erfolgreich hinzugefügt."
+
+msgid "Please enter a valid email address."
+msgstr "Bitte eine gültige E-Mail-Adresse eingeben."
+
+msgid "Category name is required."
+msgstr "Kategoriename ist erforderlich."
+
+msgid "Category created successfully."
+msgstr "Kategorie erfolgreich erstellt."
+
+msgid "Failed to create category."
+msgstr "Kategorie konnte nicht erstellt werden."
+
+msgid "Category updated."
+msgstr "Kategorie aktualisiert."
+
+msgid "Category not found."
+msgstr "Kategorie nicht gefunden."
+
+msgid "You cannot delete the default category."
+msgstr "Die Standardkategorie kann nicht gelöscht werden."
+
+msgid "At least one category must remain."
+msgstr "Mindestens eine Kategorie muss bestehen bleiben."
+
+msgid "Category deleted."
+msgstr "Kategorie gelöscht."
+
+msgid "Task Categories"
+msgstr "Aufgabenkategorien"
+
+msgid "Group your events into meaningful segments. Categories power signup filters, subscriber preferences, and email targeting."
+msgstr "Gruppiere Veranstaltungen in sinnvolle Segmente. Kategorien steuern Filter, Abonnenten-Präferenzen und E-Mail-Zielgruppen."
+
+msgid "Ready to organize your workload"
+msgstr "Bereit deine Arbeit zu organisieren"
+
+msgid "Default Category"
+msgstr "Standardkategorie"
+
+msgid "Fallback for new events & subscribers"
+msgstr "Ersatz für neue Veranstaltungen & Abonnenten"
+
+msgid "Events Tagged"
+msgstr "Veranstaltungen zugeordnet"
+
+msgid "Events currently assigned to categories"
+msgstr "Veranstaltungen mit Kategorien"
+
+msgid "Subscriber Preferences"
+msgstr "Abonnenten-Präferenzen"
+
+msgid "Category selections saved by subscribers"
+msgstr "Von Abonnenten gespeicherte Kategorien"
+
+msgid "Add New Category"
+msgstr "Neue Kategorie hinzufügen"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Category name"
+msgstr "Kategoriename"
+
+msgid "Slug"
+msgstr "Titelform"
+
+msgid "Slug (optional)"
+msgstr "Titelform (optional)"
+
+msgid "Description"
+msgstr "Beschreibung"
+
+msgid "Short description (optional)"
+msgstr "Kurze Beschreibung (optional)"
+
+msgid "Set as default category"
+msgstr "Als Standardkategorie festlegen"
+
+msgid "Add Category"
+msgstr "Kategorie hinzufügen"
+
+msgid "Edit Category"
+msgstr "Kategorie bearbeiten"
+
+msgid "Sort Order"
+msgstr "Sortierreihenfolge"
+
+msgid "Save Changes"
+msgstr "Änderungen speichern"
+
+msgid "Existing Categories"
+msgstr "Vorhandene Kategorien"
+
+msgid "No categories yet"
+msgstr "Noch keine Kategorien"
+
+msgid "Create at least one category to start grouping events and subscribers."
+msgstr "Erstelle mindestens eine Kategorie um Veranstaltungen und Abonnenten zu gruppieren."
+
+msgid "Default"
+msgstr "Standard"
+
+msgid "Available"
+msgstr "Verfügbar"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Delete this category? Associated items will be reassigned to the default category."
+msgstr "Diese Kategorie löschen? Zugeordnete Elemente werden der Standardkategorie neu zugewiesen."
+
+msgid "Delete this category? Associated items will be reassigned automatically."
+msgstr "Diese Kategorie löschen? Zugeordnete Elemente werden automatisch neu zugewiesen."
+
+msgid "Customize signup notifications and automated responses. Tailor each template so recipients get the right message at the right time."
+msgstr "Passe Anmelde-Benachrichtigungen und automatische Antworten an. Sorge dafür, dass Empfänger zur richtigen Zeit die richtige Nachricht erhalten."
+
+msgid "Notification Recipients"
+msgstr "Benachrichtigungsempfänger"
+
+msgid "Remove email"
+msgstr "E-Mail entfernen"
+
+msgid "Add new email address"
+msgstr "Neue E-Mail-Adresse hinzufügen"
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid "Add every address that should be notified about new signups. Each recipient receives an individual email."
+msgstr "Füge alle Adressen hinzu, die über neue Anmeldungen informiert werden sollen. Jeder Empfänger erhält eine separate E-Mail."
+
+msgid "Email Templates"
+msgstr "E-Mail Vorlagen"
+
+msgid "Placeholders"
+msgstr "Platzhalter"
+
+msgid "Use these placeholders inside any template to personalize the message. They will be replaced automatically when the email is sent."
+msgstr "Nutze diese Platzhalter zur Personalisierung. Sie werden beim Versand automatisch ersetzt."
+
+msgid "Site name"
+msgstr "Seitenname"
+
+msgid "User name (where available)"
+msgstr "Benutzername (falls verfügbar)"
+
+msgid "User email (where available)"
+msgstr "Benutzer E-Mail (falls verfügbar)"
+
+msgid "Event title (where available)"
+msgstr "Veranstaltungstitel (falls verfügbar)"
+
+msgid "Event details (where available)"
+msgstr "Veranstaltungsdetails (falls verfügbar)"
+
+msgid "Event ID (where available)"
+msgstr "Event-ID (falls verfügbar)"
+
+msgid "Confirmation link (subscription emails only)"
+msgstr "Bestätigungslink (nur Abo-E-Mails)"
+
+msgid "Template"
+msgstr "Vorlage"
+
+msgid "Subject"
+msgstr "Betreff"
+
+msgid "Message"
+msgstr "Nachricht"
+
+msgid "Email settings saved."
+msgstr "E-Mail Einstellungen gespeichert."
+
+msgid "Please enter a valid email address"
+msgstr "Bitte eine gültige E-Mail-Adresse eingeben"
+
+msgid "This email address is already added"
+msgstr "Diese E-Mail-Adresse wurde bereits hinzugefügt"
+
+msgid "Subscription confirmation"
+msgstr "Abo-Bestätigung"
+
+msgid "Signup approved"
+msgstr "Anmeldung angenommen"
+
+msgid "Signup denied"
+msgstr "Anmeldung abgelehnt"
+
+msgid "New signup"
+msgstr "Neue Anmeldung"
+
+msgid "New event"
+msgstr "Neue Veranstaltung"
+
+msgid "Event not found"
+msgstr "Veranstaltung nicht gefunden"
+
+msgid "Database insert failed"
+msgstr "Speichern fehlgeschlagen"
+
+msgid "Failed to save event"
+msgstr "Veranstaltung konnte nicht gespeichert werden"
+
+msgid "Failed to update event"
+msgstr "Veranstaltung konnte nicht aktualisiert werden"
+
+msgid "Failed to delete event"
+msgstr "Veranstaltung konnte nicht gelöscht werden"
+
+msgid "Event deleted successfully"
+msgstr "Veranstaltung gelöscht"
+
+msgid "Invalid email address"
+msgstr "Ungültige E-Mail-Adresse"
+
+msgid "Please confirm your subscription via the email we just sent."
+msgstr "Bitte bestätige dein Abo über den Link in der E-Mail, die wir dir gerade geschickt haben."
+
+msgid "Failed to start subscription"
+msgstr "Abo konnte nicht gestartet werden"
+
+msgid "Subscription confirmed. Thank you!"
+msgstr "Abo bestätigt. Vielen Dank!"
+
+msgid "Could not mark as confirmed."
+msgstr "Bestätigung konnte nicht gespeichert werden."
+
+msgid "Invalid or expired confirmation link."
+msgstr "Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet."
+
+msgid "Failed to update archive state"
+msgstr "Archivstatus konnte nicht geändert werden"
+
+msgid "Forbidden"
+msgstr "Keine Berechtigung"
+
+msgid "Last event created %s ago"
+msgstr "Letztes Event erstellt vor %s"

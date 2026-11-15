@@ -1,3 +1,5 @@
+import { __ } from '@wordpress/i18n';
+
 /**
  * Front-end interactions for the new event signup block.
  */
@@ -41,13 +43,13 @@ const initSignupForm = (container) => {
         event.preventDefault();
 
         if (!emailInput.value.trim()) {
-            showMessage('Bitte gib eine gültige E-Mail-Adresse ein.', 'error');
+            showMessage(__('Bitte gib eine gültige E-Mail-Adresse ein.', 'task-table'), 'error');
             return;
         }
 
         const selectedCategories = getSelectedCategories();
         if (categoryInputs.length > 0 && selectedCategories.length === 0) {
-            showMessage('Bitte wähle mindestens eine Kategorie aus.', 'error');
+            showMessage(__('Bitte wähle mindestens eine Kategorie aus.', 'task-table'), 'error');
             return;
         }
 
@@ -72,14 +74,14 @@ const initSignupForm = (container) => {
             const data = await response.json();
 
             if (response.ok && data?.success) {
-                showMessage('Bitte prüfe deinen Posteingang und bestätige dein Abonnement über den Link in unserer E-Mail.', 'success');
+                showMessage(__('Bitte prüfe deinen Posteingang und bestätige dein Abonnement über den Link in unserer E-Mail.', 'task-table'), 'success');
                 emailInput.value = '';
             } else {
-                showMessage(data?.message || 'Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'error');
+                showMessage(data?.message || __('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'task-table'), 'error');
             }
         } catch (error) {
             console.error('Task Table subscription error:', error);
-            showMessage('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'error');
+            showMessage(__('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'task-table'), 'error');
         } finally {
             submitButton?.removeAttribute('disabled');
             submitButton?.classList.remove('is-busy');

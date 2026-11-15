@@ -1,0 +1,71 @@
+<?xml version="1.0"?>
+<ruleset name="Task Table">
+	<description>WordPress-Extra and PHP 7.4+ compatibility for the Task Table plugin.</description>
+
+	<file>task-table.php</file>
+	<file>uninstall.php</file>
+	<file>src</file>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<arg name="parallel" value="8"/>
+
+	<config name="minimum_wp_version" value="6.7"/>
+	<config name="testVersion" value="7.4-"/>
+
+	<rule ref="PHPCompatibilityWP"/>
+
+	<rule ref="WordPress-Extra">
+		<!-- The plugin keeps its data in custom tables, which have no WP API or object cache layer. -->
+		<exclude name="WordPress.DB.DirectDatabaseQuery.DirectQuery"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.NoCaching"/>
+		<exclude name="WordPress.DB.DirectDatabaseQuery.SchemaChange"/>
+		<!-- Style preference; the codebase uses natural-order comparisons consistently. -->
+		<exclude name="WordPress.PHP.YodaConditions.NotYoda"/>
+		<!-- File names predate the WP naming convention; renaming would break deployed includes. -->
+		<exclude name="WordPress.Files.FileName"/>
+		<!-- Hook and render callbacks must accept the arguments WordPress passes, used or not. -->
+		<exclude name="Generic.CodeAnalysis.UnusedFunctionParameter"/>
+	</rule>
+
+	<!-- Block render templates and partials are included inside a function scope by WordPress, so their variables aren't globals. -->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound">
+		<exclude-pattern>src/*/render.php</exclude-pattern>
+		<exclude-pattern>src/templates/*</exclude-pattern>
+	</rule>
+
+	<!--
+	Interpolation into SQL is limited to "{$wpdb->prefix}task_table_*" table names and placeholder
+	lists built from array_fill('%d'). Every value goes through $wpdb->prepare(). The sniff can't
+	tell table names from values, so it's limited to warnings here; review any new occurrence.
+	-->
+	<rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
+		<type>warning</type>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="task-table"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="task_table"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_task_table"/>
+				<element value="edit_task_table_events"/>
+			</property>
+		</properties>
+	</rule>
+</ruleset>

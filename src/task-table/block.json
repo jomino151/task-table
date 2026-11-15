@@ -2,14 +2,15 @@
     "$schema": "https://schemas.wp.org/trunk/block.json",
     "apiVersion": 3,
     "name": "task-table/task-table",
-    "version": "0.1.0",
+    "version": "1.2.0",
     "title": "Task-Tabelle",
     "category": "text",
     "icon": "table",
     "description": "Erstellt eine dynamische Tabelle zur Kommunikation von Aufgaben.",
     "example": {},
     "supports": {
-        "html": false
+        "html": false,
+        "align": ["wide", "full"]
     },
     "attributes": {
         "rows": {
