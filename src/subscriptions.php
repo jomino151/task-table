@@ -103,8 +103,8 @@ function task_table_handle_subscription_management() {
 
 	if ( ! $subscriber ) {
 		wp_die(
-			esc_html__( 'Dieser Link ist ungültig oder das Abo existiert nicht mehr.', 'task-table' ),
-			esc_html__( 'Abo verwalten', 'task-table' ),
+			esc_html__( 'This link is invalid or the subscription no longer exists.', 'task-table' ),
+			esc_html__( 'Manage subscription', 'task-table' ),
 			array( 'response' => 404 )
 		);
 	}
@@ -125,8 +125,8 @@ function task_table_handle_subscription_management() {
 		if ( $action === 'unsubscribe' ) {
 			task_table_delete_subscriber( $subscriber->id );
 			wp_die(
-				esc_html__( 'Du wurdest abgemeldet und deine E-Mail-Adresse wurde gelöscht.', 'task-table' ),
-				esc_html__( 'Abgemeldet', 'task-table' ),
+				esc_html__( 'You have been unsubscribed and your email address has been deleted.', 'task-table' ),
+				esc_html__( 'Unsubscribed', 'task-table' ),
 				array( 'response' => 200 )
 			);
 		}
@@ -153,21 +153,21 @@ function task_table_render_subscription_manage_page( $subscriber, $mode, $saved 
 
 	ob_start();
 	?>
-	<h1><?php esc_html_e( 'Abo verwalten', 'task-table' ); ?></h1>
+	<h1><?php esc_html_e( 'Manage subscription', 'task-table' ); ?></h1>
 	<p>
 	<?php
 		/* translators: %s: email address */
-		printf( esc_html__( 'Benachrichtigungen für %s', 'task-table' ), '<strong>' . esc_html( $subscriber->email ) . '</strong>' );
+		printf( esc_html__( 'Notifications for %s', 'task-table' ), '<strong>' . esc_html( $subscriber->email ) . '</strong>' );
 	?>
 	</p>
 	<?php if ( $saved ) : ?>
-		<p><strong><?php esc_html_e( 'Deine Auswahl wurde gespeichert.', 'task-table' ); ?></strong></p>
+		<p><strong><?php esc_html_e( 'Your selection has been saved.', 'task-table' ); ?></strong></p>
 	<?php endif; ?>
 	<?php if ( (int) $subscriber->confirmed === 1 && $mode === 'manage' && ! empty( $categories ) ) : ?>
 		<form method="post" action="<?php echo esc_url( $action_url ); ?>">
 			<input type="hidden" name="task_table_action" value="update">
 			<fieldset>
-				<legend><?php esc_html_e( 'Kategorien', 'task-table' ); ?></legend>
+				<legend><?php esc_html_e( 'Categories', 'task-table' ); ?></legend>
 				<?php foreach ( $categories as $category ) : ?>
 					<label style="display:block;margin:.3em 0">
 						<input type="checkbox" name="categories[]" value="<?php echo esc_attr( $category['id'] ); ?>" <?php checked( in_array( (int) $category['id'], $selected, true ) ); ?>>
@@ -175,13 +175,13 @@ function task_table_render_subscription_manage_page( $subscriber, $mode, $saved 
 					</label>
 				<?php endforeach; ?>
 			</fieldset>
-			<p><button type="submit" class="button"><?php esc_html_e( 'Auswahl speichern', 'task-table' ); ?></button></p>
+			<p><button type="submit" class="button"><?php esc_html_e( 'Save selection', 'task-table' ); ?></button></p>
 		</form>
 	<?php endif; ?>
 	<form method="post" action="<?php echo esc_url( $action_url ); ?>">
 		<input type="hidden" name="task_table_action" value="unsubscribe">
-		<p><button type="submit" class="button"><?php esc_html_e( 'Abmelden und E-Mail-Adresse löschen', 'task-table' ); ?></button></p>
+		<p><button type="submit" class="button"><?php esc_html_e( 'Unsubscribe and delete my email address', 'task-table' ); ?></button></p>
 	</form>
 	<?php
-	wp_die( ob_get_clean(), esc_html__( 'Abo verwalten', 'task-table' ), array( 'response' => 200 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above
+	wp_die( ob_get_clean(), esc_html__( 'Manage subscription', 'task-table' ), array( 'response' => 200 ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped above
 }

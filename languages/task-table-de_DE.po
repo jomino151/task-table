@@ -26,7 +26,7 @@ msgid "Categories"
 msgstr "Kategorien"
 
 msgid "Email Settings"
-msgstr "E-Mail Einstellungen"
+msgstr "E-Mail-Einstellungen"
 
 msgid "Task Table Dashboard"
 msgstr "Aufgabentabelle – Übersicht"
@@ -410,7 +410,7 @@ msgid "Subscriber added successfully."
 msgstr "Abonnent erfolgreich hinzugefügt."
 
 msgid "Please enter a valid email address."
-msgstr "Bitte eine gültige E-Mail-Adresse eingeben."
+msgstr "Bitte gib eine gültige E-Mail-Adresse ein."
 
 msgid "Category name is required."
 msgstr "Kategoriename ist erforderlich."
@@ -581,7 +581,7 @@ msgid "Message"
 msgstr "Nachricht"
 
 msgid "Email settings saved."
-msgstr "E-Mail Einstellungen gespeichert."
+msgstr "E-Mail-Einstellungen gespeichert."
 
 msgid "Please enter a valid email address"
 msgstr "Bitte eine gültige E-Mail-Adresse eingeben"
@@ -648,3 +648,343 @@ msgstr "Keine Berechtigung"
 
 msgid "Last event created %s ago"
 msgstr "Letztes Event erstellt vor %s"
+
+msgid "Manage subscription (existing subscription)"
+msgstr "Abo verwalten (bestehendes Abo)"
+
+msgid "Adjust notifications and automatic replies so every message reaches the right person in the right tone."
+msgstr "Passe die Benachrichtigungen und automatischen Antworten an, damit jede Nachricht im richtigen Ton an die richtige Person geht."
+
+msgid "Notification recipients"
+msgstr "Benachrichtigungsempfänger"
+
+msgid "Add recipient"
+msgstr "Empfänger hinzufügen"
+
+msgid "Add a new email address"
+msgstr "Neue E-Mail-Adresse hinzufügen"
+
+msgid "Choose for each address whether it receives all new signups or only signups in certain categories."
+msgstr "Lege für jede Adresse fest, ob sie alle neuen Anmeldungen oder nur Anmeldungen bestimmter Kategorien erhalten soll."
+
+msgid "Email templates"
+msgstr "E-Mail-Vorlagen"
+
+msgid "Use these placeholders in any template to personalise messages. They are replaced with the matching values when the email is sent."
+msgstr "Nutze diese Platzhalter in jeder Vorlage, um Nachrichten automatisch zu personalisieren. Beim Versand werden sie durch die passenden Werte ersetzt."
+
+msgid "Person's name (if available)"
+msgstr "Name der Person (falls vorhanden)"
+
+msgid "Person's email address (if available)"
+msgstr "E-Mail-Adresse der Person (falls vorhanden)"
+
+msgid "Event title (if available)"
+msgstr "Titel der Veranstaltung (falls vorhanden)"
+
+msgid "Event details (if available)"
+msgstr "Details zur Veranstaltung (falls vorhanden)"
+
+msgid "Event ID (if available)"
+msgstr "Veranstaltungs-ID (falls vorhanden)"
+
+msgid "Category as a line of text (new signup only)"
+msgstr "Kategorie als Textzeile (nur neue Anmeldung)"
+
+msgid "Manage/unsubscribe link (new event, manage subscription; appended automatically otherwise)"
+msgstr "Link zum Verwalten/Abmelden (neue Veranstaltung, Abo verwalten; wird sonst automatisch angehängt)"
+
+msgid "Save changes"
+msgstr "Änderungen speichern"
+
+msgid "No recipients yet."
+msgstr "Noch keine Empfänger angelegt."
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "This email address has already been added."
+msgstr "Diese E-Mail-Adresse wurde bereits hinzugefügt."
+
+msgid "Please choose at least one category or enable \"All categories\"."
+msgstr "Bitte wähle mindestens eine Kategorie oder aktiviere „Alle Kategorien“."
+
+msgid "Too many requests. Please try again later."
+msgstr "Zu viele Anfragen. Bitte versuche es später erneut."
+
+msgid "Please enter a name and a valid email address."
+msgstr "Bitte gib einen Namen und eine gültige E-Mail-Adresse an."
+
+msgid "Please confirm your subscription – {site_name}"
+msgstr "Bitte bestätige dein Abo – {site_name}"
+
+msgid "Hello,\n\nplease confirm that you want to receive notifications about new events.\nTo do so, click the link below (or copy it into your browser):\n\n{confirmation_link}\n\nIf you did not sign up, you can ignore this email.\n\nThank you!\n{site_name}"
+msgstr "Hallo,\n\nbitte bestätige, dass du Benachrichtigungen über neue Veranstaltungen erhalten möchtest.\nKlicke dazu auf den folgenden Link (oder kopiere ihn in deinen Browser):\n\n{confirmation_link}\n\nFalls du dich nicht angemeldet hast, kannst du diese E-Mail ignorieren.\n\nVielen Dank!\n{site_name}"
+
+msgid "Manage your subscription – {site_name}"
+msgstr "Dein Abo verwalten – {site_name}"
+
+msgid "Hello,\n\nthis email address is already subscribed. Use the link below to change your categories or unsubscribe:\n\n{manage_link}\n\nIf you did not request this, you can ignore this email.\n\n{site_name}"
+msgstr "Hallo,\n\nfür diese E-Mail-Adresse besteht bereits ein Abo. Über den folgenden Link kannst du deine Kategorien ändern oder dich abmelden:\n\n{manage_link}\n\nFalls du das nicht angefordert hast, kannst du diese E-Mail ignorieren.\n\n{site_name}"
+
+msgid "Your signup for \"{event_title}\" has been approved"
+msgstr "Deine Anmeldung für \"{event_title}\" wurde angenommen"
+
+msgid "Hello {user_name},\n\nyour signup for the event \"{event_title}\" has been approved.\n\n{event_details}\n\nThank you!\n{site_name}"
+msgstr "Hallo {user_name},\n\ndeine Anmeldung für die Veranstaltung \"{event_title}\" wurde angenommen.\n\n{event_details}\n\nVielen Dank!\n{site_name}"
+
+msgid "Update on your signup for \"{event_title}\""
+msgstr "Aktualisierung zu deiner Anmeldung für \"{event_title}\""
+
+msgid "Hello {user_name},\n\nunfortunately we cannot accept your signup for the event \"{event_title}\" at this time.\n\n{event_details}\n\nThank you for your interest.\n{site_name}"
+msgstr "Hallo {user_name},\n\nleider können wir deine Anmeldung für die Veranstaltung \"{event_title}\" derzeit nicht annehmen.\n\n{event_details}\n\nVielen Dank für dein Interesse.\n{site_name}"
+
+msgid "New event signup"
+msgstr "Neue Veranstaltungs-Anmeldung"
+
+msgid "A new signup has arrived:\n\nEvent ID: {event_id}\n{event_category_line}Name: {user_name}\nEmail: {user_email}\n{free_text_section}\nPlease review this request in the admin area."
+msgstr "Es ist eine neue Anmeldung eingegangen:\n\nEvent-ID: {event_id}\n{event_category_line}Name: {user_name}\nE-Mail: {user_email}\n{free_text_section}\nBitte prüfe diese Anfrage im Administrationsbereich."
+
+msgid "New event published: {event_title}"
+msgstr "Neue Veranstaltung veröffentlicht: {event_title}"
+
+msgid "A new event has been published:\n\n{event_details}\n\nBest regards\n{site_name}\n\n--\nManage or cancel your subscription: {manage_link}"
+msgstr "Es wurde eine neue Veranstaltung veröffentlicht:\n\n{event_details}\n\nViele Grüße\n{site_name}\n\n--\nAbo verwalten oder abmelden: {manage_link}"
+
+msgid "Manage or cancel your subscription:"
+msgstr "Abo verwalten oder abmelden:"
+
+msgid "Event details not available"
+msgstr "Veranstaltungsdetails nicht verfügbar"
+
+msgid "Event information:"
+msgstr "Veranstaltungsinformationen:"
+
+msgid "Event #%d"
+msgstr "Veranstaltung #%d"
+
+msgid "Additional notes:"
+msgstr "Zusätzliche Hinweise:"
+
+msgid "New event #%d"
+msgstr "Neue Veranstaltung #%d"
+
+msgid "Subscribe to new events"
+msgstr "Neue Veranstaltungen abonnieren"
+
+msgid "Get an email when new events are added."
+msgstr "Erhalte E-Mail-Benachrichtigungen, wenn neue Veranstaltungen hinzugefügt werden."
+
+msgid "Your email address"
+msgstr "Deine E-Mail-Adresse"
+
+msgid "Which categories do you want to hear about?"
+msgstr "Für welche Kategorien möchtest du Benachrichtigungen erhalten?"
+
+msgid "You can choose several categories. At least one is required."
+msgstr "Du kannst mehrere Kategorien wählen. Mindestens eine Auswahl ist erforderlich."
+
+msgid "There are no categories to subscribe to right now. Please try again later or contact the team."
+msgstr "Momentan sind keine abonnierbaren Kategorien verfügbar. Bitte versuche es später erneut oder kontaktiere das Team."
+
+msgid "Subscribe"
+msgstr "Abonnieren"
+
+msgid "Please choose at least one category."
+msgstr "Bitte wähle mindestens eine Kategorie aus."
+
+msgid "Please check your inbox and confirm your subscription with the link in our email."
+msgstr "Bitte prüfe deinen Posteingang und bestätige dein Abonnement über den Link in unserer E-Mail."
+
+msgid "Something went wrong. Please try again later."
+msgstr "Ein Fehler ist aufgetreten. Bitte versuche es später erneut."
+
+msgid "This link is invalid or the subscription no longer exists."
+msgstr "Dieser Link ist ungültig oder das Abo existiert nicht mehr."
+
+msgid "Manage subscription"
+msgstr "Abo verwalten"
+
+msgid "You have been unsubscribed and your email address has been deleted."
+msgstr "Du wurdest abgemeldet und deine E-Mail-Adresse wurde gelöscht."
+
+msgid "Unsubscribed"
+msgstr "Abgemeldet"
+
+msgid "Notifications for %s"
+msgstr "Benachrichtigungen für %s"
+
+msgid "Your selection has been saved."
+msgstr "Deine Auswahl wurde gespeichert."
+
+msgid "Save selection"
+msgstr "Auswahl speichern"
+
+msgid "Unsubscribe and delete my email address"
+msgstr "Abmelden und E-Mail-Adresse löschen"
+
+msgid "What is requested?"
+msgstr "Was ist angefragt?"
+
+msgid "Context"
+msgstr "Kontext"
+
+msgid "University name"
+msgstr "Name der Hochschule"
+
+msgid "Participants"
+msgstr "Vorauss. TN-Anzahl"
+
+msgid "Planned date"
+msgstr "Anvisierter Zeitpunkt"
+
+msgid "Request details"
+msgstr "Auftragdetails"
+
+msgid "Could not load categories."
+msgstr "Kategorien konnten nicht geladen werden."
+
+msgid "Do you really want to delete this event?"
+msgstr "Möchtest du dieses Ereignis wirklich löschen?"
+
+msgid "Task category"
+msgstr "Aufgabenkategorie"
+
+msgid "Select category"
+msgstr "Kategorie auswählen"
+
+msgid "No categories available. Create one in the Task Table admin area."
+msgstr "Keine Kategorien verfügbar. Lege eine im Task-Table-Adminbereich an."
+
+msgid "Loading events…"
+msgstr "Veranstaltungen werden geladen …"
+
+msgid "No categories defined yet. Go to Task Table → Categories to create one."
+msgstr "Noch keine Kategorien definiert. Besuche Task Table → Kategorien, um eine anzulegen."
+
+msgid "Choose a category in the block settings to edit its tasks."
+msgstr "Wähle in den Blockeinstellungen eine Kategorie, um deren Aufgaben zu bearbeiten."
+
+msgid "Active category: %s"
+msgstr "Aktive Kategorie: %s"
+
+msgid "Displayed category"
+msgstr "Angezeigte Kategorie"
+
+msgid "No events in this category yet. Use \"Add row\" to add the first one."
+msgstr "Noch keine Veranstaltungen in dieser Kategorie. Fuge mit \"Zeile hinzufügen\" den ersten Eintrag hinzu."
+
+msgid "Event %d"
+msgstr "Veranstaltung %d"
+
+msgid "Saving…"
+msgstr "Wird gespeichert …"
+
+msgid "Delete row"
+msgstr "Zeile löschen"
+
+msgid "Who's doing it? (preview)"
+msgstr "Wer macht's? (Vorschau)"
+
+msgid "No approved signups yet."
+msgstr "Noch keine bestätigten Anmeldungen."
+
+msgid "Sign up (preview)"
+msgstr "Anmelden (Vorschau)"
+
+msgid "Add row"
+msgstr "Zeile hinzufügen"
+
+msgid "Sign up"
+msgstr "Anmelden"
+
+msgid "No events added yet."
+msgstr "Noch keine Veranstaltungen hinzugefügt."
+
+msgid "No events in the category “%s” yet."
+msgstr "Noch keine Veranstaltungen in der Kategorie “%s”."
+
+msgid "Please fill in all fields."
+msgstr "Bitte fülle alle Felder aus."
+
+msgid "Your signup was sent and will be reviewed."
+msgstr "Deine Anmeldung wurde erfolgreich übermittelt und wird geprüft."
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "Sign up for event"
+msgstr "Für Veranstaltung anmelden"
+
+msgid "Note: someone has already been confirmed for this event. Your signup counts as a backup in case they drop out."
+msgstr "Hinweis: Für diese Veranstaltung gibt es bereits eine bestätigte Person. Deine Anmeldung gilt als Ersatz, falls die bestätigte Person ausfällt."
+
+msgid "Your name"
+msgstr "Dein Name"
+
+msgid "Your email"
+msgstr "Deine E-Mail"
+
+msgid "More information (optional)"
+msgstr "Weitere Informationen (optional)"
+
+msgid "Additional notes or questions…"
+msgstr "Zusätzliche Hinweise oder Fragen …"
+
+msgid "Who's doing it? / Sign up"
+msgstr "Wer macht's? / Anmelden"
+
+msgid "Thank you! Your subscription is confirmed."
+msgstr "Danke! Dein Abo wurde bestätigt."
+
+msgid "Subscription confirmed"
+msgstr "Abo bestätigt"
+
+msgid "Technical error: the confirmation could not be saved."
+msgstr "Technischer Fehler: Bestätigung konnte nicht gespeichert werden."
+
+msgid "Error"
+msgstr "Fehler"
+
+msgid "This confirmation link is invalid, expired or has already been used."
+msgstr "Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet."
+
+msgid "Invalid link"
+msgstr "Ungültiger Link"
+
+msgid "Search by name, email, or event"
+msgstr "Nach Name, E-Mail oder Veranstaltung suchen"
+
+msgid "Awaiting confirmation"
+msgstr "Wartet auf Bestätigung"
+
+msgid "You do not have permission to export events."
+msgstr "Du hast keine Berechtigung, Veranstaltungen zu exportieren."
+
+msgid "Security check failed."
+msgstr "Sicherheitsprüfung fehlgeschlagen."
+
+msgid "General"
+msgstr "Allgemein"
+
+msgid "[Backup signup]"
+msgstr "[Ersatz-Anmeldung]"
+
+msgid "This form appears on the front end so visitors can subscribe to notifications."
+msgstr "Dieses Formular erscheint im Frontend zur Anmeldung für Benachrichtigungen."
+
+msgctxt "block title"
+msgid "Task Table"
+msgstr "Task-Tabelle"
+
+msgctxt "block description"
+msgid "A table of open tasks that visitors can sign up for."
+msgstr "Erstellt eine dynamische Tabelle zur Kommunikation von Aufgaben."
+
+msgctxt "block title"
+msgid "New event notifications"
+msgstr "Neue Veranstaltungs-Benachrichtigung"
+
+msgctxt "block description"
+msgid "A form where visitors subscribe to emails about new events."
+msgstr "E-Mail-Benachrichtigungsformular für neue Veranstaltungen."

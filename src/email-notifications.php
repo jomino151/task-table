@@ -15,28 +15,28 @@ if ( ! defined( 'ABSPATH' ) ) {
 function task_table_get_email_templates() {
 	return array(
 		'subscription_confirmation' => array(
-			'subject' => __( 'Bitte bestätige dein Abo – {site_name}', 'task-table' ),
-			'message' => __( "Hallo,\n\nbitte bestätige, dass du Benachrichtigungen über neue Veranstaltungen erhalten möchtest.\nKlicke dazu auf den folgenden Link (oder kopiere ihn in deinen Browser):\n\n{confirmation_link}\n\nFalls du dich nicht angemeldet hast, kannst du diese E-Mail ignorieren.\n\nVielen Dank!\n{site_name}", 'task-table' ),
+			'subject' => __( 'Please confirm your subscription – {site_name}', 'task-table' ),
+			'message' => __( "Hello,\n\nplease confirm that you want to receive notifications about new events.\nTo do so, click the link below (or copy it into your browser):\n\n{confirmation_link}\n\nIf you did not sign up, you can ignore this email.\n\nThank you!\n{site_name}", 'task-table' ),
 		),
 		'subscription_manage'       => array(
-			'subject' => __( 'Dein Abo verwalten – {site_name}', 'task-table' ),
-			'message' => __( "Hallo,\n\nfür diese E-Mail-Adresse besteht bereits ein Abo. Über den folgenden Link kannst du deine Kategorien ändern oder dich abmelden:\n\n{manage_link}\n\nFalls du das nicht angefordert hast, kannst du diese E-Mail ignorieren.\n\n{site_name}", 'task-table' ),
+			'subject' => __( 'Manage your subscription – {site_name}', 'task-table' ),
+			'message' => __( "Hello,\n\nthis email address is already subscribed. Use the link below to change your categories or unsubscribe:\n\n{manage_link}\n\nIf you did not request this, you can ignore this email.\n\n{site_name}", 'task-table' ),
 		),
 		'signup_approved'           => array(
-			'subject' => __( 'Deine Anmeldung für "{event_title}" wurde angenommen', 'task-table' ),
-			'message' => __( "Hallo {user_name},\n\ndeine Anmeldung für die Veranstaltung \"{event_title}\" wurde angenommen.\n\n{event_details}\n\nVielen Dank!\n{site_name}", 'task-table' ),
+			'subject' => __( 'Your signup for "{event_title}" has been approved', 'task-table' ),
+			'message' => __( "Hello {user_name},\n\nyour signup for the event \"{event_title}\" has been approved.\n\n{event_details}\n\nThank you!\n{site_name}", 'task-table' ),
 		),
 		'signup_denied'             => array(
-			'subject' => __( 'Aktualisierung zu deiner Anmeldung für "{event_title}"', 'task-table' ),
-			'message' => __( "Hallo {user_name},\n\nleider können wir deine Anmeldung für die Veranstaltung \"{event_title}\" derzeit nicht annehmen.\n\n{event_details}\n\nVielen Dank für dein Interesse.\n{site_name}", 'task-table' ),
+			'subject' => __( 'Update on your signup for "{event_title}"', 'task-table' ),
+			'message' => __( "Hello {user_name},\n\nunfortunately we cannot accept your signup for the event \"{event_title}\" at this time.\n\n{event_details}\n\nThank you for your interest.\n{site_name}", 'task-table' ),
 		),
 		'new_signup'                => array(
-			'subject' => __( 'Neue Veranstaltungs-Anmeldung', 'task-table' ),
-			'message' => __( "Es ist eine neue Anmeldung eingegangen:\n\nEvent-ID: {event_id}\n{event_category_line}Name: {user_name}\nE-Mail: {user_email}\n{free_text_section}\nBitte prüfe diese Anfrage im Administrationsbereich.", 'task-table' ),
+			'subject' => __( 'New event signup', 'task-table' ),
+			'message' => __( "A new signup has arrived:\n\nEvent ID: {event_id}\n{event_category_line}Name: {user_name}\nEmail: {user_email}\n{free_text_section}\nPlease review this request in the admin area.", 'task-table' ),
 		),
 		'new_event'                 => array(
-			'subject' => __( 'Neue Veranstaltung veröffentlicht: {event_title}', 'task-table' ),
-			'message' => __( "Es wurde eine neue Veranstaltung veröffentlicht:\n\n{event_details}\n\nViele Grüße\n{site_name}\n\n--\nAbo verwalten oder abmelden: {manage_link}", 'task-table' ),
+			'subject' => __( 'New event published: {event_title}', 'task-table' ),
+			'message' => __( "A new event has been published:\n\n{event_details}\n\nBest regards\n{site_name}\n\n--\nManage or cancel your subscription: {manage_link}", 'task-table' ),
 		),
 	);
 }
@@ -98,7 +98,7 @@ function task_table_send_notification( $to, $template_key, $data = array(), $ext
 
 	// Custom templates saved before {manage_link} existed must still carry the unsubscribe link.
 	if ( ! empty( $data['manage_link'] ) && strpos( $email['message'], (string) $data['manage_link'] ) === false ) {
-		$email['message'] .= "\n\n--\n" . __( 'Abo verwalten oder abmelden:', 'task-table' ) . ' ' . $data['manage_link'];
+		$email['message'] .= "\n\n--\n" . __( 'Manage or cancel your subscription:', 'task-table' ) . ' ' . $data['manage_link'];
 	}
 
 	$headers = array_merge( array( 'Content-Type: text/plain; charset=UTF-8' ), $extra_headers );
@@ -192,10 +192,10 @@ function task_table_email_label( $column ) {
 
 function task_table_format_event_details( $event_data ) {
 	if ( ! $event_data ) {
-		return __( 'Veranstaltungsdetails nicht verfügbar', 'task-table' );
+		return __( 'Event details not available', 'task-table' );
 	}
 
-	$details = __( 'Veranstaltungsinformationen:', 'task-table' ) . "\n";
+	$details = __( 'Event information:', 'task-table' ) . "\n";
 
 	if ( ! empty( $event_data['wasAngefragt'] ) ) {
 		$details .= task_table_email_label( 'was_angefragt' ) . wp_strip_all_tags( wp_unslash( $event_data['wasAngefragt'] ) ) . "\n";
@@ -231,7 +231,7 @@ function task_table_format_event_details( $event_data ) {
 	if ( $category_id ) {
 		$category = task_table_get_category( $category_id );
 		if ( $category ) {
-				$details .= __( 'Kategorie', 'task-table' ) . ': ' . $category['name'] . "\n";
+				$details .= __( 'Category', 'task-table' ) . ': ' . $category['name'] . "\n";
 		}
 	}
 
@@ -252,7 +252,7 @@ function task_table_send_approval_notification( $signup ) {
 	// Add event title if available
 	$event_title = ! empty( $event_data['wasAngefragt'] ) ?
 	wp_strip_all_tags( wp_unslash( $event_data['wasAngefragt'] ) ) :
-	sprintf( /* translators: %d: event ID */ __( 'Veranstaltung #%d', 'task-table' ), $signup->event_id );
+	sprintf( /* translators: %d: event ID */ __( 'Event #%d', 'task-table' ), $signup->event_id );
 
 	// Log for debugging
 	error_log( 'Sending approval email for event: ' . $event_title ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log -- operational log for site admins.
@@ -280,7 +280,7 @@ function task_table_send_denial_notification( $signup ) {
 	$event_data  = task_table_get_event_details( $signup->event_id );
 	$event_title = ! empty( $event_data['wasAngefragt'] ) ?
 	wp_strip_all_tags( wp_unslash( $event_data['wasAngefragt'] ) ) :
-	sprintf( /* translators: %d: event ID */ __( 'Veranstaltung #%d', 'task-table' ), $signup->event_id );
+	sprintf( /* translators: %d: event ID */ __( 'Event #%d', 'task-table' ), $signup->event_id );
 
 	// Include basic event details in denial emails too
 	$event_details = '';
@@ -563,7 +563,7 @@ function task_table_send_new_signup_notification( $signup_data ) {
 	if ( $event_category_id > 0 ) {
 		$category = task_table_get_category( $event_category_id );
 		if ( ! empty( $category['name'] ) ) {
-			$event_category_line = __( 'Kategorie', 'task-table' ) . ': ' . $category['name'] . "\n";
+			$event_category_line = __( 'Category', 'task-table' ) . ': ' . $category['name'] . "\n";
 		}
 	}
 
@@ -571,7 +571,7 @@ function task_table_send_new_signup_notification( $signup_data ) {
 	if ( ! empty( $signup_data['free_text'] ) ) {
 		$clean = trim( wp_strip_all_tags( wp_unslash( $signup_data['free_text'] ) ) );
 		if ( $clean !== '' ) {
-				$free_text_section = __( 'Zusätzliche Hinweise:', 'task-table' ) . "\n" . $clean . "\n\n";
+				$free_text_section = __( 'Additional notes:', 'task-table' ) . "\n" . $clean . "\n\n";
 		}
 	}
 
@@ -686,7 +686,7 @@ function task_table_send_new_event_notification( $event_data ) {
 		// Prepare email contents
 		$event_title = ! empty( $normalized_event['wasAngefragt'] ) ?
 			wp_strip_all_tags( $normalized_event['wasAngefragt'] ) :
-			sprintf( /* translators: %d: event ID */ __( 'Neue Veranstaltung #%d', 'task-table' ), (int) ( $normalized_event['id'] ?? 0 ) );
+			sprintf( /* translators: %d: event ID */ __( 'New event #%d', 'task-table' ), (int) ( $normalized_event['id'] ?? 0 ) );
 
 	$event_details = task_table_format_event_details( $normalized_event );
 

@@ -9,8 +9,8 @@ $cat     = task_table_get_default_category_id();
 $now     = current_time('mysql');
 
 $rows = array(
-    array('Workshop: Intro to Git', 'Onboarding week', 'Example University', '25', 'March 2026', 'Internal note: budget 500 EUR', '', 0),
-    array('Panel discussion', 'Career day', 'Sample College', '80', 'April 2026', 'Contact: dean office, room 4.12', '', 0),
+    array('Workshop: Intro to Git', 'Onboarding week', 'Example University', '25', 'March 2027', 'Internal note: budget 500 EUR', '', 0),
+    array('Panel discussion', 'Career day', 'Sample College', '80', 'April 2027', 'Contact: dean office, room 4.12', '', 0),
     array('Archived seminar', 'Old request', 'Test Institute', '10', 'Jan 2025', 'Confidential: client paid late', 'Alex', 1),
 );
 foreach ($rows as $r) {

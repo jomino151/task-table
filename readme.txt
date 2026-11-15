@@ -19,7 +19,7 @@ Task Table adds two blocks:
 
 Admin screens cover events (with archive and Excel export), signups, subscribers, categories and editable email templates.
 
-The front end is in German; the admin ships English strings with a German translation. Everything uses the `task-table` text domain.
+All strings are English and use the `task-table` text domain. A German translation is included and is used automatically on German sites.
 
 Source, development setup and security policy: https://github.com/jomino151/task-table
 

@@ -14,12 +14,12 @@ const Edit = ({ attributes, setAttributes }) => {
     const latestFetchCategory = useRef(null);
     const richTextFormats = ['core/bold', 'core/italic', 'core/link'];
     const editableFields = [
-        { key: 'wasAngefragt', label: __('Was ist angefragt?', 'task-table'), placeholder: __('Was ist angefragt?', 'task-table') },
-        { key: 'kontext', label: __('Kontext', 'task-table'), placeholder: __('Kontext', 'task-table') },
-        { key: 'nameHochschule', label: __('Name der Hochschule', 'task-table'), placeholder: __('Name der Hochschule', 'task-table') },
-        { key: 'tnAnzahl', label: __('Vorauss. TN-Anzahl', 'task-table'), placeholder: __('Vorauss. TN-Anzahl', 'task-table') },
-        { key: 'zeitpunkt', label: __('Anvisierter Zeitpunkt', 'task-table'), placeholder: __('Anvisierter Zeitpunkt', 'task-table') },
-        { key: 'auftragdetails', label: __('Auftragdetails', 'task-table'), placeholder: __('Auftragdetails', 'task-table'), isWide: true },
+        { key: 'wasAngefragt', label: __('What is requested?', 'task-table'), placeholder: __('What is requested?', 'task-table') },
+        { key: 'kontext', label: __('Context', 'task-table'), placeholder: __('Context', 'task-table') },
+        { key: 'nameHochschule', label: __('University name', 'task-table'), placeholder: __('University name', 'task-table') },
+        { key: 'tnAnzahl', label: __('Participants', 'task-table'), placeholder: __('Participants', 'task-table') },
+        { key: 'zeitpunkt', label: __('Planned date', 'task-table'), placeholder: __('Planned date', 'task-table') },
+        { key: 'auftragdetails', label: __('Request details', 'task-table'), placeholder: __('Request details', 'task-table'), isWide: true },
     ];
 
     const activeCategory = categories.find((cat) => cat.id === categoryId);
@@ -63,9 +63,9 @@ const Edit = ({ attributes, setAttributes }) => {
                     }
                 }
             } catch (error) {
-                setCategoryError(__('Kategorien konnten nicht geladen werden.', 'task-table'));
+                setCategoryError(__('Could not load categories.', 'task-table'));
                 // eslint-disable-next-line no-console
-                console.error('Task Table: Kategorien konnten nicht geladen werden', error);
+                console.error('Task Table: could not load categories', error);
             } finally {
                 setIsLoadingCategories(false);
             }
@@ -108,7 +108,7 @@ const Edit = ({ attributes, setAttributes }) => {
             }
         } catch (error) {
             // eslint-disable-next-line no-console
-            console.error('Task Table: Veranstaltungen konnten nicht geladen werden:', error);
+            console.error('Task Table: could not load events:', error);
         } finally {
             if (latestFetchCategory.current === currentCategoryId) {
                 setIsLoadingEvents(false);
@@ -190,13 +190,13 @@ const Edit = ({ attributes, setAttributes }) => {
 
     // Delete row
     const deleteRow = async (index) => {
-        if (window.confirm(__('Möchtest du dieses Ereignis wirklich löschen?', 'task-table'))) {
+        if (window.confirm(__('Do you really want to delete this event?', 'task-table'))) {
             const rowToDelete = rows[index];
             const rowId = rowToDelete.id;
             const newRows = rows.filter((_, i) => i !== index);
             setAttributes({ rows: newRows });
             if (rowToDelete._pending) return;
-            try { await apiFetch({ path: `/task-table/v1/events/${rowId}`, method: 'DELETE' }); } catch (error) { console.error('Task Table: Zeile konnte nicht aus der Datenbank gelöscht werden:', error); }
+            try { await apiFetch({ path: `/task-table/v1/events/${rowId}`, method: 'DELETE' }); } catch (error) { console.error('Task Table: could not delete the row from the database:', error); }
         }
     };
 
@@ -221,22 +221,22 @@ const Edit = ({ attributes, setAttributes }) => {
     return (
         <>
             <InspectorControls>
-                <PanelBody title={ __('Kategorie', 'task-table') } initialOpen={ true }>
+                <PanelBody title={ __('Category', 'task-table') } initialOpen={ true }>
                     {isLoadingCategories ? (
                         <Spinner />
                     ) : categories.length > 0 ? (
                         <SelectControl
-                            label={ __('Aufgabenkategorie', 'task-table') }
+                            label={ __('Task category', 'task-table') }
                             value={ categoryId ? String(categoryId) : '' }
                             options={ [
-                                { label: __('Kategorie auswählen', 'task-table'), value: '' },
+                                { label: __('Select category', 'task-table'), value: '' },
                                 ...categories.map((cat) => ({ label: cat.name, value: String(cat.id) }))
                             ] }
                             onChange={ handleCategoryChange }
                         />
                     ) : (
                         <Notice status="warning" isDismissible={ false }>
-                            { __('Keine Kategorien verfügbar. Lege eine im Task-Table-Adminbereich an.', 'task-table') }
+                            { __('No categories available. Create one in the Task Table admin area.', 'task-table') }
                         </Notice>
                     )}
                     {categoryError && (
@@ -248,18 +248,18 @@ const Edit = ({ attributes, setAttributes }) => {
             </InspectorControls>
             <div { ...useBlockProps() }>
                 {isLoadingEvents && (
-                    <div style={{ padding: '20px', textAlign: 'center' }}>{ __('Veranstaltungen werden geladen …', 'task-table') }</div>
+                    <div style={{ padding: '20px', textAlign: 'center' }}>{ __('Loading events…', 'task-table') }</div>
                 )}
 
                 {!isLoadingCategories && categories.length === 0 && (
                     <Notice status="warning" isDismissible={ false }>
-                        { __('Noch keine Kategorien definiert. Besuche Task Table → Kategorien, um eine anzulegen.', 'task-table') }
+                        { __('No categories defined yet. Go to Task Table → Categories to create one.', 'task-table') }
                     </Notice>
                 )}
 
                 {categories.length > 0 && !categoryId && !isLoadingCategories && (
                     <Notice status="info" isDismissible={ false }>
-                        { __('Wähle in den Blockeinstellungen eine Kategorie, um deren Aufgaben zu bearbeiten.', 'task-table') }
+                        { __('Choose a category in the block settings to edit its tasks.', 'task-table') }
                     </Notice>
                 )}
 
@@ -267,17 +267,17 @@ const Edit = ({ attributes, setAttributes }) => {
                     <>
                         <div className="task-table-active-category">
                             {activeCategory ? (
-                                <strong>{sprintf(__('Aktive Kategorie: %s', 'task-table'), activeCategory.name)}</strong>
+                                <strong>{sprintf(__('Active category: %s', 'task-table'), activeCategory.name)}</strong>
                             ) : (
-                                <strong>{__('Kategorie auswählen', 'task-table')}</strong>
+                                <strong>{__('Select category', 'task-table')}</strong>
                             )}
                             {categories.length > 0 && (
                                 <div className="task-table-inline-category-select">
                                     <SelectControl
-                                        label={ __('Angezeigte Kategorie', 'task-table') }
+                                        label={ __('Displayed category', 'task-table') }
                                         value={ categoryId ? String(categoryId) : '' }
                                         options={ [
-                                            { label: __('Kategorie auswählen', 'task-table'), value: '' },
+                                            { label: __('Select category', 'task-table'), value: '' },
                                             ...categories.map((cat) => ({ label: cat.name, value: String(cat.id) })),
                                         ] }
                                         onChange={ handleCategoryChange }
@@ -289,7 +289,7 @@ const Edit = ({ attributes, setAttributes }) => {
 
                         {rows.length === 0 && !isLoadingEvents && (
                             <Notice status="info" isDismissible={ false }>
-                                { __('Noch keine Veranstaltungen in dieser Kategorie. Fuge mit "Zeile hinzufügen" den ersten Eintrag hinzu.', 'task-table') }
+                                { __('No events in this category yet. Use "Add row" to add the first one.', 'task-table') }
                             </Notice>
                         )}
 
@@ -297,10 +297,10 @@ const Edit = ({ attributes, setAttributes }) => {
                             {rows.map((row, index) => (
                                 <section key={row.id || `row-${index}`} className={`task-table-editor-card ${row._pending ? 'pending-row' : ''}`}>
                                     <div className="task-table-editor-card-header">
-                                        <strong>{sprintf(__('Veranstaltung %d', 'task-table'), index + 1)}</strong>
+                                        <strong>{sprintf(__('Event %d', 'task-table'), index + 1)}</strong>
                                         <div className="task-table-editor-card-actions">
                                             {row._pending && (
-                                                <span className="task-table-editor-saving">{ __('Wird gespeichert …', 'task-table') }</span>
+                                                <span className="task-table-editor-saving">{ __('Saving…', 'task-table') }</span>
                                             )}
                                             <Button
                                                 isDestructive
@@ -308,7 +308,7 @@ const Edit = ({ attributes, setAttributes }) => {
                                                 variant="tertiary"
                                                 iconSize={16}
                                                 icon="trash"
-                                                title={ __('Zeile löschen', 'task-table') }
+                                                title={ __('Delete row', 'task-table') }
                                             />
                                         </div>
                                     </div>
@@ -329,10 +329,10 @@ const Edit = ({ attributes, setAttributes }) => {
                                     </div>
 
                                     <div className="task-table-editor-signup-preview">
-                                        <span className="task-table-editor-signup-label">{ __('Wer macht\'s? (Vorschau)', 'task-table') }</span>
+                                        <span className="task-table-editor-signup-label">{ __('Who\'s doing it? (preview)', 'task-table') }</span>
                                         <div className="task-table-editor-signup-content">
-                                            <span>{row.werMacht || __('Noch keine bestätigten Anmeldungen.', 'task-table')}</span>
-                                            <Button disabled variant="secondary">{ __('Anmelden (Vorschau)', 'task-table') }</Button>
+                                            <span>{row.werMacht || __('No approved signups yet.', 'task-table')}</span>
+                                            <Button disabled variant="secondary">{ __('Sign up (preview)', 'task-table') }</Button>
                                         </div>
                                     </div>
                                 </section>
@@ -340,7 +340,7 @@ const Edit = ({ attributes, setAttributes }) => {
                         </div>
 
                         <Button onClick={addRow} variant="primary" className="add-row-button" disabled={!categoryId}>
-                            { __('Zeile hinzufügen', 'task-table') }
+                            { __('Add row', 'task-table') }
                         </Button>
                     </>
                 ) : null}

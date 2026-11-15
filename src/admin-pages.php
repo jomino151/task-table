@@ -59,8 +59,8 @@ function task_table_register_admin_pages() {
 
 	add_submenu_page(
 		'task-table',
-		__( 'E-Mail-Einstellungen', 'task-table' ),
-		__( 'E-Mail-Einstellungen', 'task-table' ),
+		__( 'Email Settings', 'task-table' ),
+		__( 'Email Settings', 'task-table' ),
 		'manage_task_table',
 		'task-table-email-settings',
 		'task_table_admin_email_settings_page'
@@ -1288,7 +1288,7 @@ function task_table_admin_signups_page() {
 						array( 'id' => $signup->event_id )
 					);
 
-					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Anmeldung angenommen.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Signup approved.', 'task-table' ) . '</p></div>';
 				} elseif ( $action === 'deny' ) {
 					$wpdb->update(
 						$signups_table,
@@ -1301,7 +1301,7 @@ function task_table_admin_signups_page() {
 
 					task_table_send_denial_notification( $signup );
 
-					echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Anmeldung abgelehnt.', 'task-table' ) . '</p></div>';
+					echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Signup denied.', 'task-table' ) . '</p></div>';
 				} elseif ( $action === 'delete' ) {
 					$wpdb->delete( $signups_table, array( 'id' => $signup_id ) );
 					echo '<div class="notice notice-info is-dismissible"><p>' . esc_html__( 'Signup deleted.', 'task-table' ) . '</p></div>';
@@ -2350,17 +2350,17 @@ function task_table_admin_email_settings_page() {
 			task_table_save_signup_notification_recipients( $legacy_recipients );
 		}
 
-		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'E-Mail-Einstellungen gespeichert.', 'task-table' ) . '</p></div>';
+		echo '<div class="notice notice-success is-dismissible"><p>' . esc_html__( 'Email settings saved.', 'task-table' ) . '</p></div>';
 	}
 
 	$templates       = task_table_get_email_templates();
 	$template_labels = array(
-		'subscription_confirmation' => __( 'Abo-Bestätigung', 'task-table' ),
-		'subscription_manage'       => __( 'Abo verwalten (bestehendes Abo)', 'task-table' ),
-		'signup_approved'           => __( 'Anmeldung angenommen', 'task-table' ),
-		'signup_denied'             => __( 'Anmeldung abgelehnt', 'task-table' ),
-		'new_signup'                => __( 'Neue Anmeldung', 'task-table' ),
-		'new_event'                 => __( 'Neue Veranstaltung', 'task-table' ),
+		'subscription_confirmation' => __( 'Subscription confirmation', 'task-table' ),
+		'subscription_manage'       => __( 'Manage subscription (existing subscription)', 'task-table' ),
+		'signup_approved'           => __( 'Signup approved', 'task-table' ),
+		'signup_denied'             => __( 'Signup denied', 'task-table' ),
+		'new_signup'                => __( 'New signup', 'task-table' ),
+		'new_event'                 => __( 'New event', 'task-table' ),
 	);
 
 	$categories             = task_table_get_categories();
@@ -2374,8 +2374,8 @@ function task_table_admin_email_settings_page() {
 	<div class="wrap task-table-admin">
 		<div class="tt-page-header">
 			<div class="tt-page-title">
-				<h1><?php esc_html_e( 'E-Mail-Einstellungen', 'task-table' ); ?></h1>
-				<p><?php esc_html_e( 'Passe die Benachrichtigungen und automatischen Antworten an, damit jede Nachricht im richtigen Ton an die richtige Person geht.', 'task-table' ); ?></p>
+				<h1><?php esc_html_e( 'Email Settings', 'task-table' ); ?></h1>
+				<p><?php esc_html_e( 'Adjust notifications and automatic replies so every message reaches the right person in the right tone.', 'task-table' ); ?></p>
 			</div>
 		</div>
 
@@ -2384,7 +2384,7 @@ function task_table_admin_email_settings_page() {
 
 			<div class="tt-toolbar" style="justify-content: flex-start;">
 				<h2 style="margin:0; font-size: 16px; font-weight:600; color: var(--tt-text-muted); text-transform: uppercase; letter-spacing: 0.04em;">
-					<?php esc_html_e( 'Benachrichtigungsempfänger', 'task-table' ); ?>
+					<?php esc_html_e( 'Notification recipients', 'task-table' ); ?>
 				</h2>
 			</div>
 
@@ -2392,19 +2392,19 @@ function task_table_admin_email_settings_page() {
 				<div id="signup-recipient-list" style="display:grid; gap:12px; margin-bottom:16px;"></div>
 
 				<div class="tt-form-card" style="margin:0; padding:16px; border:1px solid var(--tt-border); border-radius:10px;">
-					<h3 style="margin:0 0 10px;"><?php esc_html_e( 'Empfänger hinzufügen', 'task-table' ); ?></h3>
+					<h3 style="margin:0 0 10px;"><?php esc_html_e( 'Add recipient', 'task-table' ); ?></h3>
 
 					<div class="email-input-container" style="margin-bottom:10px;">
-						<input type="email" id="new_email" placeholder="<?php esc_attr_e( 'Neue E-Mail-Adresse hinzufügen', 'task-table' ); ?>" class="regular-text">
+						<input type="email" id="new_email" placeholder="<?php esc_attr_e( 'Add a new email address', 'task-table' ); ?>" class="regular-text">
 						<button type="button" id="add_signup_recipient" class="button button-secondary">
 							<span class="dashicons dashicons-plus-alt"></span>
-							<?php esc_html_e( 'Hinzufügen', 'task-table' ); ?>
+							<?php esc_html_e( 'Add', 'task-table' ); ?>
 						</button>
 					</div>
 
 					<label style="display:inline-flex; align-items:center; gap:8px; margin-bottom:10px;">
 						<input type="checkbox" id="recipient_all_categories" checked>
-						<?php esc_html_e( 'Alle Kategorien', 'task-table' ); ?>
+						<?php esc_html_e( 'All categories', 'task-table' ); ?>
 					</label>
 
 					<div id="recipient-category-picker" style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:4px;">
@@ -2416,7 +2416,7 @@ function task_table_admin_email_settings_page() {
 								</label>
 							<?php endforeach; ?>
 						<?php else : ?>
-							<span class="description"><?php esc_html_e( 'Keine Kategorien verfügbar.', 'task-table' ); ?></span>
+							<span class="description"><?php esc_html_e( 'No categories available.', 'task-table' ); ?></span>
 						<?php endif; ?>
 					</div>
 				</div>
@@ -2426,17 +2426,17 @@ function task_table_admin_email_settings_page() {
 				<input type="hidden" name="moderator_emails" id="moderator_emails" value="">
 
 				<p class="description" style="margin-top:12px; color: var(--tt-text-muted);">
-					<?php esc_html_e( 'Lege für jede Adresse fest, ob sie alle neuen Anmeldungen oder nur Anmeldungen bestimmter Kategorien erhalten soll.', 'task-table' ); ?>
+					<?php esc_html_e( 'Choose for each address whether it receives all new signups or only signups in certain categories.', 'task-table' ); ?>
 				</p>
 			</div>
 
 			<h2 style="margin: 0 0 16px; font-size: 18px;">
-				<?php esc_html_e( 'E-Mail-Vorlagen', 'task-table' ); ?>
+				<?php esc_html_e( 'Email templates', 'task-table' ); ?>
 			</h2>
 
 			<div class="email-templates-tabs tt-pill-toggle" style="margin-bottom:18px;">
 				<a href="#general-settings" class="nav-tab is-active" data-tab="general-settings">
-					<?php esc_html_e( 'Platzhalter', 'task-table' ); ?>
+					<?php esc_html_e( 'Placeholders', 'task-table' ); ?>
 				</a>
 				<?php foreach ( array_keys( $templates ) as $tab_key ) : ?>
 					<?php $tab_label = isset( $template_labels[ $tab_key ] ) ? $template_labels[ $tab_key ] : ucwords( str_replace( '_', ' ', $tab_key ) ); ?>
@@ -2448,29 +2448,29 @@ function task_table_admin_email_settings_page() {
 
 			<div id="general-settings" class="email-template-tab" style="display: block;">
 				<p style="margin-top:0;">
-					<?php esc_html_e( 'Nutze diese Platzhalter in jeder Vorlage, um Nachrichten automatisch zu personalisieren. Beim Versand werden sie durch die passenden Werte ersetzt.', 'task-table' ); ?>
+					<?php esc_html_e( 'Use these placeholders in any template to personalise messages. They are replaced with the matching values when the email is sent.', 'task-table' ); ?>
 				</p>
 				<ul class="task-table-placeholders">
-					<li><code>{site_name}</code> - <?php esc_html_e( 'Seitenname', 'task-table' ); ?></li>
-					<li><code>{user_name}</code> - <?php esc_html_e( 'Name der Person (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{user_email}</code> - <?php esc_html_e( 'E-Mail-Adresse der Person (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_title}</code> - <?php esc_html_e( 'Titel der Veranstaltung (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_details}</code> - <?php esc_html_e( 'Details zur Veranstaltung (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_id}</code> - <?php esc_html_e( 'Veranstaltungs-ID (falls vorhanden)', 'task-table' ); ?></li>
-					<li><code>{event_category_line}</code> - <?php esc_html_e( 'Kategorie als Textzeile (nur neue Anmeldung)', 'task-table' ); ?></li>
-					<li><code>{confirmation_link}</code> - <?php esc_html_e( 'Bestätigungslink (nur Abo-E-Mails)', 'task-table' ); ?></li>
-					<li><code>{manage_link}</code> - <?php esc_html_e( 'Link zum Verwalten/Abmelden (neue Veranstaltung, Abo verwalten; wird sonst automatisch angehängt)', 'task-table' ); ?></li>
+					<li><code>{site_name}</code> - <?php esc_html_e( 'Site name', 'task-table' ); ?></li>
+					<li><code>{user_name}</code> - <?php esc_html_e( 'Person\'s name (if available)', 'task-table' ); ?></li>
+					<li><code>{user_email}</code> - <?php esc_html_e( 'Person\'s email address (if available)', 'task-table' ); ?></li>
+					<li><code>{event_title}</code> - <?php esc_html_e( 'Event title (if available)', 'task-table' ); ?></li>
+					<li><code>{event_details}</code> - <?php esc_html_e( 'Event details (if available)', 'task-table' ); ?></li>
+					<li><code>{event_id}</code> - <?php esc_html_e( 'Event ID (if available)', 'task-table' ); ?></li>
+					<li><code>{event_category_line}</code> - <?php esc_html_e( 'Category as a line of text (new signup only)', 'task-table' ); ?></li>
+					<li><code>{confirmation_link}</code> - <?php esc_html_e( 'Confirmation link (subscription emails only)', 'task-table' ); ?></li>
+					<li><code>{manage_link}</code> - <?php esc_html_e( 'Manage/unsubscribe link (new event, manage subscription; appended automatically otherwise)', 'task-table' ); ?></li>
 				</ul>
 			</div>
 
 			<?php foreach ( $templates as $template_key => $template ) : ?>
 				<div id="template-<?php echo esc_attr( $template_key ); ?>" class="email-template-tab" style="display: none;">
 					<?php $template_title = isset( $template_labels[ $template_key ] ) ? $template_labels[ $template_key ] : ucwords( str_replace( '_', ' ', $template_key ) ); ?>
-					<h3><?php echo esc_html( $template_title ); ?> <?php esc_html_e( 'Vorlage', 'task-table' ); ?></h3>
+					<h3><?php echo esc_html( $template_title ); ?> <?php esc_html_e( 'Template', 'task-table' ); ?></h3>
 					<table class="form-table">
 						<tr>
 							<th scope="row">
-								<label for="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject"><?php esc_html_e( 'Betreff', 'task-table' ); ?></label>
+								<label for="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject"><?php esc_html_e( 'Subject', 'task-table' ); ?></label>
 							</th>
 							<td>
 								<input type="text" name="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject" id="task_table_email_<?php echo esc_attr( $template_key ); ?>_subject" class="large-text" value="<?php echo esc_attr( get_option( "task_table_email_{$template_key}_subject", $template['subject'] ) ); ?>">
@@ -2478,7 +2478,7 @@ function task_table_admin_email_settings_page() {
 						</tr>
 						<tr>
 							<th scope="row">
-								<label for="task_table_email_<?php echo esc_attr( $template_key ); ?>_message"><?php esc_html_e( 'Nachricht', 'task-table' ); ?></label>
+								<label for="task_table_email_<?php echo esc_attr( $template_key ); ?>_message"><?php esc_html_e( 'Message', 'task-table' ); ?></label>
 							</th>
 							<td>
 								<textarea name="task_table_email_<?php echo esc_attr( $template_key ); ?>_message" id="task_table_email_<?php echo esc_attr( $template_key ); ?>_message" class="large-text" rows="10"><?php echo esc_textarea( get_option( "task_table_email_{$template_key}_message", $template['message'] ) ); ?></textarea>
@@ -2489,7 +2489,7 @@ function task_table_admin_email_settings_page() {
 			<?php endforeach; ?>
 
 			<p class="submit">
-				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Änderungen speichern', 'task-table' ); ?>">
+				<input type="submit" name="submit" id="submit" class="button button-primary" value="<?php esc_attr_e( 'Save changes', 'task-table' ); ?>">
 			</p>
 		</form>
 	</div>
@@ -2629,7 +2629,7 @@ function task_table_admin_email_settings_page() {
 
 				if (!recipients.length) {
 					recipientList.append(
-						$('<p class="description"></p>').text('<?php echo esc_js( __( 'Noch keine Empfänger angelegt.', 'task-table' ) ); ?>')
+						$('<p class="description"></p>').text('<?php echo esc_js( __( 'No recipients yet.', 'task-table' ) ); ?>')
 					);
 					return;
 				}
@@ -2657,7 +2657,7 @@ function task_table_admin_email_settings_page() {
 
 					if (!recipient.category_ids.length) {
 						categoryWrap.append(
-							$('<span class="tt-pill is-active"></span>').text('<?php echo esc_js( __( 'Alle Kategorien', 'task-table' ) ); ?>')
+							$('<span class="tt-pill is-active"></span>').text('<?php echo esc_js( __( 'All categories', 'task-table' ) ); ?>')
 						);
 					} else {
 						recipient.category_ids.forEach(function(categoryId) {
@@ -2675,7 +2675,7 @@ function task_table_admin_email_settings_page() {
 
 					const removeButton = $('<button type="button" class="button button-secondary remove-signup-recipient"></button>')
 						.attr('data-email', recipient.email)
-						.text('<?php echo esc_js( __( 'Entfernen', 'task-table' ) ); ?>');
+						.text('<?php echo esc_js( __( 'Remove', 'task-table' ) ); ?>');
 
 					row.append(info).append(removeButton);
 					recipientList.append(row);
@@ -2697,7 +2697,7 @@ function task_table_admin_email_settings_page() {
 				}
 
 				if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-					window.alert('<?php echo esc_js( __( 'Bitte gib eine gültige E-Mail-Adresse ein.', 'task-table' ) ); ?>');
+					window.alert('<?php echo esc_js( __( 'Please enter a valid email address.', 'task-table' ) ); ?>');
 					return;
 				}
 
@@ -2707,7 +2707,7 @@ function task_table_admin_email_settings_page() {
 				});
 
 				if (isDuplicate) {
-					window.alert('<?php echo esc_js( __( 'Diese E-Mail-Adresse wurde bereits hinzugefügt.', 'task-table' ) ); ?>');
+					window.alert('<?php echo esc_js( __( 'This email address has already been added.', 'task-table' ) ); ?>');
 					return;
 				}
 
@@ -2715,7 +2715,7 @@ function task_table_admin_email_settings_page() {
 				const selectedCategories = allCategories ? [] : getSelectedCategoryIds();
 
 				if (!allCategories && !selectedCategories.length) {
-					window.alert('<?php echo esc_js( __( 'Bitte wähle mindestens eine Kategorie oder aktiviere „Alle Kategorien“.', 'task-table' ) ); ?>');
+					window.alert('<?php echo esc_js( __( 'Please choose at least one category or enable "All categories".', 'task-table' ) ); ?>');
 					return;
 				}
 

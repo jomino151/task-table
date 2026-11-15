@@ -43,13 +43,13 @@ const initSignupForm = (container) => {
         event.preventDefault();
 
         if (!emailInput.value.trim()) {
-            showMessage(__('Bitte gib eine gültige E-Mail-Adresse ein.', 'task-table'), 'error');
+            showMessage(__('Please enter a valid email address.', 'task-table'), 'error');
             return;
         }
 
         const selectedCategories = getSelectedCategories();
         if (categoryInputs.length > 0 && selectedCategories.length === 0) {
-            showMessage(__('Bitte wähle mindestens eine Kategorie aus.', 'task-table'), 'error');
+            showMessage(__('Please choose at least one category.', 'task-table'), 'error');
             return;
         }
 
@@ -74,14 +74,14 @@ const initSignupForm = (container) => {
             const data = await response.json();
 
             if (response.ok && data?.success) {
-                showMessage(__('Bitte prüfe deinen Posteingang und bestätige dein Abonnement über den Link in unserer E-Mail.', 'task-table'), 'success');
+                showMessage(__('Please check your inbox and confirm your subscription with the link in our email.', 'task-table'), 'success');
                 emailInput.value = '';
             } else {
-                showMessage(data?.message || __('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'task-table'), 'error');
+                showMessage(data?.message || __('Something went wrong. Please try again later.', 'task-table'), 'error');
             }
         } catch (error) {
             console.error('Task Table subscription error:', error);
-            showMessage(__('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'task-table'), 'error');
+            showMessage(__('Something went wrong. Please try again later.', 'task-table'), 'error');
         } finally {
             submitButton?.removeAttribute('disabled');
             submitButton?.classList.remove('is-busy');

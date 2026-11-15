@@ -119,16 +119,16 @@ if ( ! empty( $events ) ) {
 			}
 			echo '</div>';
 		}
-		echo '<button class="event-signup" data-event-id="' . esc_attr( $event['id'] ) . '" data-has-approved="' . ( $has_approved ? '1' : '0' ) . '">' . esc_html__( 'Anmelden', 'task-table' ) . '</button>';
+		echo '<button class="event-signup" data-event-id="' . esc_attr( $event['id'] ) . '" data-has-approved="' . ( $has_approved ? '1' : '0' ) . '">' . esc_html__( 'Sign up', 'task-table' ) . '</button>';
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
 	}
 } else {
 	// Updated colspan to match the combined signups/action column.
-	$empty_message = __( 'Noch keine Veranstaltungen hinzugefügt.', 'task-table' );
+	$empty_message = __( 'No events added yet.', 'task-table' );
 	if ( ! empty( $category_name ) ) {
-		$empty_message = sprintf( /* translators: %s: category name */ __( 'Noch keine Veranstaltungen in der Kategorie “%s”.', 'task-table' ), $category_name );
+		$empty_message = sprintf( /* translators: %s: category name */ __( 'No events in the category “%s” yet.', 'task-table' ), $category_name );
 	}
 	echo '<tr><td colspan="7">' . esc_html( $empty_message ) . '</td></tr>';
 }
@@ -146,9 +146,11 @@ $nonce = wp_create_nonce( 'wp_rest' );
 
 // Add JavaScript for front-end functionality
 $signup_i18n = array(
-	'fillAll' => __( 'Bitte fülle alle Felder aus.', 'task-table' ),
-	'success' => __( 'Deine Anmeldung wurde erfolgreich übermittelt und wird geprüft.', 'task-table' ),
-	'error'   => __( 'Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'task-table' ),
+	'fillAll' => __( 'Please fill in all fields.', 'task-table' ),
+	'success' => __( 'Your signup was sent and will be reviewed.', 'task-table' ),
+	'error'   => __( 'Something went wrong. Please try again later.', 'task-table' ),
+	/* translators: Prefix added to the notes of a signup made as a backup for an already confirmed person. */
+	'backup'  => __( '[Backup signup]', 'task-table' ),
 );
 
 echo '<script>
@@ -283,8 +285,9 @@ if (!window.taskTableScriptLoaded) {
                 let freeText = freeTextEl ? freeTextEl.value : "";
                 const replacementFlag = document.getElementById("replacement-signup-flag");
                 if (replacementFlag && replacementFlag.value === "1") {
-                    if (!/^\[Ersatz-Anmeldung\]/.test(freeText)) {
-                        freeText = "[Ersatz-Anmeldung] " + freeText;
+                    const backupPrefix = window.taskTableSignupI18n.backup;
+                    if (freeText.indexOf(backupPrefix) !== 0) {
+                        freeText = backupPrefix + " " + freeText;
                     }
                 }
                 
