@@ -69,7 +69,8 @@ function task_table_register_api_routes() {
     register_rest_route('task-table/v1', '/events/export', array(
         'methods' => 'GET',
         'callback' => 'task_table_export_events_excel',
-        'permission_callback' => function() { return is_user_logged_in(); }
+        // Same capability as the admin export (admin-post) and every other /events route.
+        'permission_callback' => function() { return current_user_can('manage_task_table'); }
     ));
     
     // Notification subscriber management
@@ -740,8 +741,8 @@ function task_table_archive_event(WP_REST_Request $request) {
  * Export events as CSV (optionally archived=1)
  */
 function task_table_export_events_excel(WP_REST_Request $request) {
-    // Allow any logged-in user to export (matches permission_callback)
-    if (!is_user_logged_in()) {
+    // Defence in depth: the export contains internal event data, so require the plugin capability here too.
+    if (!current_user_can('manage_task_table')) {
         return new WP_REST_Response(['success' => false, 'message' => 'Forbidden'], 403);
     }
 
@@ -762,7 +763,23 @@ function task_table_export_events_excel(WP_REST_Request $request) {
 }
 
 /**
- * Generate events spreadsheet (XLSX or legacy XML) and return array with content, filename, content_type
+ * Serve the export body as a raw file instead of letting the REST server JSON-encode it.
+ * Headers (Content-Type, Content-Disposition) are already sent by the server at this point.
+ */
+function task_table_serve_raw_export($served, $result, $request) {
+    if ($served || !($result instanceof WP_HTTP_Response) || !($request instanceof WP_REST_Request)) {
+        return $served;
+    }
+    if ($request->get_route() !== '/task-table/v1/events/export' || $result->get_status() !== 200 || !is_string($result->get_data())) {
+        return $served;
+    }
+    echo $result->get_data(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- binary file body
+    return true;
+}
+add_filter('rest_pre_serve_request', 'task_table_serve_raw_export', 10, 3);
+
+/**
+ * Normalize the "archived" filter value of an export request.
  */
 function task_table_normalize_archived_filter($value) {
     if (is_array($value)) {
@@ -949,6 +966,9 @@ function task_table_generate_events_spreadsheet($archived_param = null, $format 
     $workbook_rels_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>';
     $styles_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"></styleSheet>';
     $content_types_xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+    if (!function_exists('wp_tempnam')) {
+        require_once ABSPATH . 'wp-admin/includes/file.php'; // Not loaded on REST requests.
+    }
     $tmp = wp_tempnam('task-table-xlsx');
     if (!$tmp) { return task_table_generate_events_spreadsheet($archived_param, 'xml', $filters); }
     $zip = new ZipArchive();
