@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Run wp-cli against the dev stack: dev/wp.sh plugin list   (POD / PLUGIN_SRC as in dev/up.sh)
-ENGINE="${ENGINE:-$(command -v podman || command -v docker)}"
+ENGINE="${ENGINE:-podman}"
 POD="${POD:-task-table-dev}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PLUGIN_SRC="${PLUGIN_SRC:-$ROOT}"

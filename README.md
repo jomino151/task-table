@@ -1,5 +1,7 @@
 # Task Table
 
+[![CI](https://github.com/jomino151/task-table/actions/workflows/ci.yml/badge.svg)](https://github.com/jomino151/task-table/actions/workflows/ci.yml)
+
 A WordPress plugin for publishing open tasks or event requests, letting volunteers
 sign up for them, and notifying subscribers when new entries appear. It was built
 for a non-profit that lists requests (workshops, talks, panels) and has volunteers
@@ -120,7 +122,7 @@ To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Development
 
-A self-contained stack runs on podman or docker:
+A self-contained stack runs on podman (the scripts use pods, so docker is not supported):
 
 ```bash
 npm ci && npm run build
@@ -136,6 +138,24 @@ dev/down.sh               # remove containers and volumes
 Logins: `admin/admin`, `editor/editor`, `subscriber/subscriber`. All mail is
 caught by Mailpit at http://localhost:8025. `dev/repro-export-authz.sh` is the
 standalone reproduction for the 1.1.0 export vulnerability.
+
+### Coding standards and CI
+
+```bash
+composer install            # or: podman run --rm -v "$PWD:/app" -w /app composer:2 composer install
+vendor/bin/phpcs            # WordPress-Extra + PHPCompatibilityWP (PHP 7.4+), see phpcs.xml.dist
+vendor/bin/phpcbf           # auto-fix formatting
+```
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request:
+
+- PHP syntax check on 7.4 and 8.4
+- PHPCS, where errors fail the build and warnings show as annotations
+- gitleaks over the full git history
+- the build, `dev/tests/run.sh` and `dev/tests/upgrade.sh` (from tag `v1.1.0`) in podman
+- an installable plugin zip as a build artifact
+
+`git config blame.ignoreRevsFile .git-blame-ignore-revs` hides the bulk-formatting commit from `git blame`.
 
 ### Translations
 

@@ -1,16 +1,17 @@
 #!/usr/bin/env bash
-# Upgrade test: install the previous release (default: the code on `main`, deployed as 1.1.0), create
+# Upgrade test: install the previous release (default: tag v1.1.0, else `main`), create
 # data shaped like a production site, then swap in the working-tree code and check that existing
 # subscribers, signups, templates and links keep working.
 # Runs in its own stack (pod task-table-upgrade, ports 8890/8026) and removes it afterwards.
 # Usage: dev/tests/upgrade.sh [old-git-ref]     KEEP=1 keeps the stack for inspection
+# Needs podman, node_modules (npm ci) and a built plugin (npm run build).
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 ROOT="$(pwd)"
-OLD_REF="${1:-main}"
+OLD_REF="${1:-$(git rev-parse -q --verify v1.1.0 >/dev/null && echo v1.1.0 || echo main)}"
 export POD=task-table-upgrade WP_PORT=8890 MAIL_PORT=8026
 export WP_IMAGE="${WP_IMAGE:-docker.io/library/wordpress:php8.4-apache}"   # production runs PHP 8.4
-ENGINE="${ENGINE:-$(command -v podman || command -v docker)}"
+ENGINE="${ENGINE:-podman}"
 BASE="http://localhost:$WP_PORT"; API="$BASE/wp-json"; MAILPIT="http://localhost:$MAIL_PORT"
 TMP="$(mktemp -d)"; OLD="$TMP/old"
 FAILS=0; PASSES=0

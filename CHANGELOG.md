@@ -57,11 +57,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - Local development stack (`dev/up.sh`: WordPress, MariaDB and Mailpit through
-  podman or docker), an integration test suite (`dev/tests/run.sh`) and an
+  podman), an integration test suite (`dev/tests/run.sh`) and an
   upgrade test from the previous release (`dev/tests/upgrade.sh`).
 - Filters: `task_table_rate_limit`, `task_table_client_ip`,
   `task_table_confirmation_token_ttl`, `task_table_column_labels`.
 - English README, SECURITY.md, LICENSE and screenshots.
+- GitHub Actions CI: PHP 7.4/8.4 lint, PHPCS (WordPress-Extra, PHPCompatibilityWP),
+  gitleaks history scan, integration and upgrade tests, plugin zip artifact.
+  Dependabot for actions, Composer and npm.
+
+### Changed (code style)
+- The code base follows the WordPress coding standards, with late escaping at
+  every output.
 
 ## [1.1.0]
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local dev stack for the task-table plugin (podman or docker).
+# Local dev stack for the task-table plugin (podman; it uses pods, which docker lacks).
 #   WordPress  http://localhost:8888   (admin / admin)
 #   Mailpit    http://localhost:8025   (catches every email the plugin sends)
 # The repo is bind-mounted as wp-content/plugins/task-table, so `npm run start` rebuilds are live.
@@ -11,7 +11,7 @@
 #        SKIP_SEED=1              install WordPress and the plugin, but no demo data
 set -euo pipefail
 
-ENGINE="${ENGINE:-$(command -v podman || command -v docker)}"
+ENGINE="${ENGINE:-podman}"
 POD="${POD:-task-table-dev}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PLUGIN_SRC="${PLUGIN_SRC:-$ROOT}"
