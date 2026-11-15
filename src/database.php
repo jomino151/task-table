@@ -537,6 +537,27 @@ function task_table_get_category( $category_id ) {
 }
 
 /**
+ * Name to show for a category.
+ *
+ * The default category is stored with whatever __( 'General' ) returned when it was created,
+ * which is the English source on most sites (the locale is often set after activation). While
+ * it still has that untouched English name, show the translation for the current locale. A name
+ * an admin has changed is shown as stored.
+ *
+ * @param array<string, mixed> $category Row from task_table_get_category() or task_table_get_categories().
+ * @return string
+ */
+function task_table_get_category_display_name( $category ) {
+	$name = isset( $category['name'] ) ? (string) $category['name'] : '';
+
+	if ( $name === 'General' && isset( $category['slug'] ) && $category['slug'] === 'general' ) {
+		return __( 'General', 'task-table' );
+	}
+
+	return $name;
+}
+
+/**
  * Retrieve category IDs selected for a subscriber.
  *
  * @param int $subscriber_id
@@ -596,17 +617,18 @@ function task_table_get_subscriber_category_names( $subscriber_id ) {
 		return '';
 	}
 
-	$names = $wpdb->get_col(
+	$rows = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT c.name FROM $categories_table c
+			"SELECT c.name, c.slug FROM $categories_table c
          INNER JOIN $subscriber_categories_table sc ON sc.category_id = c.id
          WHERE sc.subscriber_id = %d
          ORDER BY c.sort_order ASC, c.name ASC",
 			(int) $subscriber_id
-		)
+		),
+		ARRAY_A
 	);
 
-	return implode( ', ', $names );
+	return implode( ', ', array_map( 'task_table_get_category_display_name', (array) $rows ) );
 }
 
 /**

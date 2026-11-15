@@ -231,7 +231,7 @@ function task_table_format_event_details( $event_data ) {
 	if ( $category_id ) {
 		$category = task_table_get_category( $category_id );
 		if ( $category ) {
-				$details .= __( 'Category', 'task-table' ) . ': ' . $category['name'] . "\n";
+				$details .= __( 'Category', 'task-table' ) . ': ' . task_table_get_category_display_name( $category ) . "\n";
 		}
 	}
 
@@ -563,7 +563,7 @@ function task_table_send_new_signup_notification( $signup_data ) {
 	if ( $event_category_id > 0 ) {
 		$category = task_table_get_category( $event_category_id );
 		if ( ! empty( $category['name'] ) ) {
-			$event_category_line = __( 'Category', 'task-table' ) . ': ' . $category['name'] . "\n";
+			$event_category_line = __( 'Category', 'task-table' ) . ': ' . task_table_get_category_display_name( $category ) . "\n";
 		}
 	}
 

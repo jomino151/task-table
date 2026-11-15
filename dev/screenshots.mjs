@@ -64,6 +64,17 @@ await shot( '/task-table/', 'frontend-signup-modal.png', async () => {
 	await new Promise( ( r ) => setTimeout( r, 400 ) );
 } );
 
+// Phone width: rows render as stacked cards.
+await page.setViewport( {
+	width: 375,
+	height: 812,
+	deviceScaleFactor: 2,
+	isMobile: true,
+	hasTouch: true,
+} );
+await shot( '/task-table/', 'frontend-mobile.png', null, blocksClip );
+await page.setViewport( { width: 1280, height: 860, deviceScaleFactor: 1 } );
+
 await page.goto( BASE + '/wp-login.php', { waitUntil: 'networkidle0' } );
 await page.type( '#user_login', 'admin' );
 await page.type( '#user_pass', 'admin' );

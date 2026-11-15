@@ -12,7 +12,7 @@ $category_name = '';
 if ( $category_id ) {
 	$category = task_table_get_category( $category_id );
 	if ( $category ) {
-		$category_name = $category['name'];
+		$category_name = task_table_get_category_display_name( $category );
 	}
 }
 
@@ -92,12 +92,12 @@ echo '<tbody>';
 if ( ! empty( $events ) ) {
 	foreach ( $events as $event ) {
 		echo '<tr>';
-		echo '<td class="tt-col-request">' . wp_kses( $render_event_cell( $event['was_angefragt'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
-		echo '<td class="tt-col-context">' . wp_kses( $render_event_cell( $event['kontext'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
-		echo '<td class="tt-col-university">' . wp_kses( $render_event_cell( $event['name_hochschule'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
-		echo '<td class="tt-col-tn"><span class="tt-tn-value">' . wp_kses( $render_event_cell( $event['tn_anzahl'] ), task_table_get_event_text_allowed_tags() ) . '</span></td>';
-		echo '<td class="tt-col-time">' . wp_kses( $render_event_cell( $event['zeitpunkt'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
-		echo '<td class="tt-col-details">' . wp_kses( $render_event_cell( $event['auftragdetails'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-request" data-label="' . esc_attr( $column_labels['was_angefragt'] ) . '">' . wp_kses( $render_event_cell( $event['was_angefragt'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-context" data-label="' . esc_attr( $column_labels['kontext'] ) . '">' . wp_kses( $render_event_cell( $event['kontext'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-university" data-label="' . esc_attr( $column_labels['name_hochschule'] ) . '">' . wp_kses( $render_event_cell( $event['name_hochschule'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-tn" data-label="' . esc_attr( $column_labels['tn_anzahl'] ) . '"><span class="tt-tn-value">' . wp_kses( $render_event_cell( $event['tn_anzahl'] ), task_table_get_event_text_allowed_tags() ) . '</span></td>';
+		echo '<td class="tt-col-time" data-label="' . esc_attr( $column_labels['zeitpunkt'] ) . '">' . wp_kses( $render_event_cell( $event['zeitpunkt'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
+		echo '<td class="tt-col-details" data-label="' . esc_attr( $column_labels['auftragdetails'] ) . '">' . wp_kses( $render_event_cell( $event['auftragdetails'] ), task_table_get_event_text_allowed_tags() ) . '</td>';
 		// Fetch approved sign-ups for this event.
 		$signups_table = $wpdb->prefix . 'task_table_signups';
 		$signups       = $wpdb->get_results(
@@ -110,7 +110,7 @@ if ( ! empty( $events ) ) {
 		$has_approved = ! empty( $signups );
 
 		// Combined column: approved names on top, signup button below.
-		echo '<td class="tt-col-signups">';
+		echo '<td class="tt-col-signups" data-label="' . esc_attr( $column_labels['wer_macht'] ) . '">';
 		echo '<div class="tt-signup-stack">';
 		if ( $has_approved ) {
 			echo '<div class="approved-signups">';
@@ -119,7 +119,7 @@ if ( ! empty( $events ) ) {
 			}
 			echo '</div>';
 		}
-		echo '<button class="event-signup" data-event-id="' . esc_attr( $event['id'] ) . '" data-has-approved="' . ( $has_approved ? '1' : '0' ) . '">' . esc_html__( 'Sign up', 'task-table' ) . '</button>';
+		echo '<button type="button" class="event-signup" aria-haspopup="dialog" data-event-id="' . esc_attr( $event['id'] ) . '" data-has-approved="' . ( $has_approved ? '1' : '0' ) . '">' . esc_html__( 'Sign up', 'task-table' ) . '</button>';
 		echo '</div>';
 		echo '</td>';
 		echo '</tr>';
@@ -130,214 +130,16 @@ if ( ! empty( $events ) ) {
 	if ( ! empty( $category_name ) ) {
 		$empty_message = sprintf( /* translators: %s: category name */ __( 'No events in the category “%s” yet.', 'task-table' ), $category_name );
 	}
-	echo '<tr><td colspan="7">' . esc_html( $empty_message ) . '</td></tr>';
+	echo '<tr class="tt-empty"><td colspan="7">' . esc_html( $empty_message ) . '</td></tr>';
 }
 
 echo '</tbody></table>';
 
-// Add notification div for success/error messages
 echo '</div>'; // Close the main container
 
-// Move the modal outside the main block container to avoid CSS scoping issues
-require TASK_TABLE_PLUGIN_DIR . 'build/templates/signup-modal.php';
-
-// Add WordPress REST API nonce to the page
-$nonce = wp_create_nonce( 'wp_rest' );
-
-// Add JavaScript for front-end functionality
-$signup_i18n = array(
-	'fillAll' => __( 'Please fill in all fields.', 'task-table' ),
-	'success' => __( 'Your signup was sent and will be reviewed.', 'task-table' ),
-	'error'   => __( 'Something went wrong. Please try again later.', 'task-table' ),
-	/* translators: Prefix added to the notes of a signup made as a backup for an already confirmed person. */
-	'backup'  => __( '[Backup signup]', 'task-table' ),
-);
-
-echo '<script>
-if (!window.taskTableScriptLoaded) {
-    window.taskTableSignupI18n = ' . wp_json_encode( $signup_i18n ) . ';
-    window.taskTableScriptLoaded = true;
-
-    document.addEventListener("DOMContentLoaded", function () {
-        // DOM elements
-        const signupButtons = document.querySelectorAll(".event-signup");
-        const modalOverlay = document.getElementById("signup-modal-overlay");
-        const modal = document.getElementById("signup-modal");
-        const form = document.getElementById("signup-form");
-        const closeModalBtn = document.getElementById("close-modal");
-        const cancelBtn = document.getElementById("cancel-signup");
-        const submitBtn = document.getElementById("submit-signup");
-        const feedbackEl = document.getElementById("signup-feedback");
-        const freeTextArea = document.getElementById("free-text");
-
-        // Auto-resize textarea
-        const autoResize = (el) => {
-            if (!el) return;
-            el.style.height = "auto";
-            el.style.height = el.scrollHeight + "px";
-        };
-        if (freeTextArea) {
-            freeTextArea.addEventListener("input", () => autoResize(freeTextArea));
-            // Initialize height if prefilled
-            autoResize(freeTextArea);
-        }
-
-        // Ensure modal is initially hidden
-        if (modalOverlay) {
-            modalOverlay.classList.remove("active");
-        }
-
-        // Helper functions
-        const showFeedback = (message, type) => {
-            if (!feedbackEl) return;
-            feedbackEl.textContent = message;
-            feedbackEl.className = "signup-feedback " + type + " show";
-            
-            setTimeout(() => {
-                feedbackEl.classList.remove("show");
-            }, 5000);
-        };
-        
-        const showLoading = (button) => {
-            if (!button) return;
-            button.classList.add("loading");
-            button.disabled = true;
-        };
-        
-        const hideLoading = (button) => {
-            if (!button) return;
-            button.classList.remove("loading");
-            button.disabled = false;
-        };
-
-        // Event signup buttons
-        signupButtons.forEach(button => {
-            button.addEventListener("click", function(e) {
-                e.preventDefault();
-                const eventId = this.getAttribute("data-event-id");
-                const hasApproved = this.getAttribute("data-has-approved") === "1";
-                if (document.getElementById("event-id")) {
-                    document.getElementById("event-id").value = eventId;
-                }
-                if (modalOverlay) {
-                    modalOverlay.classList.add("active");
-                    document.body.style.overflow = "hidden"; // Prevent scrolling
-                }
-                
-                // Reset form and feedback
-                if (form) form.reset();
-                if (feedbackEl) feedbackEl.className = "signup-feedback";
-
-                // Replacement disclaimer logic
-                const disclaimer = document.getElementById("replacement-disclaimer");
-                const replacementFlag = document.getElementById("replacement-signup-flag");
-                if (hasApproved) {
-                    if (disclaimer) disclaimer.style.display = "block";
-                    if (replacementFlag) replacementFlag.value = "1";
-                } else {
-                    if (disclaimer) disclaimer.style.display = "none";
-                    if (replacementFlag) replacementFlag.value = "";
-                }
-            });
-        });
-
-        // Close modal handlers
-        const closeModal = () => {
-            if (modalOverlay) {
-                modalOverlay.classList.remove("active");
-                document.body.style.overflow = ""; // Re-enable scrolling
-            }
-        };
-        
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener("click", closeModal);
-        }
-        
-        if (cancelBtn) {
-            cancelBtn.addEventListener("click", closeModal);
-        }
-
-        // Handle click outside modal
-        if (modalOverlay) {
-            modalOverlay.addEventListener("click", function(e) {
-                if (e.target === modalOverlay) {
-                    closeModal();
-                }
-            });
-        }
-        
-        // Handle escape key press
-        document.addEventListener("keydown", function(e) {
-            if (e.key === "Escape" && modalOverlay && modalOverlay.classList.contains("active")) {
-                closeModal();
-            }
-        });
-
-        // Handle signup form submission
-        if (form) {
-            form.addEventListener("submit", function(e) {
-                e.preventDefault();
-                
-                const eventId = document.getElementById("event-id").value;
-                const userName = document.getElementById("user-name").value;
-                const userEmail = document.getElementById("user-email").value;
-                const freeTextEl = document.getElementById("free-text");
-                let freeText = freeTextEl ? freeTextEl.value : "";
-                const replacementFlag = document.getElementById("replacement-signup-flag");
-                if (replacementFlag && replacementFlag.value === "1") {
-                    const backupPrefix = window.taskTableSignupI18n.backup;
-                    if (freeText.indexOf(backupPrefix) !== 0) {
-                        freeText = backupPrefix + " " + freeText;
-                    }
-                }
-                
-                if (!userName.trim() || !userEmail.trim()) {
-                    showFeedback(window.taskTableSignupI18n.fillAll, "error");
-                    return;
-                }
-                
-                showLoading(submitBtn);
-                
-                fetch(' . wp_json_encode( esc_url_raw( rest_url( 'event-signups/v1/submit' ) ) ) . ', {
-                    method: "POST",
-                    credentials: "same-origin",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-WP-Nonce": "' . esc_js( $nonce ) . '"
-                    },
-                    body: JSON.stringify({
-                        event_id: eventId,
-                        user_name: userName,
-                        user_email: userEmail,
-                        free_text: freeText
-                    })
-                })
-                .then(response => response.json().catch(() => {
-                    throw new Error("Network response was not ok");
-                }))
-                .then(data => {
-                    hideLoading(submitBtn);
-                    
-                    if (data.success) {
-                        showFeedback(window.taskTableSignupI18n.success, "success");
-                        
-                        // Close modal and reload after delay
-                        setTimeout(() => {
-                            closeModal();
-                            window.location.reload();
-                        }, 2000);
-                    } else {
-                        showFeedback(data.message || window.taskTableSignupI18n.error, "error");
-                    }
-                })
-                .catch(error => {
-                    hideLoading(submitBtn);
-                    console.error("Error:", error);
-                    showFeedback(window.taskTableSignupI18n.error, "error");
-                });
-            });
-        }
-
-    });
+// The dialog is printed once per page, outside the block wrapper, even with several tables.
+// Its markup and data attributes are read by view.js.
+if ( ! did_action( 'task_table_signup_modal_printed' ) ) {
+	do_action( 'task_table_signup_modal_printed' );
+	require TASK_TABLE_PLUGIN_DIR . 'build/templates/signup-modal.php';
 }
-</script>';
