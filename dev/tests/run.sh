@@ -97,7 +97,7 @@ n=$(login admin admin)
 check "admin creates event" 201 "$(status -X POST -b "$TMP/admin" -H "X-WP-Nonce: $n" -H 'Content-Type: application/json' \
   -d "{\"wasAngefragt\":\"Notify test\",\"kontext\":\"ctx\",\"category_id\":$CAT}" "$API/task-table/v1/events")"
 $WP post update 4 --post_title="Task Table" >/dev/null   # notifications go out on save_post
-sleep 1
+sleep 2
 MSG=$(curl -s "$MAILPIT/api/v1/search?query=to:new@example.test" | python3 -c 'import sys,json;m=json.load(sys.stdin)["messages"];print(m[0]["ID"] if m else "")')
 check "subscriber got new-event mail" 1 "$([ -n "$MSG" ] && echo 1 || echo 0)"
 HDR=$(curl -s "$MAILPIT/api/v1/message/$MSG/headers")
@@ -121,7 +121,7 @@ check "one-click removed subscriber" 0 "$(sql "SELECT COUNT(*) FROM wp_task_tabl
 reset_limits; clear_mail
 sql "INSERT INTO wp_task_table_subscribers (email, confirmed, created_at, updated_at) VALUES ('again@example.test', 1, NOW(), NOW())" >/dev/null
 post_json /task-table/v1/subscribers '{"email":"again@example.test"}' >/dev/null
-sleep 1
+sleep 2
 check "re-subscribing confirmed address mails its manage link" 1 "$(curl -s "$MAILPIT/api/v1/search?query=to:again@example.test" | grep -c 'task_table_subscription=manage')"
 
 echo "Email template settings"

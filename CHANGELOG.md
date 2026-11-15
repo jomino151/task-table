@@ -57,7 +57,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - Local development stack (`dev/up.sh`: WordPress, MariaDB and Mailpit through
-  podman or docker) and an integration test suite (`dev/tests/run.sh`).
+  podman or docker), an integration test suite (`dev/tests/run.sh`) and an
+  upgrade test from the previous release (`dev/tests/upgrade.sh`).
 - Filters: `task_table_rate_limit`, `task_table_client_ip`,
   `task_table_confirmation_token_ttl`, `task_table_column_labels`.
 - English README, SECURITY.md, LICENSE and screenshots.

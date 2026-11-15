@@ -128,6 +128,7 @@ dev/up.sh                 # WordPress :8888, Mailpit :8025, seeded fictional dat
 npm run start             # optional: rebuild on change (the repo is mounted into WordPress)
 dev/wp.sh plugin list     # wp-cli inside the stack
 dev/tests/run.sh          # integration tests (authorization, validation, rate limits, opt-in, unsubscribe)
+dev/tests/upgrade.sh      # installs the previous release with production-like data, upgrades, re-checks
 node dev/screenshots.mjs  # regenerate docs/screenshots (needs Chrome/Chromium)
 dev/down.sh               # remove containers and volumes
 ```
