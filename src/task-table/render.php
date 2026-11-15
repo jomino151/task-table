@@ -281,7 +281,7 @@ if (!window.taskTableScriptLoaded) {
                 
                 showLoading(submitBtn);
                 
-                fetch("/wp-json/event-signups/v1/submit", {
+                fetch(' . wp_json_encode(esc_url_raw(rest_url('event-signups/v1/submit'))) . ', {
                     method: "POST",
                     credentials: "same-origin",
                     headers: {
@@ -295,12 +295,9 @@ if (!window.taskTableScriptLoaded) {
                         free_text: freeText
                     })
                 })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error("Network response was not ok");
-                    }
-                    return response.json();
-                })
+                .then(response => response.json().catch(() => {
+                    throw new Error("Network response was not ok");
+                }))
                 .then(data => {
                     hideLoading(submitBtn);
                     

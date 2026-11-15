@@ -135,9 +135,9 @@ function task_table_admin_enqueue_scripts($hook) {
     if (strpos($hook, 'task-table') !== false) {
         wp_enqueue_script(
             'task-table-admin',
-            TASK_TABLE_PLUGIN_URL . 'js/admin.js',
+            TASK_TABLE_PLUGIN_URL . 'admin/admin.js',
             array('jquery'),
-            filemtime(TASK_TABLE_PLUGIN_DIR . 'js/admin.js'),
+            filemtime(TASK_TABLE_PLUGIN_DIR . 'admin/admin.js'),
             true
         );
     }
@@ -210,25 +210,12 @@ function task_table_handle_frontend_confirmation() {
     if (!$email || !$token) {
         return; // Silent fail to avoid revealing info
     }
-    global $wpdb; 
-    $table = $wpdb->prefix . 'task_table_subscribers';
-    $row = $wpdb->get_row($wpdb->prepare("SELECT id, confirmed, confirmation_token FROM $table WHERE email = %s", $email));
-    if ($row && (int)$row->confirmed === 0 && hash_equals((string)$row->confirmation_token, (string)$token)) {
-        $updated = $wpdb->update($table, [
-            'confirmed' => 1,
-            'confirmation_token' => null,
-            'updated_at' => current_time('mysql')
-        ], ['id' => $row->id]);
-        $verify = (int)$wpdb->get_var($wpdb->prepare("SELECT confirmed FROM $table WHERE id = %d", $row->id));
-        if ($updated !== false && $verify === 1) {
-            wp_die(__('Danke! Dein Abo wurde bestätigt.', 'task-table'), __('Abo bestätigt', 'task-table'), ['response' => 200]);
-        } else {
-            wp_die(__('Technischer Fehler: Bestätigung konnte nicht gespeichert werden.', 'task-table'), __('Fehler', 'task-table'), ['response' => 500]);
-        }
-    } elseif ($row && (int)$row->confirmed === 1) {
-        wp_die(__('Dieses Abo ist bereits bestätigt.', 'task-table'), __('Bereits bestätigt', 'task-table'), ['response' => 200]);
-    } else {
-        wp_die(__('Bestätigungslink ist ungültig oder abgelaufen.', 'task-table'), __('Ungültiger Link', 'task-table'), ['response' => 400]);
+    $result = task_table_confirm_subscription_token($email, $token);
+    if ($result === 'confirmed') {
+        wp_die(esc_html__('Danke! Dein Abo wurde bestätigt.', 'task-table'), esc_html__('Abo bestätigt', 'task-table'), ['response' => 200]);
+    } elseif ($result === 'error') {
+        wp_die(esc_html__('Technischer Fehler: Bestätigung konnte nicht gespeichert werden.', 'task-table'), esc_html__('Fehler', 'task-table'), ['response' => 500]);
     }
+    wp_die(esc_html__('Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet.', 'task-table'), esc_html__('Ungültiger Link', 'task-table'), ['response' => 400]);
 }
 add_action('template_redirect', 'task_table_handle_frontend_confirmation');

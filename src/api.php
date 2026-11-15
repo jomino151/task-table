@@ -90,25 +90,85 @@ function task_table_register_api_routes() {
 add_action('rest_api_init', 'task_table_register_api_routes');
 
 /**
+ * Simple fixed-window rate limiter for the public endpoints, backed by transients.
+ *
+ * @param string $bucket Logical action name, e.g. "signup".
+ * @param string $key    Who is limited (IP address or email).
+ * @param int    $limit  Allowed calls per window. Filterable via `task_table_rate_limit`.
+ * @param int    $window Window length in seconds.
+ * @return bool True when the caller is over the limit.
+ */
+function task_table_is_rate_limited($bucket, $key, $limit, $window) {
+    $limit = (int) apply_filters('task_table_rate_limit', $limit, $bucket);
+    if ($limit <= 0 || $key === '') {
+        return false;
+    }
+
+    $transient = 'tt_rl_' . md5($bucket . '|' . strtolower($key));
+    $state = get_transient($transient);
+    if (!is_array($state) || !isset($state['count'], $state['reset']) || $state['reset'] <= time()) {
+        $state = array('count' => 0, 'reset' => time() + $window);
+    }
+
+    if ($state['count'] >= $limit) {
+        return true;
+    }
+
+    $state['count']++;
+    set_transient($transient, $state, max(1, $state['reset'] - time()));
+    return false;
+}
+
+/**
+ * Client IP used for rate limiting. Uses REMOTE_ADDR only; proxies can adjust it via the filter.
+ */
+function task_table_get_client_ip() {
+    $ip = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+    return (string) apply_filters('task_table_client_ip', $ip);
+}
+
+function task_table_too_many_requests_response() {
+    return new WP_REST_Response(array(
+        'success' => false,
+        'message' => __('Zu viele Anfragen. Bitte versuche es später erneut.', 'task-table'),
+    ), 429);
+}
+
+/**
  * Handle the signup form submission via REST API
  */
 function task_table_handle_signup_submission(WP_REST_Request $request) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'task_table_signups';
 
+    if (task_table_is_rate_limited('signup', task_table_get_client_ip(), 5, 10 * MINUTE_IN_SECONDS)) {
+        return task_table_too_many_requests_response();
+    }
+
     $data = $request->get_json_params();
-    $event_id = intval($data['event_id']); 
-    $user_name = sanitize_text_field($data['user_name']);
-    $user_email = sanitize_email($data['user_email']);
-    $free_text = isset($data['free_text']) ? wp_kses_post($data['free_text']) : '';
-    
-    // Verify the event exists
+    $data = is_array($data) ? $data : array();
+    $event_id = isset($data['event_id']) ? absint($data['event_id']) : 0;
+    $user_name = isset($data['user_name']) && is_scalar($data['user_name']) ? sanitize_text_field((string) $data['user_name']) : '';
+    $user_email = isset($data['user_email']) && is_scalar($data['user_email']) ? sanitize_email((string) $data['user_email']) : '';
+    $free_text = isset($data['free_text']) && is_scalar($data['free_text']) ? wp_kses_post((string) $data['free_text']) : '';
+
+    if ($user_name === '' || mb_strlen($user_name) > 100 || !is_email($user_email) || strlen($user_email) > 100) {
+        return new WP_REST_Response(array(
+            'success' => false,
+            'message' => __('Bitte gib einen Namen und eine gültige E-Mail-Adresse an.', 'task-table'),
+        ), 400);
+    }
+    if (mb_strlen($free_text) > 2000) {
+        $free_text = mb_substr($free_text, 0, 2000);
+    }
+
+    // Only open (non-archived) events accept signups.
     $events_table = $wpdb->prefix . 'task_table_events';
     $event_exists = $wpdb->get_var($wpdb->prepare(
-        "SELECT COUNT(*) FROM $events_table WHERE id = %d",
+        "SELECT COUNT(*) FROM $events_table WHERE id = %d AND archived = 0",
         $event_id
     ));
-    
+
     if (!$event_exists) {
         return new WP_REST_Response(array('success' => false, 'message' => 'Event not found'), 404);
     }
@@ -129,8 +189,12 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
     }
 
     // Send email to moderator using our notification system
-    $data['free_text'] = $free_text;
-    task_table_send_new_signup_notification($data);
+    task_table_send_new_signup_notification(array(
+        'event_id' => $event_id,
+        'user_name' => $user_name,
+        'user_email' => $user_email,
+        'free_text' => $free_text,
+    ));
 
     return new WP_REST_Response(array('success' => true), 200);
 }
@@ -471,21 +535,40 @@ function task_table_delete_event(WP_REST_Request $request) {
 }
 
 /**
- * Add a new notification subscriber
+ * Add a new notification subscriber (double opt-in).
+ *
+ * Responses are identical whether or not the address is already subscribed, so the
+ * endpoint cannot be used to check who is on the list. Confirmed subscribers are never
+ * modified by this unauthenticated endpoint.
  */
 function task_table_add_subscriber(WP_REST_Request $request) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'task_table_subscribers';
-    
+
+    if (task_table_is_rate_limited('subscribe_ip', task_table_get_client_ip(), 10, HOUR_IN_SECONDS)) {
+        return task_table_too_many_requests_response();
+    }
+
     $data = $request->get_json_params();
-    $email = sanitize_email($data['email']);
+    $data = is_array($data) ? $data : array();
+    $email = isset($data['email']) && is_scalar($data['email']) ? sanitize_email((string) $data['email']) : '';
     $requested_categories = isset($data['categories']) ? (array) $data['categories'] : array();
-    
-    if (!is_email($email)) {
+
+    if (!is_email($email) || strlen($email) > 100) {
         return new WP_REST_Response(array(
             'success' => false,
             'message' => 'Invalid email address'
         ), 400);
+    }
+
+    $generic_response = new WP_REST_Response(array(
+        'success' => true,
+        'message' => 'Please confirm your subscription via the email we just sent.'
+    ), 200);
+
+    // At most 3 confirmation mails per address per day, so the form can't be used to mail-bomb someone.
+    if (task_table_is_rate_limited('subscribe_email', $email, 3, DAY_IN_SECONDS)) {
+        return $generic_response;
     }
 
     $subscriber = $wpdb->get_row($wpdb->prepare(
@@ -493,102 +576,102 @@ function task_table_add_subscriber(WP_REST_Request $request) {
         $email
     ));
 
+    if ($subscriber && (int) $subscriber->confirmed === 1) {
+        return $generic_response;
+    }
+
+    $token = wp_generate_password(32, false, false);
+    $now = current_time('mysql');
+
     if ($subscriber) {
         task_table_sync_subscriber_categories((int) $subscriber->id, $requested_categories);
-
-        if ((int) $subscriber->confirmed === 1) {
-            return new WP_REST_Response(array(
-                'success' => true,
-                'message' => 'Subscription preferences updated.'
-            ), 200);
-        }
-
-        $token = wp_generate_password(32, false, false);
         $wpdb->update($table_name, array(
             'confirmation_token' => $token,
-            'updated_at' => current_time('mysql')
+            'updated_at' => $now
         ), array('id' => $subscriber->id));
+    } else {
+        $result = $wpdb->insert($table_name, array(
+            'email' => $email,
+            'confirmed' => 0,
+            'confirmation_token' => $token,
+            'created_at' => $now,
+            'updated_at' => $now
+        ));
 
-        task_table_send_subscription_confirmation_email($email, $token);
+        if ($result === false) {
+            error_log('Task Table: subscriber insert failed: ' . $wpdb->last_error);
+            return new WP_REST_Response(array(
+                'success' => false,
+                'message' => 'Failed to start subscription'
+            ), 500);
+        }
 
-        return new WP_REST_Response(array(
-            'success' => true,
-            'message' => 'Confirmation email resent. Please check your inbox.'
-        ), 200);
+        task_table_sync_subscriber_categories((int) $wpdb->insert_id, $requested_categories);
     }
-
-    // Create new unconfirmed subscriber with token
-    $token = wp_generate_password(32, false, false);
-    $result = $wpdb->insert($table_name, array(
-        'email' => $email,
-        'confirmed' => 0,
-        'confirmation_token' => $token,
-        'created_at' => current_time('mysql')
-    ));
-
-    if ($result === false) {
-        return new WP_REST_Response(array(
-            'success' => false,
-            'message' => 'Failed to start subscription',
-            'error' => $wpdb->last_error
-        ), 500);
-    }
-
-    task_table_sync_subscriber_categories((int) $wpdb->insert_id, $requested_categories);
 
     task_table_send_subscription_confirmation_email($email, $token);
 
-    return new WP_REST_Response(array(
-        'success' => true,
-        'message' => 'Please confirm your subscription via the email we just sent.'
-    ), 201);
+    return $generic_response;
+}
+
+/**
+ * How long a double opt-in link stays valid, in seconds.
+ */
+function task_table_get_confirmation_token_ttl() {
+    return (int) apply_filters('task_table_confirmation_token_ttl', 7 * DAY_IN_SECONDS);
+}
+
+/**
+ * Confirm a pending subscription.
+ *
+ * @return string 'confirmed', 'invalid' (unknown email, wrong/expired token, already confirmed) or 'error'.
+ */
+function task_table_confirm_subscription_token($email, $token) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'task_table_subscribers';
+
+    if (!is_email($email) || !is_string($token) || $token === '') {
+        return 'invalid';
+    }
+
+    $row = $wpdb->get_row($wpdb->prepare(
+        "SELECT id, confirmed, confirmation_token, created_at, updated_at FROM $table_name WHERE email = %s",
+        $email
+    ));
+    if (!$row || (int) $row->confirmed === 1 || empty($row->confirmation_token)
+        || !hash_equals((string) $row->confirmation_token, $token)) {
+        return 'invalid';
+    }
+
+    $issued_at = strtotime((string) ($row->updated_at ?: $row->created_at));
+    if ($issued_at && $issued_at + task_table_get_confirmation_token_ttl() < strtotime(current_time('mysql'))) {
+        return 'invalid';
+    }
+
+    $updated = $wpdb->update($table_name, array(
+        'confirmed' => 1,
+        'confirmation_token' => null,
+        'updated_at' => current_time('mysql')
+    ), array('id' => $row->id));
+
+    return $updated === false ? 'error' : 'confirmed';
 }
 
 /**
  * Confirm a subscriber using token + email (double opt-in)
  */
 function task_table_confirm_subscriber(WP_REST_Request $request) {
-    global $wpdb; 
-    $table_name = $wpdb->prefix . 'task_table_subscribers';
-    $email = sanitize_email($request->get_param('email'));
-    $token = sanitize_text_field($request->get_param('token'));
+    $email = sanitize_email((string) $request->get_param('email'));
+    $token = sanitize_text_field((string) $request->get_param('token'));
 
-    if (!is_email($email) || empty($token)) {
-        return new WP_REST_Response(array(
-            'success' => false,
-            'message' => 'Invalid confirmation parameters.'
-        ), 400);
-    }
-
-    $row = $wpdb->get_row($wpdb->prepare("SELECT id, confirmed, confirmation_token FROM $table_name WHERE email = %s", $email));
-    if (!$row) {
-        return new WP_REST_Response(array(
-            'success' => false,
-            'message' => 'Subscriber not found.'
-        ), 404);
-    }
-    if ((int)$row->confirmed === 1) {
+    $result = task_table_confirm_subscription_token($email, $token);
+    if ($result === 'confirmed') {
         return new WP_REST_Response(array(
             'success' => true,
-            'message' => 'Subscription already confirmed.'
+            'message' => 'Subscription confirmed. Thank you!'
         ), 200);
     }
-    if (hash_equals((string)$row->confirmation_token, (string)$token)) {
-        $updated = $wpdb->update($table_name, array(
-            'confirmed' => 1,
-            'confirmation_token' => null,
-            'updated_at' => current_time('mysql')
-        ), array('id' => $row->id));
-        if ($updated !== false) {
-            // Re-fetch to verify
-            $verify = (int)$wpdb->get_var($wpdb->prepare("SELECT confirmed FROM $table_name WHERE id = %d", $row->id));
-            if ($verify === 1) {
-                return new WP_REST_Response(array(
-                    'success' => true,
-                    'message' => 'Subscription confirmed. Thank you!'
-                ), 200);
-            }
-        }
+    if ($result === 'error') {
         return new WP_REST_Response(array(
             'success' => false,
             'message' => 'Could not mark as confirmed.'
@@ -596,7 +679,7 @@ function task_table_confirm_subscriber(WP_REST_Request $request) {
     }
     return new WP_REST_Response(array(
         'success' => false,
-        'message' => 'Invalid or expired token.'
+        'message' => 'Invalid or expired confirmation link.'
     ), 400);
 }
 
