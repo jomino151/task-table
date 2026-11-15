@@ -2221,11 +2221,11 @@ function task_table_admin_email_settings_page() {
         
         foreach (array_keys($templates) as $template_key) {
             if (isset($_POST["task_table_email_{$template_key}_subject"])) {
-                update_option("task_table_email_{$template_key}_subject", wp_kses_post($_POST["task_table_email_{$template_key}_subject"]));
+                update_option("task_table_email_{$template_key}_subject", sanitize_text_field(wp_unslash($_POST["task_table_email_{$template_key}_subject"])));
             }
             
             if (isset($_POST["task_table_email_{$template_key}_message"])) {
-                update_option("task_table_email_{$template_key}_message", wp_kses_post($_POST["task_table_email_{$template_key}_message"]));
+                update_option("task_table_email_{$template_key}_message", sanitize_textarea_field(wp_unslash($_POST["task_table_email_{$template_key}_message"])));
             }
         }
 
@@ -2280,6 +2280,7 @@ function task_table_admin_email_settings_page() {
     $templates = task_table_get_email_templates();
     $template_labels = [
         'subscription_confirmation' => __('Abo-Bestätigung', 'task-table'),
+        'subscription_manage' => __('Abo verwalten (bestehendes Abo)', 'task-table'),
         'signup_approved' => __('Anmeldung angenommen', 'task-table'),
         'signup_denied' => __('Anmeldung abgelehnt', 'task-table'),
         'new_signup' => __('Neue Anmeldung', 'task-table'),
@@ -2382,6 +2383,7 @@ function task_table_admin_email_settings_page() {
                     <li><code>{event_id}</code> - <?php _e('Veranstaltungs-ID (falls vorhanden)', 'task-table'); ?></li>
                     <li><code>{event_category_line}</code> - <?php _e('Kategorie als Textzeile (nur neue Anmeldung)', 'task-table'); ?></li>
                     <li><code>{confirmation_link}</code> - <?php _e('Bestätigungslink (nur Abo-E-Mails)', 'task-table'); ?></li>
+                    <li><code>{manage_link}</code> - <?php _e('Link zum Verwalten/Abmelden (neue Veranstaltung, Abo verwalten; wird sonst automatisch angehängt)', 'task-table'); ?></li>
                 </ul>
             </div>
 

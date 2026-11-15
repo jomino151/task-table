@@ -1,7 +1,7 @@
 {
 	"name": "task-table",
 	"version": "0.1.1",
-	"description": "Creates a dynamic table to communicate task to multis.",
+	"description": "WordPress plugin: publish open tasks, collect volunteer signups and notify subscribers.",
 	"author": "Jonas Morawietz",
 	"license": "GPL-2.0-or-later",
 	"main": "build/index.js",

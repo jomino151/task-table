@@ -61,6 +61,7 @@ $render_event_cell = static function ($value) {
     return wp_kses_post(make_clickable($content));
 };
 
+$column_labels = task_table_get_column_labels();
 echo '<table class="task-table-grid">';
 echo '<colgroup>';
 echo '<col class="tt-col-request" />';
@@ -73,13 +74,13 @@ echo '<col class="tt-col-signups" />';
 echo '</colgroup>';
 echo '<thead>';
 echo '<tr>';
-echo '<th class="tt-col-request">Was ist Angefragt?</th>';
-echo '<th class="tt-col-context">Kontext</th>';
-echo '<th class="tt-col-university">Name der Hochschule</th>';
-echo '<th class="tt-col-tn">Vorauss. TN-Anzahl</th>';
-echo '<th class="tt-col-time">Anvisierter Zeitpunkt</th>';
-echo '<th class="tt-col-details">Auftragdetails</th>';
-echo '<th class="tt-col-signups">Wer macht\'s? / Anmelden</th>';
+echo '<th class="tt-col-request">' . esc_html($column_labels['was_angefragt']) . '</th>';
+echo '<th class="tt-col-context">' . esc_html($column_labels['kontext']) . '</th>';
+echo '<th class="tt-col-university">' . esc_html($column_labels['name_hochschule']) . '</th>';
+echo '<th class="tt-col-tn">' . esc_html($column_labels['tn_anzahl']) . '</th>';
+echo '<th class="tt-col-time">' . esc_html($column_labels['zeitpunkt']) . '</th>';
+echo '<th class="tt-col-details">' . esc_html($column_labels['auftragdetails']) . '</th>';
+echo '<th class="tt-col-signups">' . esc_html($column_labels['wer_macht']) . '</th>';
 echo '</tr>';
 echo '</thead>';
 echo '<tbody>';
@@ -112,7 +113,7 @@ if (!empty($events)) {
             }
             echo '</div>';
         }
-        echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '" data-has-approved="' . ($hasApproved ? '1' : '0') . '">Anmelden</button>';
+        echo '<button class="event-signup" data-event-id="' . esc_attr($event['id']) . '" data-has-approved="' . ($hasApproved ? '1' : '0') . '">' . esc_html__('Anmelden', 'task-table') . '</button>';
         echo '</div>';
         echo '</td>';
         echo '</tr>';
@@ -138,8 +139,15 @@ include(TASK_TABLE_PLUGIN_DIR . 'build/templates/signup-modal.php');
 $nonce = wp_create_nonce('wp_rest');
 
 // Add JavaScript for front-end functionality
+$signup_i18n = array(
+    'fillAll' => __('Bitte fülle alle Felder aus.', 'task-table'),
+    'success' => __('Deine Anmeldung wurde erfolgreich übermittelt und wird geprüft.', 'task-table'),
+    'error'   => __('Ein Fehler ist aufgetreten. Bitte versuche es später erneut.', 'task-table'),
+);
+
 echo '<script>
 if (!window.taskTableScriptLoaded) {
+    window.taskTableSignupI18n = ' . wp_json_encode($signup_i18n) . ';
     window.taskTableScriptLoaded = true;
 
     document.addEventListener("DOMContentLoaded", function () {
@@ -275,7 +283,7 @@ if (!window.taskTableScriptLoaded) {
                 }
                 
                 if (!userName.trim() || !userEmail.trim()) {
-                    showFeedback("Bitte fülle alle Felder aus.", "error");
+                    showFeedback(window.taskTableSignupI18n.fillAll, "error");
                     return;
                 }
                 
@@ -302,7 +310,7 @@ if (!window.taskTableScriptLoaded) {
                     hideLoading(submitBtn);
                     
                     if (data.success) {
-                        showFeedback("Deine Anmeldung wurde erfolgreich übermittelt und wird geprüft.", "success");
+                        showFeedback(window.taskTableSignupI18n.success, "success");
                         
                         // Close modal and reload after delay
                         setTimeout(() => {
@@ -310,13 +318,13 @@ if (!window.taskTableScriptLoaded) {
                             window.location.reload();
                         }, 2000);
                     } else {
-                        showFeedback(data.message || "Ein Fehler ist aufgetreten. Bitte versuche es später erneut.", "error");
+                        showFeedback(data.message || window.taskTableSignupI18n.error, "error");
                     }
                 })
                 .catch(error => {
                     hideLoading(submitBtn);
                     console.error("Error:", error);
-                    showFeedback("Ein Fehler ist aufgetreten. Bitte versuche es später erneut.", "error");
+                    showFeedback(window.taskTableSignupI18n.error, "error");
                 });
             });
         }

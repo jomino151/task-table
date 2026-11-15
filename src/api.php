@@ -170,7 +170,7 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
     ));
 
     if (!$event_exists) {
-        return new WP_REST_Response(array('success' => false, 'message' => 'Event not found'), 404);
+        return new WP_REST_Response(array('success' => false, 'message' => __('Event not found', 'task-table')), 404);
     }
 
     // Insert into the database
@@ -185,7 +185,7 @@ function task_table_handle_signup_submission(WP_REST_Request $request) {
 
     if ($result === false) {
         error_log('Database insert failed: ' . $wpdb->last_error);
-        return new WP_REST_Response(array('success' => false, 'message' => 'Database insert failed'), 500);
+        return new WP_REST_Response(array('success' => false, 'message' => __('Database insert failed', 'task-table')), 500);
     }
 
     // Send email to moderator using our notification system
@@ -385,7 +385,7 @@ function task_table_save_event(WP_REST_Request $request) {
     if ($result === false) {
         return new WP_REST_Response(array(
             'success' => false, 
-            'message' => 'Failed to save event',
+            'message' => __('Failed to save event', 'task-table'),
             'error' => $wpdb->last_error
         ), 500);
     }
@@ -423,7 +423,7 @@ function task_table_update_event(WP_REST_Request $request) {
     if (!$existing_event) {
         return new WP_REST_Response(array(
             'success' => false,
-            'message' => 'Event not found'
+            'message' => __('Event not found', 'task-table')
         ), 404);
     }
 
@@ -481,7 +481,7 @@ function task_table_update_event(WP_REST_Request $request) {
     if ($result === false) {
         return new WP_REST_Response(array(
             'success' => false,
-            'message' => 'Failed to update event',
+            'message' => __('Failed to update event', 'task-table'),
             'error' => $wpdb->last_error
         ), 500);
     }
@@ -524,13 +524,13 @@ function task_table_delete_event(WP_REST_Request $request) {
     if ($result === false) {
         return new WP_REST_Response(array(
             'success' => false,
-            'message' => 'Failed to delete event'
+            'message' => __('Failed to delete event', 'task-table')
         ), 500);
     }
     
     return new WP_REST_Response(array(
         'success' => true,
-        'message' => 'Event deleted successfully'
+        'message' => __('Event deleted successfully', 'task-table')
     ), 200);
 }
 
@@ -557,13 +557,13 @@ function task_table_add_subscriber(WP_REST_Request $request) {
     if (!is_email($email) || strlen($email) > 100) {
         return new WP_REST_Response(array(
             'success' => false,
-            'message' => 'Invalid email address'
+            'message' => __('Invalid email address', 'task-table')
         ), 400);
     }
 
     $generic_response = new WP_REST_Response(array(
         'success' => true,
-        'message' => 'Please confirm your subscription via the email we just sent.'
+        'message' => __('Please confirm your subscription via the email we just sent.', 'task-table')
     ), 200);
 
     // At most 3 confirmation mails per address per day, so the form can't be used to mail-bomb someone.
@@ -577,6 +577,8 @@ function task_table_add_subscriber(WP_REST_Request $request) {
     ));
 
     if ($subscriber && (int) $subscriber->confirmed === 1) {
+        // Don't change anything; send the owner of the address their management link instead.
+        task_table_send_subscription_manage_email((int) $subscriber->id, $subscriber->email);
         return $generic_response;
     }
 
@@ -602,7 +604,7 @@ function task_table_add_subscriber(WP_REST_Request $request) {
             error_log('Task Table: subscriber insert failed: ' . $wpdb->last_error);
             return new WP_REST_Response(array(
                 'success' => false,
-                'message' => 'Failed to start subscription'
+                'message' => __('Failed to start subscription', 'task-table')
             ), 500);
         }
 
@@ -668,18 +670,18 @@ function task_table_confirm_subscriber(WP_REST_Request $request) {
     if ($result === 'confirmed') {
         return new WP_REST_Response(array(
             'success' => true,
-            'message' => 'Subscription confirmed. Thank you!'
+            'message' => __('Subscription confirmed. Thank you!', 'task-table')
         ), 200);
     }
     if ($result === 'error') {
         return new WP_REST_Response(array(
             'success' => false,
-            'message' => 'Could not mark as confirmed.'
+            'message' => __('Could not mark as confirmed.', 'task-table')
         ), 500);
     }
     return new WP_REST_Response(array(
         'success' => false,
-        'message' => 'Invalid or expired confirmation link.'
+        'message' => __('Invalid or expired confirmation link.', 'task-table')
     ), 400);
 }
 
@@ -810,11 +812,11 @@ function task_table_archive_event(WP_REST_Request $request) {
     $archive = isset($body['archived']) ? (int)$body['archived'] : 1; // default archive
     $exists = $wpdb->get_var($wpdb->prepare("SELECT COUNT(*) FROM $events_table WHERE id = %d", $event_id));
     if (!$exists) {
-        return new WP_REST_Response(['success' => false, 'message' => 'Event not found'], 404);
+        return new WP_REST_Response(['success' => false, 'message' => __('Event not found', 'task-table')], 404);
     }
     $res = $wpdb->update($events_table, [ 'archived' => $archive, 'updated_at' => current_time('mysql') ], ['id' => $event_id]);
     if ($res === false) {
-        return new WP_REST_Response(['success' => false, 'message' => 'Failed to update archive state'], 500);
+        return new WP_REST_Response(['success' => false, 'message' => __('Failed to update archive state', 'task-table')], 500);
     }
     $event = $wpdb->get_row($wpdb->prepare("SELECT * FROM $events_table WHERE id = %d", $event_id), ARRAY_A);
     return new WP_REST_Response(['success' => true, 'event' => $event]);
@@ -826,7 +828,7 @@ function task_table_archive_event(WP_REST_Request $request) {
 function task_table_export_events_excel(WP_REST_Request $request) {
     // Defence in depth: the export contains internal event data, so require the plugin capability here too.
     if (!current_user_can('manage_task_table')) {
-        return new WP_REST_Response(['success' => false, 'message' => 'Forbidden'], 403);
+        return new WP_REST_Response(['success' => false, 'message' => __('Forbidden', 'task-table')], 403);
     }
 
     $params = $request->get_params();

@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:       Task Table
- * Description:       Creates a dynamic table to communicate tasks to multis.
+ * Description:       Publish a table of open tasks or event requests, let volunteers sign up, and notify subscribers about new entries.
  * Version:           0.1.1
  * Requires at least: 6.7
  * Requires PHP:      7.4
@@ -28,8 +28,42 @@ define('TASK_TABLE_SIGNUP_NOTIFICATION_RECIPIENTS_OPTION', 'task_table_signup_no
 require_once TASK_TABLE_PLUGIN_DIR . 'build/database.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'build/email-notifications.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'build/api.php';
+require_once TASK_TABLE_PLUGIN_DIR . 'build/subscriptions.php';
 require_once TASK_TABLE_PLUGIN_DIR . 'build/admin-pages.php';
-require_once TASK_TABLE_PLUGIN_DIR . 'build/translation-overrides.php';
+
+/**
+ * Load translations shipped in /languages (de_DE for the English admin strings).
+ */
+function task_table_load_textdomain() {
+    load_plugin_textdomain('task-table', false, dirname(plugin_basename(__FILE__)) . '/languages');
+}
+add_action('init', 'task_table_load_textdomain', 1);
+
+/**
+ * Column labels for the event table, notification emails and the export.
+ *
+ * The defaults fit the original use case (requests from universities). Sites with a
+ * different context can rename the columns with the `task_table_column_labels` filter:
+ *
+ *     add_filter('task_table_column_labels', function ($labels) {
+ *         $labels['name_hochschule'] = 'Organisation';
+ *         return $labels;
+ *     });
+ *
+ * @return array<string, string> Keyed by database column.
+ */
+function task_table_get_column_labels() {
+    $labels = array(
+        'was_angefragt'   => __('Was ist angefragt?', 'task-table'),
+        'kontext'         => __('Kontext', 'task-table'),
+        'name_hochschule' => __('Name der Hochschule', 'task-table'),
+        'tn_anzahl'       => __('Vorauss. TN-Anzahl', 'task-table'),
+        'zeitpunkt'       => __('Anvisierter Zeitpunkt', 'task-table'),
+        'auftragdetails'  => __('Auftragdetails', 'task-table'),
+        'wer_macht'       => __('Wer macht\'s? / Anmelden', 'task-table'),
+    );
+    return (array) apply_filters('task_table_column_labels', $labels);
+}
 
 // Register activation hook
 register_activation_hook(__FILE__, 'task_table_create_database_tables');
