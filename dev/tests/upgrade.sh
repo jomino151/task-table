@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
-# Upgrade test: install the previous release (default: tag v1.1.0, else `main`), create
-# data shaped like a production site, then swap in the working-tree code and check that existing
-# subscribers, signups, templates and links keep working.
+# Upgrade test: install the previous release, create data shaped like a production site, then
+# swap in the working-tree code and check that existing subscribers, signups, templates and links
+# keep working.
+# The previous release is the newest v* tag in HEAD's history, ignoring tags on HEAD itself, so
+# a release build where HEAD already carries the new tag tests the upgrade from the one before.
 # Runs in its own stack (pod task-table-upgrade, ports 8890/8026) and removes it afterwards.
-# Usage: dev/tests/upgrade.sh [old-git-ref]     KEEP=1 keeps the stack for inspection
-# Needs podman, node_modules (npm ci) and a built plugin (npm run build).
+# Usage: dev/tests/upgrade.sh [old-git-ref]     e.g. v1.1.0 to test a longer upgrade path
+#        KEEP=1 keeps the stack for inspection
+# Needs podman, node_modules (npm ci), a built plugin (npm run build) and the git tags.
 set -uo pipefail
 cd "$(dirname "$0")/../.."
 ROOT="$(pwd)"
-OLD_REF="${1:-$(git rev-parse -q --verify v1.1.0 >/dev/null && echo v1.1.0 || echo main)}"
+NEW_VERSION="$(grep -m1 'Version:' task-table.php | awk '{print $3}')"
+OLD_REF="${1:-$(git tag --list 'v*' --merged HEAD --no-contains HEAD --sort=-v:refname | head -1)}"
+[ -n "$OLD_REF" ] || { echo "no previous release tag found (fetch the tags, or pass a ref)"; exit 1; }
+# Highest DB schema version the new code migrates to.
+NEW_DB="$(grep -o "task_table_db_version', '[0-9.]*'" src/database.php | grep -o "[0-9.]*'$" | tr -d "'" | sort -V | tail -1)"
+# DB 1.7 cleans backslashes that releases before it stored in email templates.
+needs_unslash_migration() { [ "$(printf '%s\n' "$OLD_DB" 1.7 | sort -V | head -1)" != 1.7 ]; }
 export POD=task-table-upgrade WP_PORT=8890 MAIL_PORT=8026
 export WP_IMAGE="${WP_IMAGE:-docker.io/library/wordpress:php8.4-apache}"   # production runs PHP 8.4
 ENGINE="${ENGINE:-podman}"
@@ -37,13 +46,17 @@ echo "== Build $OLD_REF in a temp dir"
 mkdir -p "$OLD" && git archive "$OLD_REF" | tar -x -C "$OLD"
 ln -s "$ROOT/node_modules" "$OLD/node_modules"
 (cd "$OLD" && npx wp-scripts build --webpack-copy-php >/dev/null 2>&1) || { echo "old build failed"; exit 1; }
-sed -i 's/^\( \* Version:           \).*/\11.1.0/' "$OLD/task-table.php"
+# A tag's plugin header can lag behind the tag (v1.1.0 said 0.1.0), so trust the tag name.
+case "$OLD_REF" in v[0-9]*) sed -i "s/^\( \* Version:           \).*/\1${OLD_REF#v}/" "$OLD/task-table.php" ;; esac
+OLD_VERSION="$(grep -m1 'Version:' "$OLD/task-table.php" | awk '{print $3}')"
+echo "   $OLD_REF ($OLD_VERSION) -> working tree ($NEW_VERSION)"
 
 echo "== Start old version"
 dev/down.sh >/dev/null 2>&1
 PLUGIN_SRC="$OLD" SKIP_SEED=1 dev/up.sh >/dev/null 2>&1 || { echo "stack failed"; exit 1; }
 PLUGIN_SRC="$OLD"
-check "old version active" "1.1.0" "$(wp plugin get task-table --field=version)"
+check "old version active" "$OLD_VERSION" "$(wp plugin get task-table --field=version)"
+OLD_DB="$(wp option get task_table_db_version)"
 
 echo "== Create production-like data with the old code"
 wp language core install de_DE --activate >/dev/null 2>&1   # production runs de_DE
@@ -63,7 +76,9 @@ curl -s -o /dev/null -b "$TMP/jar-admin" --data-urlencode "task_table_email_sett
   --data-urlencode 'task_table_email_signup_approved_message=Hallo {user_name}, du machst "{event_title}". {site_name}' \
   --data-urlencode 'task_table_email_new_event_message=Neu: {event_details} Grüße {site_name}' \
   --data-urlencode "signup_notification_recipients=[{\"email\":\"mod@example.test\",\"category_ids\":[]},{\"email\":\"mod2@example.test\",\"category_ids\":[$CAT2]}]" "$PAGE"
-check "old code stored escaped quotes (precondition)" 1 "$(wp option get task_table_email_signup_approved_subject | grep -cF '\"')"
+if needs_unslash_migration; then
+  check "old code stored escaped quotes (precondition)" 1 "$(wp option get task_table_email_signup_approved_subject | grep -cF '\"')"
+fi
 
 # Subscribers through the old public flow: two confirmed (different categories), one still pending.
 for e in sub1 sub2 pending; do
@@ -90,7 +105,7 @@ sql "UPDATE wp_task_table_events SET wer_macht='Sam' WHERE id=$EVENT"
 curl -s -o /dev/null -X POST -b "$TMP/jar-admin" -H "X-WP-Nonce: $n" -H 'Content-Type: application/json' \
   -d "{\"wasAngefragt\":\"Queued event\",\"kontext\":\"ctx\",\"category_id\":$CAT1}" "$API/task-table/v1/events"
 check "old: notification queued" 1 "$(wp option get task_table_pending_event_notifications --format=json | python3 -c 'import sys,json;print(len(json.load(sys.stdin)))')"
-check "old db version" "1.6" "$(wp option get task_table_db_version)"
+echo "   old db version: $OLD_DB, new code migrates to: $NEW_DB"
 BEFORE=$(sql "SELECT CONCAT((SELECT COUNT(*) FROM wp_task_table_events),'/',(SELECT COUNT(*) FROM wp_task_table_signups),'/',(SELECT COUNT(*) FROM wp_task_table_subscribers),'/',(SELECT COUNT(*) FROM wp_task_table_subscriber_categories),'/',(SELECT COUNT(*) FROM wp_task_table_categories))")
 curl -s -X DELETE "$MAILPIT/api/v1/messages" >/dev/null
 
@@ -99,11 +114,11 @@ echo "== Swap in the new code (database kept)"
 PLUGIN_SRC="$ROOT" dev/up.sh >/dev/null 2>&1
 PLUGIN_SRC="$ROOT"
 wp eval 'file_put_contents(WP_CONTENT_DIR . "/debug.log", "");' >/dev/null
-check "new version active" "$(grep -m1 'Version:' task-table.php | awk '{print $3}')" "$(wp plugin get task-table --field=version)"
+check "new version active" "$NEW_VERSION" "$(wp plugin get task-table --field=version)"
 check "front page renders" 200 "$(status "$BASE/task-table/")"
-check "db upgraded to 1.7" "1.7" "$(wp option get task_table_db_version)"
+check "db upgraded to $NEW_DB" "$NEW_DB" "$(wp option get task_table_db_version)"
 check "data untouched (events/signups/subscribers/sub-cats/categories)" "$BEFORE" "$(sql "SELECT CONCAT((SELECT COUNT(*) FROM wp_task_table_events),'/',(SELECT COUNT(*) FROM wp_task_table_signups),'/',(SELECT COUNT(*) FROM wp_task_table_subscribers),'/',(SELECT COUNT(*) FROM wp_task_table_subscriber_categories),'/',(SELECT COUNT(*) FROM wp_task_table_categories))")"
-check "escaped templates cleaned" 'Zusage für "{event_title}"' "$(wp option get task_table_email_signup_approved_subject)"
+check "templates have no escaped quotes" 'Zusage für "{event_title}"' "$(wp option get task_table_email_signup_approved_subject)"
 check "unescaped template unchanged" 'Neu: {event_details} Grüße {site_name}' "$(wp option get task_table_email_new_event_message)"
 check "signup recipients kept" 2 "$(wp option get task_table_signup_notification_recipients --format=json | python3 -c 'import sys,json;print(len(json.load(sys.stdin)))')"
 
