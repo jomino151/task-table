@@ -70,7 +70,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          fetch-depth: 0   # upgrade test builds the previous release from tag v1.1.0
+          fetch-depth: 0   # upgrade test builds the previous release from its git tag
           fetch-tags: true
       - uses: actions/setup-node@v7
         with:
@@ -84,7 +84,7 @@ jobs:
           dev/up.sh
       - name: Integration tests
         run: dev/tests/run.sh
-      - name: Upgrade test from v1.1.0
+      - name: Upgrade test from the previous release
         run: dev/tests/upgrade.sh
       - name: Logs on failure
         if: failure()

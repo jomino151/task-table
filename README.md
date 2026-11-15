@@ -86,7 +86,7 @@ The local stack (WordPress, MariaDB, Mailpit) runs in podman:
 npm ci && npm run build
 dev/up.sh              # http://localhost:8888 (admin/admin), mail at :8025
 dev/tests/run.sh       # integration tests
-dev/tests/upgrade.sh   # upgrade from v1.1.0 with production-like data
+dev/tests/upgrade.sh   # upgrade from the previous release with production-like data
 composer install && vendor/bin/phpcs   # WordPress coding standards
 ```
 
