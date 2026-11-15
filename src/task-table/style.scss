@@ -283,26 +283,132 @@
 		}
 	}
 
+	// Touch widths and coarse pointers: 44px targets (WCAG 2.5.5).
+	@media (max-width: 768px), (pointer: coarse) {
+
+		.event-signup {
+			min-height: 44px;
+			padding: 0.5rem 1rem;
+		}
+	}
+
+	// Narrow screens: each row becomes a card of label/value pairs.
 	@media (max-width: 768px) {
 		grid-column: 1/-1;
 		margin: 1rem 0;
+		overflow-x: visible;
+		scrollbar-gutter: auto;
+
+		.task-table-grid,
+		.task-table-grid tbody,
+		.task-table-grid tr,
+		.task-table-grid td {
+			display: block;
+			width: 100%;
+			min-width: 0;
+			box-sizing: border-box;
+		}
 
 		.task-table-grid {
-			min-width: 860px;
+			min-width: 0;
+			table-layout: auto;
+			border: 0;
+			background: transparent;
+			overflow: visible;
+		}
+
+		.task-table-grid colgroup {
+			display: none;
+		}
+
+		// Keep the header for screen readers only; each cell carries its label.
+		.task-table-grid thead {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
+
+		.task-table-grid tbody tr {
+			margin: 0 0 1rem;
+			border: 1px solid var(--tt-gray-30);
+			border-radius: var(--tt-br);
+			background: var(--tt-gray-10);
+			overflow: hidden;
+		}
+
+		.task-table-grid tbody tr:nth-child(even) td,
+		.task-table-grid tbody tr:hover td {
+			background-color: transparent;
 		}
 
 		.task-table-grid th,
 		.task-table-grid td {
-			padding: 0.75rem;
+			padding: 0.6rem 0.9rem;
+		}
+
+		.task-table-grid td,
+		.task-table-grid tbody tr:last-child td {
+			border-bottom: 1px solid var(--tt-gray-20);
+		}
+
+		.task-table-grid td:last-child,
+		.task-table-grid tbody tr:last-child td:last-child {
+			border-bottom: 0;
+		}
+
+		.task-table-grid td:empty {
+			display: none;
+		}
+
+		.task-table-grid td[data-label]::before {
+			content: attr(data-label);
+			display: block;
+			margin-bottom: 0.15rem;
+			color: var(--tt-blue-80);
+			font-size: var(--tt-ms--1);
+			font-variation-settings: "wght" 650, "wdth" 105;
+			letter-spacing: 0.02em;
+			hyphens: none;
+		}
+
+		.task-table-grid td.tt-col-request {
+			background: var(--tt-blue-10);
+			font-variation-settings: "wght" 650;
+		}
+
+		.task-table-grid th.tt-col-university,
+		.task-table-grid td.tt-col-university,
+		.task-table-grid th.tt-col-details,
+		.task-table-grid td.tt-col-details,
+		.task-table-grid th.tt-col-signups,
+		.task-table-grid td.tt-col-signups {
+			min-width: 0;
+		}
+
+		.task-table-grid td.tt-col-signups {
+			padding-left: 0.9rem;
+			padding-right: 0.9rem;
+		}
+
+		.task-table-grid tr.tt-empty td {
+			border-bottom: 0;
+		}
+
+		.tt-signup-stack {
+			align-items: stretch;
 		}
 
 		.event-signup {
-			min-width: 7rem;
+			width: 100%;
+			min-width: 0;
 		}
 	}
 }
 
-.modal-overlay {
+.tt-signup-dialog {
 	--tt-gray-10: var(--gray-10, hsl(0, 0%, 100%));
 	--tt-gray-20: var(--gray-20, #f0f0f0);
 	--tt-gray-30: var(--gray-30, #b9b9b9);
@@ -326,49 +432,51 @@
 	--tt-ms--1: var(--ms--1, calc(var(--tt-ms-0) / 1.3));
 	--tt-ms-1: var(--ms-1, calc(var(--tt-ms-0) * 1.3));
 
-	position: fixed;
-	inset: 0;
-	z-index: 1000;
+	box-sizing: border-box;
 	// Block themes give direct children of constrained layouts a max-width
-	// and auto margins.
-	max-width: none !important;
-	margin: 0 !important;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: clamp(1rem, 3vw, 2rem);
-	background: rgba(10, 10, 10, 0.5);
-	opacity: 0;
-	pointer-events: none;
-	transform: scale(0.9);
-	transform-origin: top right;
-	transition: opacity var(--tt-slow), transform var(--tt-slow);
+	// and margins; the dialog sits in the top layer and centres itself with
+	// margin: auto.
+	width: min(calc(100% - 2rem), 32rem);
+	max-width: min(calc(100% - 2rem), 32rem) !important;
+	max-height: min(calc(100% - 2rem), 44rem);
+	margin: auto !important;
+	padding: 0;
+	overflow-y: auto;
 
-	&.active {
-		opacity: 1;
-		pointer-events: all;
-		transform: scale(1);
+	&::backdrop {
+		background: rgba(10, 10, 10, 0.5);
+	}
+
+	&[open] {
+		animation: tt-dialog-in 200ms ease-out;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+
+		&[open] {
+			animation: none;
+		}
+	}
+}
+
+@keyframes tt-dialog-in {
+
+	from {
+		opacity: 0;
+		transform: translateY(0.75rem);
 	}
 }
 
 #signup-modal {
-	width: min(100%, 32rem);
-	max-height: min(92vh, 44rem);
-	overflow-y: auto;
 	border: 1px solid var(--tt-gray-30);
 	border-radius: var(--tt-br);
 	background: linear-gradient(180deg, var(--tt-yellow-10) 0, var(--tt-gray-10) 5rem);
 	box-shadow: 1px 1px 0 0 var(--tt-blue-90);
-	padding: clamp(1rem, 2.5vw, 1.6rem);
 	color: var(--tt-gray-90);
-	position: relative;
-	transform: translateY(0.75rem);
-	opacity: 0;
-	transition: transform var(--tt-slow), opacity var(--tt-slow);
 
-	.modal-overlay.active & {
-		transform: translateY(0);
-		opacity: 1;
+	.tt-signup-dialog__inner {
+		position: relative;
+		padding: clamp(1rem, 2.5vw, 1.6rem);
 	}
 
 	h3 {
@@ -384,7 +492,9 @@
 		top: 0.75rem;
 		right: 0.75rem;
 		width: 1.9rem;
+		min-width: 0;
 		height: 1.9rem;
+		padding: 0;
 		border: 1px solid var(--tt-gray-30);
 		border-radius: var(--tt-br);
 		background: var(--tt-gray-10);
@@ -555,6 +665,24 @@
 				border-top-color: var(--tt-blue-80);
 				animation: tt-spin 0.8s linear infinite;
 			}
+		}
+	}
+
+	@media (max-width: 768px), (pointer: coarse) {
+
+		button {
+			min-height: 44px;
+		}
+
+		.close-modal {
+			width: 44px;
+			height: 44px;
+			top: 0.5rem;
+			right: 0.5rem;
+		}
+
+		h3 {
+			margin-right: 3rem;
 		}
 	}
 }

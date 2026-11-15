@@ -171,7 +171,7 @@ function task_table_render_subscription_manage_page( $subscriber, $mode, $saved 
 				<?php foreach ( $categories as $category ) : ?>
 					<label style="display:block;margin:.3em 0">
 						<input type="checkbox" name="categories[]" value="<?php echo esc_attr( $category['id'] ); ?>" <?php checked( in_array( (int) $category['id'], $selected, true ) ); ?>>
-						<?php echo esc_html( $category['name'] ); ?>
+						<?php echo esc_html( task_table_get_category_display_name( $category ) ); ?>
 					</label>
 				<?php endforeach; ?>
 			</fieldset>

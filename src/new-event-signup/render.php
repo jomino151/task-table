@@ -24,14 +24,16 @@ ob_start();
 	<h3><?php esc_html_e( 'Subscribe to new events', 'task-table' ); ?></h3>
 	<p><?php esc_html_e( 'Get an email when new events are added.', 'task-table' ); ?></p>
 	<form class="event-notification-form">
-		<input type="email" class="subscriber-email" placeholder="<?php esc_attr_e( 'Your email address', 'task-table' ); ?>" aria-label="<?php esc_attr_e( 'Your email address', 'task-table' ); ?>" required>
+		<?php $task_table_email_id = wp_unique_id( 'subscriber-email-' ); ?>
+		<label for="<?php echo esc_attr( $task_table_email_id ); ?>" class="screen-reader-text"><?php esc_html_e( 'Your email address', 'task-table' ); ?></label>
+		<input type="email" id="<?php echo esc_attr( $task_table_email_id ); ?>" class="subscriber-email" name="email" autocomplete="email" placeholder="<?php esc_attr_e( 'Your email address', 'task-table' ); ?>" required>
 		<?php if ( ! empty( $display_categories ) ) : ?>
 			<fieldset class="subscription-categories">
 				<legend><?php esc_html_e( 'Which categories do you want to hear about?', 'task-table' ); ?></legend>
 				<?php
 				foreach ( $display_categories as $category ) :
 					$category_id   = (int) $category['id'];
-					$category_name = $category['name'];
+					$category_name = task_table_get_category_display_name( $category );
 					$input_id      = 'subscription-category-' . $category_id;
 					?>
 					<label for="<?php echo esc_attr( $input_id ); ?>" class="subscription-category">
