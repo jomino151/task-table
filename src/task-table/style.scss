@@ -43,13 +43,13 @@
         border-radius: var(--tt-br);
         overflow: hidden;
 
-        col.tt-col-request { width: 10%; }
-        col.tt-col-context { width: 10%; }
-        col.tt-col-university { width: 17%; }
-        col.tt-col-tn { width: 7%; }
-        col.tt-col-time { width: 12%; }
-        col.tt-col-details { width: 20%; }
-        col.tt-col-signups { width: 9%; }
+        col.tt-col-request { width: 15%; }
+        col.tt-col-context { width: 12%; }
+        col.tt-col-university { width: 15%; }
+        col.tt-col-tn { width: 10%; }
+        col.tt-col-time { width: 11%; }
+        col.tt-col-details { width: 23%; }
+        col.tt-col-signups { width: 9.5rem; } // fits .event-signup (min-width 7.4rem + padding + shadow)
     }
 
     .task-table-category-heading {

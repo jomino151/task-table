@@ -54,13 +54,13 @@ add_action( 'init', 'task_table_load_textdomain', 1 );
  */
 function task_table_get_column_labels() {
 	$labels = array(
-		'was_angefragt'   => __( 'Was ist angefragt?', 'task-table' ),
-		'kontext'         => __( 'Kontext', 'task-table' ),
-		'name_hochschule' => __( 'Name der Hochschule', 'task-table' ),
-		'tn_anzahl'       => __( 'Vorauss. TN-Anzahl', 'task-table' ),
-		'zeitpunkt'       => __( 'Anvisierter Zeitpunkt', 'task-table' ),
-		'auftragdetails'  => __( 'Auftragdetails', 'task-table' ),
-		'wer_macht'       => __( 'Wer macht\'s? / Anmelden', 'task-table' ),
+		'was_angefragt'   => __( 'What is requested?', 'task-table' ),
+		'kontext'         => __( 'Context', 'task-table' ),
+		'name_hochschule' => __( 'University name', 'task-table' ),
+		'tn_anzahl'       => __( 'Participants', 'task-table' ),
+		'zeitpunkt'       => __( 'Planned date', 'task-table' ),
+		'auftragdetails'  => __( 'Request details', 'task-table' ),
+		'wer_macht'       => __( 'Who\'s doing it? / Sign up', 'task-table' ),
 	);
 	return (array) apply_filters( 'task_table_column_labels', $labels );
 }
@@ -93,6 +93,25 @@ function task_table_register_blocks() {
 	);
 }
 add_action( 'init', 'task_table_register_blocks' );
+
+/**
+ * Load the block scripts' translations from the plugin's own languages/ folder.
+ *
+ * block.json registration only looks in wp-content/languages/plugins. The JSON files
+ * are built by dev/make-translations.py.
+ */
+function task_table_set_script_translations() {
+	$scripts = array(
+		'task-table/task-table'       => array( 'editorScript' ),
+		'task-table/new-event-signup' => array( 'editorScript', 'viewScript' ),
+	);
+	foreach ( $scripts as $block => $fields ) {
+		foreach ( $fields as $field ) {
+			wp_set_script_translations( generate_block_asset_handle( $block, $field ), 'task-table', TASK_TABLE_PLUGIN_DIR . 'languages' );
+		}
+	}
+}
+add_action( 'init', 'task_table_set_script_translations', 20 );
 
 /**
  * Render callback for the new event signup block.
@@ -250,11 +269,11 @@ function task_table_handle_frontend_confirmation() {
 	nocache_headers();
 	$result = task_table_confirm_subscription_token( $email, $token );
 	if ( $result === 'confirmed' ) {
-		wp_die( esc_html__( 'Danke! Dein Abo wurde bestätigt.', 'task-table' ), esc_html__( 'Abo bestätigt', 'task-table' ), array( 'response' => 200 ) );
+		wp_die( esc_html__( 'Thank you! Your subscription is confirmed.', 'task-table' ), esc_html__( 'Subscription confirmed', 'task-table' ), array( 'response' => 200 ) );
 	} elseif ( $result === 'error' ) {
-		wp_die( esc_html__( 'Technischer Fehler: Bestätigung konnte nicht gespeichert werden.', 'task-table' ), esc_html__( 'Fehler', 'task-table' ), array( 'response' => 500 ) );
+		wp_die( esc_html__( 'Technical error: the confirmation could not be saved.', 'task-table' ), esc_html__( 'Error', 'task-table' ), array( 'response' => 500 ) );
 	}
-	wp_die( esc_html__( 'Bestätigungslink ist ungültig, abgelaufen oder wurde bereits verwendet.', 'task-table' ), esc_html__( 'Ungültiger Link', 'task-table' ), array( 'response' => 400 ) );
+	wp_die( esc_html__( 'This confirmation link is invalid, expired or has already been used.', 'task-table' ), esc_html__( 'Invalid link', 'task-table' ), array( 'response' => 400 ) );
 	// phpcs:enable WordPress.Security.NonceVerification
 }
 add_action( 'template_redirect', 'task_table_handle_frontend_confirmation' );

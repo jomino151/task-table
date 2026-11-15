@@ -3,10 +3,10 @@
     "apiVersion": 3,
     "name": "task-table/new-event-signup",
     "version": "1.2.0",
-    "title": "Neue Veranstaltungs-Benachrichtigung",
+    "title": "New event notifications",
     "category": "widgets",
     "icon": "email",
-    "description": "E-Mail-Benachrichtigungsformular für neue Veranstaltungen.",
+    "description": "A form where visitors subscribe to emails about new events.",
     "supports": {
         "html": false
     },

@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+- English is now the source language everywhere. The front end, the email
+  templates, the email settings screen and the block editor used German
+  source strings; they are now English and the German moved into the
+  `de_DE` and `de_DE_formal` translations. German sites see the same text
+  as before.
+- Default email templates are only affected on English sites. Templates that
+  were saved in the email settings are stored as text and stay unchanged.
+
+### Fixed
+- Block editor and subscribe form scripts now load the plugin's bundled
+  German translation (block scripts only looked in `wp-content/languages`).
+- The "Sign up" button no longer overflows its table column.
+
 ## [1.2.0] - 2026-11-15
 
 ### Security

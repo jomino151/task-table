@@ -21,13 +21,13 @@ ob_start();
 	data-rest-url="<?php echo esc_attr( $rest_url ); ?>"
 	data-rest-nonce="<?php echo esc_attr( $rest_nonce ); ?>"
 >
-	<h3><?php esc_html_e( 'Neue Veranstaltungen abonnieren', 'task-table' ); ?></h3>
-	<p><?php esc_html_e( 'Erhalte E-Mail-Benachrichtigungen, wenn neue Veranstaltungen hinzugefügt werden.', 'task-table' ); ?></p>
+	<h3><?php esc_html_e( 'Subscribe to new events', 'task-table' ); ?></h3>
+	<p><?php esc_html_e( 'Get an email when new events are added.', 'task-table' ); ?></p>
 	<form class="event-notification-form">
-		<input type="email" class="subscriber-email" placeholder="<?php esc_attr_e( 'Deine E-Mail-Adresse', 'task-table' ); ?>" aria-label="<?php esc_attr_e( 'Deine E-Mail-Adresse', 'task-table' ); ?>" required>
+		<input type="email" class="subscriber-email" placeholder="<?php esc_attr_e( 'Your email address', 'task-table' ); ?>" aria-label="<?php esc_attr_e( 'Your email address', 'task-table' ); ?>" required>
 		<?php if ( ! empty( $display_categories ) ) : ?>
 			<fieldset class="subscription-categories">
-				<legend><?php esc_html_e( 'Für welche Kategorien möchtest du Benachrichtigungen erhalten?', 'task-table' ); ?></legend>
+				<legend><?php esc_html_e( 'Which categories do you want to hear about?', 'task-table' ); ?></legend>
 				<?php
 				foreach ( $display_categories as $category ) :
 					$category_id   = (int) $category['id'];
@@ -39,12 +39,12 @@ ob_start();
 						<span><?php echo esc_html( $category_name ); ?></span>
 					</label>
 				<?php endforeach; ?>
-				<p class="subscription-hint"><?php esc_html_e( 'Du kannst mehrere Kategorien wählen. Mindestens eine Auswahl ist erforderlich.', 'task-table' ); ?></p>
+				<p class="subscription-hint"><?php esc_html_e( 'You can choose several categories. At least one is required.', 'task-table' ); ?></p>
 			</fieldset>
 		<?php else : ?>
-			<p class="subscription-categories-empty"><?php esc_html_e( 'Momentan sind keine abonnierbaren Kategorien verfügbar. Bitte versuche es später erneut oder kontaktiere das Team.', 'task-table' ); ?></p>
+			<p class="subscription-categories-empty"><?php esc_html_e( 'There are no categories to subscribe to right now. Please try again later or contact the team.', 'task-table' ); ?></p>
 		<?php endif; ?>
-		<button type="submit" class="subscription-button"><?php esc_html_e( 'Abonnieren', 'task-table' ); ?></button>
+		<button type="submit" class="subscription-button"><?php esc_html_e( 'Subscribe', 'task-table' ); ?></button>
 	</form>
 	<div class="subscription-message" role="status" aria-live="polite"></div>
 </div>

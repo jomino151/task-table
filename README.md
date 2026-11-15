@@ -23,7 +23,7 @@ panels) with volunteer speakers, and it runs in production there.
 - **Signups with moderation**: a signup modal on the front end and approve/deny in wp-admin. Moderators get an email for each signup, and volunteers get one with the decision.
 - **Subscriptions**: double opt-in per category. Every notification has a signed one-click unsubscribe link.
 - **Admin screens**: events, signups, subscribers, categories, editable email templates and Excel export.
-- **Translatable**: German UI shipped, every string uses the `task-table` text domain.
+- **Translatable**: English by default, with a German translation included (`de_DE`, `de_DE_formal`). Every string uses the `task-table` text domain.
 
 | Signup modal | Events admin |
 |---|---|
@@ -89,6 +89,10 @@ dev/tests/run.sh       # integration tests
 dev/tests/upgrade.sh   # upgrade from the previous release with production-like data
 composer install && vendor/bin/phpcs   # WordPress coding standards
 ```
+
+Source strings are English. After changing a string, add its German to both files in `languages/`
+and run `python3 dev/make-translations.py` to rebuild the `.mo` files and the JSON files the block
+scripts load. `node dev/screenshots.mjs` regenerates the screenshots in `docs/screenshots/`.
 
 CI runs PHP 7.4/8.4 lint, PHPCS, a gitleaks history scan and both test suites on every pull request.
 

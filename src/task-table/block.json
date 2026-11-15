@@ -3,10 +3,10 @@
     "apiVersion": 3,
     "name": "task-table/task-table",
     "version": "1.2.0",
-    "title": "Task-Tabelle",
+    "title": "Task Table",
     "category": "text",
     "icon": "table",
-    "description": "Erstellt eine dynamische Tabelle zur Kommunikation von Aufgaben.",
+    "description": "A table of open tasks that visitors can sign up for.",
     "example": {},
     "supports": {
         "html": false,

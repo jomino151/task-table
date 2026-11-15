@@ -15,14 +15,23 @@ const browser = await puppeteer.launch({ executablePath: CHROME, headless: true,
 const page = await browser.newPage();
 await page.setViewport({ width: 1280, height: 860, deviceScaleFactor: 1 });
 
-const shot = async (url, file, prepare) => {
+const shot = async (url, file, prepare, clip) => {
 	await page.goto(BASE + url, { waitUntil: 'networkidle0' });
 	if (prepare) await prepare();
-	await page.screenshot({ path: OUT + file });
+	await page.screenshot({ path: OUT + file, clip: clip ? await clip() : undefined });
 	console.log('wrote docs/screenshots/' + file);
 };
 
-await shot('/task-table/', 'frontend-table.png');
+// Crop to the blocks themselves: from the task table down to the end of the subscribe form.
+const PAD = 24;
+const blocksClip = () => page.evaluate((pad) => {
+	const table = document.querySelector('.wp-block-task-table-task-table').getBoundingClientRect();
+	const form = document.querySelector('.wp-block-task-table-new-event-signup').getBoundingClientRect();
+	const top = table.top + window.scrollY - pad;
+	return { x: table.left - pad, y: top, width: table.width + 2 * pad, height: form.bottom + window.scrollY + pad - top };
+}, PAD);
+
+await shot('/task-table/', 'frontend-table.png', null, blocksClip);
 await shot('/task-table/', 'frontend-signup-modal.png', async () => {
 	await page.click('.event-signup');
 	await new Promise((r) => setTimeout(r, 400));

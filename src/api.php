@@ -176,7 +176,7 @@ function task_table_too_many_requests_response() {
 	return new WP_REST_Response(
 		array(
 			'success' => false,
-			'message' => __( 'Zu viele Anfragen. Bitte versuche es später erneut.', 'task-table' ),
+			'message' => __( 'Too many requests. Please try again later.', 'task-table' ),
 		),
 		429
 	);
@@ -204,7 +204,7 @@ function task_table_handle_signup_submission( WP_REST_Request $request ) {
 		return new WP_REST_Response(
 			array(
 				'success' => false,
-				'message' => __( 'Bitte gib einen Namen und eine gültige E-Mail-Adresse an.', 'task-table' ),
+				'message' => __( 'Please enter a name and a valid email address.', 'task-table' ),
 			),
 			400
 		);
