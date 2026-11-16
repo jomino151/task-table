@@ -51,6 +51,7 @@ Yes, with the `task_table_column_labels` filter.
 * Change: English source strings everywhere, German moved into the bundled translations. German sites see the same text.
 * Change: admin styles and scripts load from files, only on the plugin's screens.
 * Fix: block scripts load the bundled German translation, no console output on the front end, the "Sign up" button fits its column.
+* Fix: exports stay readable when event text contains control characters.
 
 = 1.2.0 =
 * Security: the events export endpoint now requires the `manage_task_table` capability. Before, any logged-in user could download all events (CWE-862).
