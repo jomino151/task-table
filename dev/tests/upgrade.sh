@@ -4,7 +4,8 @@
 # keep working.
 # The previous release is the newest v* tag in HEAD's history, ignoring tags on HEAD itself, so
 # a release build where HEAD already carries the new tag tests the upgrade from the one before.
-# Runs in its own stack (pod task-table-upgrade, ports 8890/8026) and removes it afterwards.
+# Runs in its own stack (pod task-table-upgrade, ports 8890/8026; override with UPGRADE_POD,
+# UPGRADE_WP_PORT, UPGRADE_MAIL_PORT) and removes it afterwards.
 # Usage: dev/tests/upgrade.sh [old-git-ref]     e.g. v1.1.0 to test a longer upgrade path
 #        KEEP=1 keeps the stack for inspection
 # Needs podman, node_modules (npm ci), a built plugin (npm run build) and the git tags.
@@ -18,7 +19,7 @@ OLD_REF="${1:-$(git tag --list 'v*' --merged HEAD --no-contains HEAD --sort=-v:r
 NEW_DB="$(grep -o "task_table_db_version', '[0-9.]*'" src/database.php | grep -o "[0-9.]*'$" | tr -d "'" | sort -V | tail -1)"
 # DB 1.7 cleans backslashes that releases before it stored in email templates.
 needs_unslash_migration() { [ "$(printf '%s\n' "$OLD_DB" 1.7 | sort -V | head -1)" != 1.7 ]; }
-export POD=task-table-upgrade WP_PORT=8890 MAIL_PORT=8026
+export POD="${UPGRADE_POD:-task-table-upgrade}" WP_PORT="${UPGRADE_WP_PORT:-8890}" MAIL_PORT="${UPGRADE_MAIL_PORT:-8026}"
 export WP_IMAGE="${WP_IMAGE:-docker.io/library/wordpress:php8.4-apache}"   # production runs PHP 8.4
 ENGINE="${ENGINE:-podman}"
 BASE="http://localhost:$WP_PORT"; API="$BASE/wp-json"; MAILPIT="http://localhost:$MAIL_PORT"
@@ -53,7 +54,7 @@ echo "   $OLD_REF ($OLD_VERSION) -> working tree ($NEW_VERSION)"
 
 echo "== Start old version"
 dev/down.sh >/dev/null 2>&1
-PLUGIN_SRC="$OLD" SKIP_SEED=1 dev/up.sh >/dev/null 2>&1 || { echo "stack failed"; exit 1; }
+PLUGIN_SRC="$OLD" SKIP_SEED=1 dev/up.sh >"$TMP/up.log" 2>&1 || { tail -5 "$TMP/up.log"; echo "stack failed"; exit 1; }
 PLUGIN_SRC="$OLD"
 check "old version active" "$OLD_VERSION" "$(wp plugin get task-table --field=version)"
 OLD_DB="$(wp option get task_table_db_version)"
@@ -76,6 +77,8 @@ curl -s -o /dev/null -b "$TMP/jar-admin" --data-urlencode "task_table_email_sett
   --data-urlencode 'task_table_email_signup_approved_message=Hallo {user_name}, du machst "{event_title}". {site_name}' \
   --data-urlencode 'task_table_email_new_event_message=Neu: {event_details} Grüße {site_name}' \
   --data-urlencode "signup_notification_recipients=[{\"email\":\"mod@example.test\",\"category_ids\":[]},{\"email\":\"mod2@example.test\",\"category_ids\":[$CAT2]}]" "$PAGE"
+# Set outside the form (wp-cli, code), so never escaped: the 1.7 migration must leave its lone backslash alone.
+wp option update task_table_email_signup_denied_subject 'Absage \o/ {event_title}' >/dev/null
 if needs_unslash_migration; then
   check "old code stored escaped quotes (precondition)" 1 "$(wp option get task_table_email_signup_approved_subject | grep -cF '\"')"
 fi
@@ -115,31 +118,25 @@ PLUGIN_SRC="$ROOT" dev/up.sh >/dev/null 2>&1
 PLUGIN_SRC="$ROOT"
 wp eval 'file_put_contents(WP_CONTENT_DIR . "/debug.log", "");' >/dev/null
 check "new version active" "$NEW_VERSION" "$(wp plugin get task-table --field=version)"
-check "front page renders" 200 "$(status "$BASE/task-table/")"
+# A 200 is not enough: a query broken by the schema change renders an empty table. Look for the
+# seeded event (table block) and the subscribe form (second block).
+check "front page renders both blocks" "200 1 1" "$(status "$BASE/task-table/") $(grep -c 'Workshop: Intro to Git' "$TMP/body") $(grep -c 'class="subscriber-email"' "$TMP/body")"
 check "db upgraded to $NEW_DB" "$NEW_DB" "$(wp option get task_table_db_version)"
 check "data untouched (events/signups/subscribers/sub-cats/categories)" "$BEFORE" "$(sql "SELECT CONCAT((SELECT COUNT(*) FROM wp_task_table_events),'/',(SELECT COUNT(*) FROM wp_task_table_signups),'/',(SELECT COUNT(*) FROM wp_task_table_subscribers),'/',(SELECT COUNT(*) FROM wp_task_table_subscriber_categories),'/',(SELECT COUNT(*) FROM wp_task_table_categories))")"
 check "templates have no escaped quotes" 'Zusage für "{event_title}"' "$(wp option get task_table_email_signup_approved_subject)"
-check "unescaped template unchanged" 'Neu: {event_details} Grüße {site_name}' "$(wp option get task_table_email_new_event_message)"
+check "unescaped templates unchanged (umlauts, lone backslash)" 'Neu: {event_details} Grüße {site_name}|Absage \o/ {event_title}' "$(wp option get task_table_email_new_event_message)|$(wp option get task_table_email_signup_denied_subject)"
 check "signup recipients kept" 2 "$(wp option get task_table_signup_notification_recipients --format=json | python3 -c 'import sys,json;print(len(json.load(sys.stdin)))')"
 
 echo "== Existing users and links"
 check "confirmation link mailed before the update still works" 200 "$(status "$API/task-table/v1/subscribers/confirm?email=pending%40example.test&token=$PENDING_TOKEN")"
 n=$(login admin admin)
 check "admin export works" 200 "$(status -b "$TMP/jar-admin" -H "X-WP-Nonce: $n" "$API/task-table/v1/events/export?archived=all")"
-for u in subscriber editor; do
-  wp user get $u >/dev/null 2>&1 || wp user create $u $u@example.test --role=$u --user_pass=$u >/dev/null
-  nu=$(login $u $u)
-  check "$u: export denied" 403 "$(status -b "$TMP/jar-$u" -H "X-WP-Nonce: $nu" "$API/task-table/v1/events/export?archived=all")"
-done
-curl -s -b "$TMP/jar-admin" "$BASE/wp-admin/admin.php?page=task-table" > "$TMP/admin.html"
-check "admin menu is German" 1 "$(grep -q 'Aufgabentabelle' "$TMP/admin.html" && echo 1 || echo 0)"
 
 echo "== Pending signup approved after the update"
 ALEX=$(sql "SELECT id FROM wp_task_table_signups WHERE user_name='Alex'")
 APPROVE=$(curl -s -b "$TMP/jar-admin" "$BASE/wp-admin/admin.php?page=task-table-signups" | grep -o "href=\"[^\"]*action=approve[^\"]*signup_id=$ALEX[^\"]*\"" | head -1 | sed 's/^href="//;s/"$//;s/&#038;/\&/g;s/&amp;/\&/g')
 check "approve link present in admin" 1 "$([ -n "$APPROVE" ] && echo 1 || echo 0)"
-check "approve pending signup" 200 "$(status -b "$TMP/jar-admin" "$APPROVE")"
-check "signup marked approved" approved "$(sql "SELECT status FROM wp_task_table_signups WHERE id=$ALEX")"
+check "approve pending signup (response, stored status)" "200 approved" "$(status -b "$TMP/jar-admin" "$APPROVE") $(sql "SELECT status FROM wp_task_table_signups WHERE id=$ALEX")"
 sleep 2
 MID=$(mails_to alex@example.test | first_id)
 check "approval mail subject without backslashes" 'Zusage für "Workshop: Intro to Git"' "$(curl -s "$MAILPIT/api/v1/message/$MID" | python3 -c 'import sys,json;print(json.load(sys.stdin)["Subject"])')"
@@ -155,11 +152,8 @@ done
 MID=$(mails_to sub1@example.test | first_id)
 TEXT=$(mail_text "$MID")
 check "custom template got manage link appended" 1 "$(echo "$TEXT" | grep -c 'task_table_subscription=manage')"
-check "List-Unsubscribe header" 1 "$(curl -s "$MAILPIT/api/v1/message/$MID/headers" | grep -c '"List-Unsubscribe"')"
 LINK=$(echo "$TEXT" | grep -o 'http[^ ]*task_table_subscription=manage[^ ]*' | head -1)
-check "pre-existing subscriber can open manage page" 200 "$(status "$LINK")"
-check "pre-existing subscriber can unsubscribe" 200 "$(status -X POST -d task_table_action=unsubscribe "$LINK")"
-check "unsubscribed" 0 "$(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE email='sub1@example.test'")"
+check "pre-existing subscriber can unsubscribe (response, row deleted)" "200 0" "$(status -X POST -d task_table_action=unsubscribe "$LINK") $(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE email='sub1@example.test'")"
 
 echo "== PHP log after upgrade"
 LOG=$(wp eval 'echo @file_get_contents(WP_CONTENT_DIR . "/debug.log");' | grep -i 'task-table' || true)

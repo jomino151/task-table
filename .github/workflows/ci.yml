@@ -100,6 +100,8 @@ jobs:
         run: dev/tests/run.sh
       - name: Upgrade test from the previous release
         run: dev/tests/upgrade.sh
+      - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)
+        run: dev/tests/upgrade.sh v1.1.0
       - name: Logs on failure
         if: failure()
         run: |
