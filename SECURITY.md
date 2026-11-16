@@ -49,4 +49,4 @@ listed in the README.
 
 | ID | Summary | Affected | Fixed |
 |----|---------|----------|-------|
-| _pending_ | Missing authorization on `GET /task-table/v1/events/export` (CWE-862): any logged-in user could export all events | `<= 1.1.0` | `1.2.0` |
+| [GHSA-g7rx-773p-f9m6](https://github.com/jomino151/task-table/security/advisories/GHSA-g7rx-773p-f9m6) | Missing authorization on `GET /task-table/v1/events/export` (CWE-862): any logged-in user could export all events | `<= 1.1.0` | `1.2.0` |
