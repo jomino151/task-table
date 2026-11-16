@@ -33,3 +33,4 @@ node_modules/
 
 # Composer
 vendor/
+.phpunit.result.cache

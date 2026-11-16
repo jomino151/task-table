@@ -1199,14 +1199,14 @@ function task_table_generate_events_spreadsheet( $archived_param = null, $format
 		$xml .= '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">';
 		$xml .= '<Worksheet ss:Name="Events"><Table><Row>';
 		foreach ( $headers as $h ) {
-			$xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars( $h, ENT_XML1 | ENT_COMPAT, 'UTF-8' ) . '</Data></Cell>'; }
+			$xml .= '<Cell><Data ss:Type="String">' . task_table_xlsx_escape( $h ) . '</Data></Cell>'; }
 		$xml .= '</Row>';
 		foreach ( $rows as $r ) {
 			$xml .= '<Row>';
 			foreach ( $headers as $h ) {
 				$val  = isset( $r[ $h ] ) ? (string) $r[ $h ] : '';
 				$val  = preg_replace( "/\r\n?|\n/", "\n", $val );
-				$xml .= '<Cell><Data ss:Type="String">' . htmlspecialchars( $val, ENT_XML1 | ENT_COMPAT, 'UTF-8' ) . '</Data></Cell>';
+				$xml .= '<Cell><Data ss:Type="String">' . task_table_xlsx_escape( $val ) . '</Data></Cell>';
 			}
 			$xml .= '</Row>';
 		}
@@ -1283,8 +1283,17 @@ function task_table_xlsx_cell_ref( $col, $row ) {
 		$col     = intval( ( $col - 1 ) / 26 ); }
 	return $letters . $row;
 }
+/**
+ * Escape a cell value for both export formats.
+ *
+ * XML 1.0 forbids most C0 control characters, and one of them (e.g. the vertical tab Word
+ * uses for soft line breaks) makes Excel and LibreOffice reject the whole file, so they
+ * become spaces. Tab and newline are kept.
+ */
 function task_table_xlsx_escape( $value ) {
-	return htmlspecialchars( $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8' ); }
+	$value = preg_replace( '/[\x00-\x08\x0B\x0C\x0E-\x1F]/', ' ', (string) $value );
+	return htmlspecialchars( $value, ENT_QUOTES | ENT_XML1 | ENT_SUBSTITUTE, 'UTF-8' );
+}
 
 /**
  * Generate the Excel XML (SpreadsheetML) for events export. Shared between REST and admin-post download.
