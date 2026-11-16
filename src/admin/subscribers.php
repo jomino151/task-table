@@ -40,14 +40,13 @@ function task_table_admin_subscribers_handle_action() {
 	$subscriber_added            = false;
 
 	if ( isset( $_POST['task_table_update_subscriber_categories'] ) && isset( $_POST['_wpnonce'] ) ) {
-		if ( check_admin_referer( 'task_table_update_subscriber_categories' ) ) {
-			$subscriber_id       = isset( $_POST['subscriber_id'] ) ? (int) $_POST['subscriber_id'] : 0;
-			$selected_categories = isset( $_POST['subscriber_categories'] ) ? (array) wp_unslash( $_POST['subscriber_categories'] ) : array();
+		check_admin_referer( 'task_table_update_subscriber_categories' ); // Dies on a bad nonce.
+		$subscriber_id       = isset( $_POST['subscriber_id'] ) ? (int) $_POST['subscriber_id'] : 0;
+		$selected_categories = isset( $_POST['subscriber_categories'] ) ? (array) wp_unslash( $_POST['subscriber_categories'] ) : array();
 
-			if ( $subscriber_id > 0 ) {
-				task_table_sync_subscriber_categories( $subscriber_id, $selected_categories );
-				$category_update_notice = __( 'Subscriber categories updated.', 'task-table' );
-			}
+		if ( $subscriber_id > 0 ) {
+			task_table_sync_subscriber_categories( $subscriber_id, $selected_categories );
+			$category_update_notice = __( 'Subscriber categories updated.', 'task-table' );
 		}
 	}
 
@@ -70,7 +69,7 @@ function task_table_admin_subscribers_handle_action() {
 	if ( isset( $_GET['action'] ) && $_GET['action'] === 'resend' && isset( $_GET['subscriber_id'] ) && isset( $_GET['_wpnonce'] ) ) {
 		$subscriber_id = intval( $_GET['subscriber_id'] );
 		if ( wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ), 'task_table_resend_subscriber_' . $subscriber_id ) ) {
-			$subscriber = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $subscribers_table WHERE id = %d", $subscriber_id ) );
+			$subscriber = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $subscribers_table, $subscriber_id ) );
 			if ( $subscriber && (int) $subscriber->confirmed === 0 ) {
 				// Generate new token
 				$token = wp_generate_password( 32, false, false );
@@ -100,7 +99,8 @@ function task_table_admin_subscribers_handle_action() {
 			if ( is_email( $email ) ) {
 				$exists = $wpdb->get_var(
 					$wpdb->prepare(
-						"SELECT COUNT(*) FROM $subscribers_table WHERE email = %s",
+						'SELECT COUNT(*) FROM %i WHERE email = %s',
+						$subscribers_table,
 						$email
 					)
 				);
@@ -181,10 +181,10 @@ function task_table_admin_subscribers_get_view_data( $result ) {
 		? $wpdb->get_results( $wpdb->prepare( $subscribers_sql, $search_params ) ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 		: $wpdb->get_results( $subscribers_sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
-	$total_subscribers     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $subscribers_table" );
-	$confirmed_subscribers = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $subscribers_table WHERE confirmed = 1" );
+	$total_subscribers     = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i', $subscribers_table ) );
+	$confirmed_subscribers = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE confirmed = 1', $subscribers_table ) );
 	$awaiting_confirmation = $total_subscribers - $confirmed_subscribers;
-	$last_subscriber_date  = $wpdb->get_var( "SELECT created_at FROM $subscribers_table ORDER BY created_at DESC LIMIT 1" );
+	$last_subscriber_date  = $wpdb->get_var( $wpdb->prepare( 'SELECT created_at FROM %i ORDER BY created_at DESC LIMIT 1', $subscribers_table ) );
 	$filters_applied       = $search_term !== '';
 
 	$editing_subscriber = null;
@@ -192,7 +192,7 @@ function task_table_admin_subscribers_get_view_data( $result ) {
 	// phpcs:disable WordPress.Security.NonceVerification.Recommended -- read-only view state from the URL.
 	if ( isset( $_GET['action'] ) && $_GET['action'] === 'edit-categories' && isset( $_GET['subscriber_id'] ) ) {
 		$editing_id         = (int) $_GET['subscriber_id'];
-		$editing_subscriber = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $subscribers_table WHERE id = %d", $editing_id ) );
+		$editing_subscriber = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $subscribers_table, $editing_id ) );
 		if ( $editing_subscriber ) {
 			$editing_categories = task_table_get_subscriber_categories( $editing_subscriber->id );
 		}
@@ -287,7 +287,7 @@ function task_table_admin_subscribers_render( $view ) {
 			</div>
 			<div class="tt-card">
 				<h3><?php esc_html_e( 'Categories', 'task-table' ); ?></h3>
-				<div class="tt-card-value"><?php echo esc_html( count( $categories ) ); ?></div>
+				<div class="tt-card-value"><?php echo esc_html( (string) count( $categories ) ); ?></div>
 				<div class="tt-card-meta"><?php esc_html_e( 'Ways to segment your audience', 'task-table' ); ?></div>
 			</div>
 		</div>

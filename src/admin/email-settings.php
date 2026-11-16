@@ -211,7 +211,7 @@ function task_table_admin_email_settings_render( $view ) {
 						<?php if ( ! empty( $categories ) ) : ?>
 							<?php foreach ( $categories as $category ) : ?>
 								<label>
-									<input type="checkbox" class="recipient-category" value="<?php echo esc_attr( (int) $category['id'] ); ?>">
+									<input type="checkbox" class="recipient-category" value="<?php echo esc_attr( (string) (int) $category['id'] ); ?>">
 									<?php echo esc_html( $category['name'] ); ?>
 								</label>
 							<?php endforeach; ?>

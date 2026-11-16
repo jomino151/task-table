@@ -103,7 +103,8 @@ function task_table_create_database_tables() {
 		// Ensure every event belongs to a valid category
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE $events_table SET category_id = %d WHERE category_id IS NULL OR category_id = 0",
+				'UPDATE %i SET category_id = %d WHERE category_id IS NULL OR category_id = 0',
+				$events_table,
 				$default_category_id
 			)
 		);
@@ -111,9 +112,11 @@ function task_table_create_database_tables() {
 		// Assign subscribers to the default category if none stored yet
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO $subscriber_categories_table (subscriber_id, category_id)
-             SELECT id, %d FROM $subscribers_table",
-				$default_category_id
+				'INSERT IGNORE INTO %i (subscriber_id, category_id)
+             SELECT id, %d FROM %i',
+				$subscriber_categories_table,
+				$default_category_id,
+				$subscribers_table
 			)
 		);
 	}
@@ -160,7 +163,8 @@ function task_table_migrate_existing_data() {
 					// Check if this event is already migrated
 					$exists = $wpdb->get_var(
 						$wpdb->prepare(
-							"SELECT COUNT(*) FROM $events_table WHERE id = %d",
+							'SELECT COUNT(*) FROM %i WHERE id = %d',
+							$events_table,
 							$row['id']
 						)
 					);
@@ -196,8 +200,8 @@ function task_table_migrate_existing_data() {
 	$old_signups_table = $wpdb->prefix . 'event_signups';
 	$new_signups_table = $wpdb->prefix . 'task_table_signups';
 
-	if ( $wpdb->get_var( "SHOW TABLES LIKE '$old_signups_table'" ) === $old_signups_table ) {
-		$signups = $wpdb->get_results( "SELECT * FROM $old_signups_table" );
+	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $old_signups_table ) ) === $old_signups_table ) {
+		$signups = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $old_signups_table ) );
 
 		foreach ( $signups as $signup ) {
 			$wpdb->insert(
@@ -222,16 +226,19 @@ function task_table_migrate_existing_data() {
 
 		$wpdb->query(
 			$wpdb->prepare(
-				"UPDATE $events_table SET category_id = %d WHERE category_id IS NULL OR category_id = 0",
+				'UPDATE %i SET category_id = %d WHERE category_id IS NULL OR category_id = 0',
+				$events_table,
 				$default_category_id
 			)
 		);
 
 		$wpdb->query(
 			$wpdb->prepare(
-				"INSERT IGNORE INTO $subscriber_categories_table (subscriber_id, category_id)
-             SELECT id, %d FROM $subscribers_table",
-				$default_category_id
+				'INSERT IGNORE INTO %i (subscriber_id, category_id)
+             SELECT id, %d FROM %i',
+				$subscriber_categories_table,
+				$default_category_id,
+				$subscribers_table
 			)
 		);
 	}
@@ -259,10 +266,10 @@ function task_table_maybe_upgrade_schema() {
 
 	// Upgrade to 1.1: add confirmation_token
 	if ( version_compare( $current_version, '1.1', '<' ) ) {
-		$col = $wpdb->get_results( "SHOW COLUMNS FROM $subscribers_table LIKE 'confirmation_token'" );
+		$col = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $subscribers_table, 'confirmation_token' ) );
 		if ( empty( $col ) ) {
-			$wpdb->query( "ALTER TABLE $subscribers_table ADD COLUMN confirmation_token varchar(64) DEFAULT NULL" );
-			$wpdb->query( "ALTER TABLE $subscribers_table ADD KEY confirmation_token (confirmation_token)" );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN confirmation_token varchar(64) DEFAULT NULL', $subscribers_table ) );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD KEY confirmation_token (confirmation_token)', $subscribers_table ) );
 		}
 		update_option( 'task_table_db_version', '1.1' );
 		$current_version = '1.1';
@@ -270,9 +277,9 @@ function task_table_maybe_upgrade_schema() {
 
 	// Upgrade to 1.2: add updated_at
 	if ( version_compare( $current_version, '1.2', '<' ) ) {
-		$col2 = $wpdb->get_results( "SHOW COLUMNS FROM $subscribers_table LIKE 'updated_at'" );
+		$col2 = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $subscribers_table, 'updated_at' ) );
 		if ( empty( $col2 ) ) {
-			$wpdb->query( "ALTER TABLE $subscribers_table ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL AFTER created_at" );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN updated_at datetime DEFAULT CURRENT_TIMESTAMP NOT NULL AFTER created_at', $subscribers_table ) );
 		}
 		update_option( 'task_table_db_version', '1.2' );
 		$current_version = '1.2';
@@ -280,9 +287,9 @@ function task_table_maybe_upgrade_schema() {
 
 	// Upgrade to 1.3: add free_text column to signups
 	if ( version_compare( $current_version, '1.3', '<' ) ) {
-		$col3 = $wpdb->get_results( "SHOW COLUMNS FROM $signups_table LIKE 'free_text'" );
+		$col3 = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $signups_table, 'free_text' ) );
 		if ( empty( $col3 ) ) {
-			$wpdb->query( "ALTER TABLE $signups_table ADD COLUMN free_text text NULL AFTER user_email" );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN free_text text NULL AFTER user_email', $signups_table ) );
 		}
 		update_option( 'task_table_db_version', '1.3' );
 		$current_version = '1.3';
@@ -290,10 +297,10 @@ function task_table_maybe_upgrade_schema() {
 
 	// Upgrade to 1.4: add archived column to events
 	if ( version_compare( $current_version, '1.4', '<' ) ) {
-		$col4 = $wpdb->get_results( "SHOW COLUMNS FROM $events_table LIKE 'archived'" );
+		$col4 = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $events_table, 'archived' ) );
 		if ( empty( $col4 ) ) {
-			$wpdb->query( "ALTER TABLE $events_table ADD COLUMN archived tinyint(1) DEFAULT 0 NOT NULL AFTER wer_macht" );
-			$wpdb->query( "ALTER TABLE $events_table ADD KEY archived (archived)" );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN archived tinyint(1) DEFAULT 0 NOT NULL AFTER wer_macht', $events_table ) );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD KEY archived (archived)', $events_table ) );
 		}
 		update_option( 'task_table_db_version', '1.4' );
 		$current_version = '1.4';
@@ -317,17 +324,18 @@ function task_table_maybe_upgrade_schema() {
         ) {$wpdb->get_charset_collate()};";
 		dbDelta( $categories_sql );
 
-		$col_category = $wpdb->get_results( "SHOW COLUMNS FROM $events_table LIKE 'category_id'" );
+		$col_category = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $events_table, 'category_id' ) );
 		if ( empty( $col_category ) ) {
-			$wpdb->query( "ALTER TABLE $events_table ADD COLUMN category_id mediumint(9) NULL AFTER wer_macht" );
-			$wpdb->query( "ALTER TABLE $events_table ADD KEY category_id (category_id)" );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD COLUMN category_id mediumint(9) NULL AFTER wer_macht', $events_table ) );
+			$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i ADD KEY category_id (category_id)', $events_table ) );
 		}
 
 		$default_category_id = task_table_ensure_default_category();
 		if ( $default_category_id ) {
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE $events_table SET category_id = %d WHERE category_id IS NULL OR category_id = 0",
+					'UPDATE %i SET category_id = %d WHERE category_id IS NULL OR category_id = 0',
+					$events_table,
 					$default_category_id
 				)
 			);
@@ -356,9 +364,11 @@ function task_table_maybe_upgrade_schema() {
 			$subscribers_table = $wpdb->prefix . 'task_table_subscribers';
 			$wpdb->query(
 				$wpdb->prepare(
-					"INSERT IGNORE INTO $subscriber_categories_table (subscriber_id, category_id)
-                 SELECT id, %d FROM $subscribers_table",
-					$default_category_id
+					'INSERT IGNORE INTO %i (subscriber_id, category_id)
+                 SELECT id, %d FROM %i',
+					$subscriber_categories_table,
+					$default_category_id,
+					$subscribers_table
 				)
 			);
 		}
@@ -415,14 +425,14 @@ function task_table_ensure_default_category() {
 	$default_id       = (int) get_option( TASK_TABLE_DEFAULT_CATEGORY_OPTION, 0 );
 
 	if ( $default_id > 0 ) {
-		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $categories_table WHERE id = %d", $default_id ) );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE id = %d', $categories_table, $default_id ) );
 		if ( $exists ) {
 			return $default_id;
 		}
 	}
 
 	$default_slug = 'general';
-	$existing_id  = $wpdb->get_var( $wpdb->prepare( "SELECT id FROM $categories_table WHERE slug = %s", $default_slug ) );
+	$existing_id  = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE slug = %s', $categories_table, $default_slug ) );
 	if ( $existing_id ) {
 		update_option( TASK_TABLE_DEFAULT_CATEGORY_OPTION, (int) $existing_id );
 		return (int) $existing_id;
@@ -488,7 +498,8 @@ function task_table_get_unique_category_slug( $desired_slug, $exclude_id = 0 ) {
 
 	while ( $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT COUNT(*) FROM $categories_table WHERE slug = %s AND id <> %d",
+			'SELECT COUNT(*) FROM %i WHERE slug = %s AND id <> %d',
+			$categories_table,
 			$slug,
 			(int) $exclude_id
 		)
@@ -516,7 +527,7 @@ function task_table_get_categories() {
 	}
 
 	$categories_table = $wpdb->prefix . 'task_table_categories';
-	return $wpdb->get_results( "SELECT * FROM $categories_table ORDER BY sort_order ASC, name ASC", ARRAY_A );
+	return $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY sort_order ASC, name ASC', $categories_table ), ARRAY_A );
 }
 
 /**
@@ -533,7 +544,7 @@ function task_table_get_category( $category_id ) {
 	}
 
 	$categories_table = $wpdb->prefix . 'task_table_categories';
-	return $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $categories_table WHERE id = %d", (int) $category_id ), ARRAY_A );
+	return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $categories_table, (int) $category_id ), ARRAY_A );
 }
 
 /**
@@ -580,14 +591,15 @@ function task_table_get_subscriber_categories( $subscriber_id ) {
 
 	$ids = $wpdb->get_col(
 		$wpdb->prepare(
-			"SELECT category_id FROM $subscriber_categories_table WHERE subscriber_id = %d",
+			'SELECT category_id FROM %i WHERE subscriber_id = %d',
+			$subscriber_categories_table,
 			(int) $subscriber_id
 		)
 	);
 
 	if ( empty( $ids ) ) {
 		// Fallback: if subscriber exists but no categories stored, assume default
-		$exists = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $subscribers_table WHERE id = %d", (int) $subscriber_id ) );
+		$exists = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE id = %d', $subscribers_table, (int) $subscriber_id ) );
 		if ( $exists ) {
 			$default_id = task_table_get_default_category_id();
 			return $default_id ? array( $default_id ) : array();
@@ -619,10 +631,12 @@ function task_table_get_subscriber_category_names( $subscriber_id ) {
 
 	$rows = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT c.name, c.slug FROM $categories_table c
-         INNER JOIN $subscriber_categories_table sc ON sc.category_id = c.id
+			'SELECT c.name, c.slug FROM %i c
+         INNER JOIN %i sc ON sc.category_id = c.id
          WHERE sc.subscriber_id = %d
-         ORDER BY c.sort_order ASC, c.name ASC",
+         ORDER BY c.sort_order ASC, c.name ASC',
+			$categories_table,
+			$subscriber_categories_table,
 			(int) $subscriber_id
 		),
 		ARRAY_A
@@ -669,7 +683,8 @@ function task_table_sync_subscriber_categories( $subscriber_id, $category_ids ) 
 
 	$wpdb->query(
 		$wpdb->prepare(
-			"DELETE FROM $subscriber_categories_table WHERE subscriber_id = %d",
+			'DELETE FROM %i WHERE subscriber_id = %d',
+			$subscriber_categories_table,
 			(int) $subscriber_id
 		)
 	);

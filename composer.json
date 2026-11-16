@@ -9,15 +9,26 @@
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
         "wp-coding-standards/wpcs": "^3.1",
-        "phpcompatibility/phpcompatibility-wp": "^2.1"
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "phpunit/phpunit": "^9.6",
+        "brain/monkey": "^2.6",
+        "phpstan/phpstan": "^2.1",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "phpstan/extension-installer": "^1.4"
     },
     "config": {
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "phpstan/extension-installer": true
+        },
+        "platform": {
+            "php": "7.4.33"
         }
     },
     "scripts": {
         "lint": "find . -name '*.php' -not -path './vendor/*' -not -path './node_modules/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
-        "phpcs": "phpcs"
+        "phpcs": "phpcs",
+        "test": "phpunit",
+        "phpstan": "phpstan analyse --memory-limit=1G --no-progress"
     }
 }

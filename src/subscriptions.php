@@ -48,7 +48,7 @@ function task_table_get_subscriber_from_signed_request( $subscriber_id, $signatu
 	}
 
 	$table = $wpdb->prefix . 'task_table_subscribers';
-	$row   = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $table WHERE id = %d", $subscriber_id ) );
+	$row   = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $subscriber_id ) );
 	if ( ! $row || ! hash_equals( task_table_subscription_signature( $row->id, $row->email ), $signature ) ) {
 		return null;
 	}

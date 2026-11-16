@@ -42,20 +42,33 @@ for u in subscriber editor; do
 done
 n=$(login admin admin)
 check "admin gets 200 (xlsx)" 200 "$(status -b "$TMP/admin" -H "X-WP-Nonce: $n" "$EXPORT")"
-if python3 -c "import zipfile,sys;zipfile.ZipFile(sys.argv[1]).testzip()" "$TMP/body" 2>/dev/null; then
-  pass "xlsx body is a valid zip, not JSON"; else fail "xlsx body is a valid zip, not JSON"; fi
+# Parse the sheet like a spreadsheet app would: a JSON-encoded body, a broken zip or one illegal
+# XML character in any cell all make the file unreadable.
+xlsx_rows() { python3 -c '
+import sys, zipfile, xml.dom.minidom as m
+z = zipfile.ZipFile(sys.argv[1])
+for part in ("[Content_Types].xml", "xl/workbook.xml"): m.parseString(z.read(part))
+print(len(m.parseString(z.read("xl/worksheets/sheet1.xml")).getElementsByTagName("row")))' "$1" 2>/dev/null; }
+check "xlsx opens, header + one row per event" "$(( $(sql "SELECT COUNT(*) FROM wp_task_table_events") + 1 ))" "$(xlsx_rows "$TMP/body")"
 check "admin gets 200 (xml)" 200 "$(status -b "$TMP/admin" -H "X-WP-Nonce: $n" "$EXPORT&format=xml")"
 check "xml body is raw XML" '<?xml' "$(head -c 5 "$TMP/body")"
+DEFAULT_CAT=$($WP option get task_table_default_category_id)
+xml_rows() { status -b "$TMP/admin" -H "X-WP-Nonce: $n" "$EXPORT&format=xml&$1" >/dev/null; grep -o '<Row>' "$TMP/body" | wc -l | tr -d ' '; }
+ACTIVE_IN_CAT=$(sql "SELECT COUNT(*) FROM wp_task_table_events WHERE archived=0 AND category_id=$DEFAULT_CAT")
+check "export honours archived and category filters (precondition: some rows filtered out)" \
+  "1 $(( ACTIVE_IN_CAT + 1 )) 1" \
+  "$([ "$ACTIVE_IN_CAT" -lt "$(sql "SELECT COUNT(*) FROM wp_task_table_events")" ] && echo 1) $(xml_rows "archived=0&tt_categories[]=$DEFAULT_CAT") $(xml_rows "tt_categories[]=999999")"
 
 echo "Public signup endpoint"
 check "invalid email rejected" 400 "$(post_json /event-signups/v1/submit "{\"event_id\":$ACTIVE,\"user_name\":\"A\",\"user_email\":\"nope\"}")"
-check "missing fields rejected" 400 "$(post_json /event-signups/v1/submit '{}')"
+check "missing name rejected" 400 "$(post_json /event-signups/v1/submit "{\"event_id\":$ACTIVE,\"user_email\":\"a@example.test\"}")"
 check "archived event rejected" 404 "$(post_json /event-signups/v1/submit "{\"event_id\":$ARCHIVED,\"user_name\":\"A\",\"user_email\":\"a@example.test\"}")"
 reset_limits
 check "valid signup accepted" 200 "$(post_json /event-signups/v1/submit "{\"event_id\":$ACTIVE,\"user_name\":\"Test Person\",\"user_email\":\"tp@example.test\",\"free_text\":\"hi\"}")"
 sleep 1; check "moderator notified" 1 "$(mail_count admin@example.test)"
-for _ in 1 2 3 4; do post_json /event-signups/v1/submit "{\"event_id\":$ACTIVE,\"user_name\":\"B\",\"user_email\":\"b@example.test\"}" >/dev/null; done
-check "6th signup in window is rate limited" 429 "$(post_json /event-signups/v1/submit "{\"event_id\":$ACTIVE,\"user_name\":\"B\",\"user_email\":\"b@example.test\"}")"
+codes=""
+for _ in 1 2 3 4 5; do codes="$codes $(post_json /event-signups/v1/submit "{\"event_id\":$ACTIVE,\"user_name\":\"B\",\"user_email\":\"b@example.test\"}")"; done
+check "signups 2-5 accepted, 6th in window rate limited" " 200 200 200 200 429" "$codes"
 
 echo "Subscribe / double opt-in"
 reset_limits; clear_mail
@@ -75,8 +88,8 @@ post_json /task-table/v1/subscribers "{\"email\":\"known@example.test\",\"catego
 check "known and new address get identical responses" "$(cat "$TMP/new.json")" "$(cat "$TMP/body")"
 check "confirmed subscriber's categories unchanged" "$CAT" "$(sql "SELECT GROUP_CONCAT(category_id) FROM wp_task_table_subscriber_categories WHERE subscriber_id=$KNOWN_ID")"
 
-for _ in 1 2 3 4 5; do post_json /task-table/v1/subscribers '{"email":"victim@example.test"}' >/dev/null; done
-sleep 1; check "max 3 confirmation mails per address per day" 3 "$(mail_count victim@example.test)"
+for e in victim victim victim VICTIM Victim; do post_json /task-table/v1/subscribers "{\"email\":\"$e@example.test\"}" >/dev/null; done
+sleep 1; check "max 3 confirmation mails per address per day, whatever the case" 3 "$(mail_count victim@example.test)"
 
 status "$API/task-table/v1/subscribers/confirm?email=nobody@example.test&token=x" >/dev/null; cp "$TMP/body" "$TMP/unknown.json"
 s=$(status "$API/task-table/v1/subscribers/confirm?email=new@example.test&token=x")
@@ -87,15 +100,17 @@ TOKEN=$(sql "SELECT confirmation_token FROM wp_task_table_subscribers WHERE emai
 sql "UPDATE wp_task_table_subscribers SET updated_at = DATE_SUB(NOW(), INTERVAL 8 DAY) WHERE email='victim@example.test'" >/dev/null
 check "expired token rejected" 400 "$(status "$API/task-table/v1/subscribers/confirm?email=victim%40example.test&token=$TOKEN")"
 TOKEN=$(sql "SELECT confirmation_token FROM wp_task_table_subscribers WHERE email='new@example.test'")
-check "valid token confirms" 200 "$(status "$API/task-table/v1/subscribers/confirm?email=new%40example.test&token=$TOKEN")"
-check "subscriber marked confirmed" 1 "$(sql "SELECT confirmed FROM wp_task_table_subscribers WHERE email='new@example.test'")"
+check "valid token confirms (response, stored flag)" "200 1" "$(status "$API/task-table/v1/subscribers/confirm?email=new%40example.test&token=$TOKEN") $(sql "SELECT confirmed FROM wp_task_table_subscribers WHERE email='new@example.test'")"
 
 echo "New-event notification, manage link, unsubscribe"
 clear_mail
 NEW_ID=$(sql "SELECT id FROM wp_task_table_subscribers WHERE email='new@example.test'")
 n=$(login admin admin)
 check "admin creates event" 201 "$(status -X POST -b "$TMP/admin" -H "X-WP-Nonce: $n" -H 'Content-Type: application/json' \
-  -d "{\"wasAngefragt\":\"Notify test\",\"kontext\":\"ctx\",\"category_id\":$CAT}" "$API/task-table/v1/events")"
+  -d "{\"wasAngefragt\":\"Notify test\",\"kontext\":\"<strong>ctx</strong><script>alert(1)</script><a href=\\\"javascript:alert(2)\\\" onclick=\\\"x()\\\">l</a><img src=x onerror=y()>\",\"category_id\":$CAT}" "$API/task-table/v1/events")"
+KONTEXT=$(sql "SELECT kontext FROM wp_task_table_events WHERE was_angefragt='Notify test' ORDER BY id DESC LIMIT 1")
+check "event text keeps formatting, loses script/handlers/javascript: URLs" "1 0" \
+  "$(echo "$KONTEXT" | grep -c '<strong>ctx</strong>') $(echo "$KONTEXT" | grep -ciE '<script|<img|onclick|onerror|javascript:')"
 $WP post update 4 --post_title="Task Table" >/dev/null   # notifications go out on save_post
 sleep 2
 MSG=$(curl -s "$MAILPIT/api/v1/search?query=to:new@example.test" | python3 -c 'import sys,json;m=json.load(sys.stdin)["messages"];print(m[0]["ID"] if m else "")')
@@ -108,15 +123,14 @@ check "manage link in body" 1 "$([ -n "$MANAGE" ] && echo 1 || echo 0)"
 check "manage page loads" 200 "$(status "$MANAGE")"
 check "tampered signature rejected" 404 "$(status "$(echo "$MANAGE" | sed -E 's/sig=[0-9a-f]+/sig=0000000000000000000000000000000000000000000000000000000000000000/')")"
 check "signature for another subscriber rejected" 404 "$(status "$(echo "$MANAGE" | sed -E 's/sid=[0-9]+/sid='"$KNOWN_ID"'/')")"
-check "GET alone does not unsubscribe" 1 "$(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE id=$NEW_ID")"
-check "category update via manage page" 200 "$(status -X POST -d "task_table_action=update&categories[]=$CAT2" "$MANAGE")"
-check "categories updated" "$CAT2" "$(sql "SELECT GROUP_CONCAT(category_id) FROM wp_task_table_subscriber_categories WHERE subscriber_id=$NEW_ID")"
-check "unsubscribe via manage page" 200 "$(status -X POST -d "task_table_action=unsubscribe" "$MANAGE")"
-check "subscriber and categories deleted" "0 0" "$(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE id=$NEW_ID") $(sql "SELECT COUNT(*) FROM wp_task_table_subscriber_categories WHERE subscriber_id=$NEW_ID")"
+ONECLICK_NEW=$(echo "$HDR" | python3 -c 'import sys,json;print(json.load(sys.stdin)["List-Unsubscribe"][0].strip("<>"))')
+status "$ONECLICK_NEW" >/dev/null   # link scanners prefetch every URL in a mail, headers included
+check "GET on manage or one-click link does not unsubscribe" 1 "$(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE id=$NEW_ID")"
+check "category update via manage page (response, stored categories)" "200 $CAT2" "$(status -X POST -d "task_table_action=update&categories[]=$CAT2" "$MANAGE") $(sql "SELECT GROUP_CONCAT(category_id) FROM wp_task_table_subscriber_categories WHERE subscriber_id=$NEW_ID")"
+check "unsubscribe via manage page deletes subscriber and categories" "200 0 0" "$(status -X POST -d "task_table_action=unsubscribe" "$MANAGE") $(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE id=$NEW_ID") $(sql "SELECT COUNT(*) FROM wp_task_table_subscriber_categories WHERE subscriber_id=$NEW_ID")"
 
 ONECLICK=$($WP eval "echo task_table_get_subscription_manage_url($KNOWN_ID, 'known@example.test', true);")
-check "one-click unsubscribe (RFC 8058 POST)" 200 "$(status -X POST -d "List-Unsubscribe=One-Click" "$ONECLICK")"
-check "one-click removed subscriber" 0 "$(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE id=$KNOWN_ID")"
+check "one-click unsubscribe (RFC 8058 POST) removes subscriber" "200 0" "$(status -X POST -d "List-Unsubscribe=One-Click" "$ONECLICK") $(sql "SELECT COUNT(*) FROM wp_task_table_subscribers WHERE id=$KNOWN_ID")"
 
 reset_limits; clear_mail
 sql "INSERT INTO wp_task_table_subscribers (email, confirmed, created_at, updated_at) VALUES ('again@example.test', 1, NOW(), NOW())" >/dev/null
@@ -137,8 +151,10 @@ check "de_DE translation loads" "Aufgabentabelle" "$($WP eval 'add_filter("local
 check "English stays English" "Task Table" "$($WP eval 'echo __("Task Table", "task-table");')"
 
 echo "Admin pages"
+# The screen callback runs after WordPress has sent the 200 header, so a fatal error in it still
+# returns 200. Only a screen that rendered to the end prints the admin footer.
 for page in task-table task-table-signups task-table-subscribers task-table-categories task-table-email-settings; do
-  check "admin page $page loads" 200 "$(status -b "$TMP/admin" "$BASE/wp-admin/admin.php?page=$page")"
+  check "admin page $page renders completely" "200 1" "$(status -b "$TMP/admin" "$BASE/wp-admin/admin.php?page=$page") $(grep -c 'id="wpfooter"' "$TMP/body")"
 done
 check "subscriber cannot open admin page" 403 "$(status -b "$TMP/subscriber" "$BASE/wp-admin/admin.php?page=task-table")"
 
@@ -148,15 +164,18 @@ if [ -z "$LOG" ]; then pass "no PHP warnings/errors from the plugin"; else fail 
 
 echo "Uninstall"
 # WordPress runs uninstall.php with the plugin already deactivated, so do the same.
+tables_before=$(sql "SHOW TABLES LIKE 'wp_task_table_%'" | grep -c .)
+options_before=$(sql "SELECT COUNT(*) FROM wp_options WHERE option_name LIKE 'task\_table\_%'")
+cap_before=$($WP cap list administrator | grep -c manage_task_table)
 $WP plugin deactivate task-table >/dev/null
 $WP eval 'define("WP_UNINSTALL_PLUGIN", true); include WP_PLUGIN_DIR . "/task-table/uninstall.php";' >/dev/null
-check "tables dropped" 0 "$(sql "SHOW TABLES LIKE 'wp_task_table_%'" | grep -c .)"
-check "options removed" 0 "$(sql "SELECT COUNT(*) FROM wp_options WHERE option_name LIKE 'task\_table\_%'")"
-check "capability removed" "" "$($WP cap list administrator | grep manage_task_table)"
+check "tables dropped" "5 0" "$tables_before $(sql "SHOW TABLES LIKE 'wp_task_table_%'" | grep -c .)"
+check "options removed" "1 0" "$([ "$options_before" -gt 0 ] && echo 1) $(sql "SELECT COUNT(*) FROM wp_options WHERE option_name LIKE 'task\_table\_%'")"
+check "capability removed" "1 0" "$cap_before $($WP cap list administrator | grep -c manage_task_table)"
 # Restore the stack: re-run activation hooks and seed data.
 $WP plugin activate task-table >/dev/null
 $WP eval-file wp-content/plugins/task-table/dev/seed.php >/dev/null
-check "reactivation recreates tables" 5 "$(sql "SHOW TABLES LIKE 'wp_task_table_%'" | grep -c .)"
+[ "$(sql "SHOW TABLES LIKE 'wp_task_table_%'" | grep -c .)" = 5 ] || { echo "  stack restore after uninstall failed; run dev/down.sh and dev/up.sh"; FAILS=$((FAILS + 1)); }
 
 reset_limits
 echo

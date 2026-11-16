@@ -46,7 +46,7 @@ function task_table_get_email_templates() {
  *
  * @param string $template_key The template key
  * @param array $data Data to replace placeholders
- * @return array The processed email template
+ * @return array|false Subject and message, or false for an unknown template key.
  */
 function task_table_get_email_content( $template_key, $data = array() ) {
 	$templates = task_table_get_email_templates();
@@ -153,7 +153,8 @@ function task_table_get_event_details( $event_id ) {
 
 	$event = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $events_table WHERE id = %d",
+			'SELECT * FROM %i WHERE id = %d',
+			$events_table,
 			$event_id
 		),
 		ARRAY_A
@@ -179,10 +180,7 @@ function task_table_get_event_details( $event_id ) {
 }
 
 /**
- * Format event details for email
- *
- * @param array $event_data The event data
- * @return string Formatted event details
+ * Column label for plain-text emails, e.g. "Context: ".
  */
 function task_table_email_label( $column ) {
 	$labels = task_table_get_column_labels();
@@ -190,6 +188,12 @@ function task_table_email_label( $column ) {
 	return rtrim( wp_strip_all_tags( $label ), ' ?:' ) . ': ';
 }
 
+/**
+ * Format event details for email
+ *
+ * @param array $event_data The event data
+ * @return string Formatted event details
+ */
 function task_table_format_event_details( $event_data ) {
 	if ( ! $event_data ) {
 		return __( 'Event details not available', 'task-table' );
@@ -533,7 +537,8 @@ function task_table_get_signup_notification_event_category_id( $signup_data ) {
 	$events_table = $wpdb->prefix . 'task_table_events';
 	$category_id  = (int) $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT category_id FROM $events_table WHERE id = %d",
+			'SELECT category_id FROM %i WHERE id = %d',
+			$events_table,
 			$event_id
 		)
 	);
@@ -638,7 +643,8 @@ function task_table_send_new_event_notification( $event_data ) {
 	if ( ! $event_category_id && ! empty( $normalized_event['id'] ) ) {
 		$event_category_id = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT category_id FROM $events_table WHERE id = %d",
+				'SELECT category_id FROM %i WHERE id = %d',
+				$events_table,
 				(int) $normalized_event['id']
 			)
 		);
@@ -653,9 +659,11 @@ function task_table_send_new_event_notification( $event_data ) {
 
 		if ( $event_category_id && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $subscriber_categories_table ) ) === $subscriber_categories_table ) {
 			$recipient_query = $wpdb->prepare(
-				"SELECT s.id, s.email FROM $subscribers_table s
-                 INNER JOIN $subscriber_categories_table sc ON sc.subscriber_id = s.id
+				"SELECT s.id, s.email FROM %i s
+                 INNER JOIN %i sc ON sc.subscriber_id = s.id
                  WHERE s.confirmed = 1 AND sc.category_id = %d AND s.email <> ''",
+				$subscribers_table,
+				$subscriber_categories_table,
 				$event_category_id
 			);
 		}
