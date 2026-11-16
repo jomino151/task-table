@@ -47,7 +47,7 @@ function task_table_admin_categories_handle_action() {
 			$error = __( 'Category name is required.', 'task-table' );
 		} else {
 			$slug      = task_table_get_unique_category_slug( $slug_input !== '' ? $slug_input : $name );
-			$next_sort = (int) $wpdb->get_var( "SELECT MAX(sort_order) FROM $categories_table" );
+			$next_sort = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT MAX(sort_order) FROM %i', $categories_table ) );
 			$next_sort = $next_sort ? $next_sort + 10 : 10;
 
 			$inserted = $wpdb->insert(
@@ -115,7 +115,8 @@ function task_table_admin_categories_handle_action() {
 		$category_id          = isset( $_POST['category_id'] ) ? (int) $_POST['category_id'] : 0;
 		$fallback_reassign_id = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT id FROM $categories_table WHERE id <> %d ORDER BY sort_order ASC, name ASC LIMIT 1",
+				'SELECT id FROM %i WHERE id <> %d ORDER BY sort_order ASC, name ASC LIMIT 1',
+				$categories_table,
 				$category_id
 			)
 		);
@@ -131,7 +132,8 @@ function task_table_admin_categories_handle_action() {
 			// Reassign events
 			$wpdb->query(
 				$wpdb->prepare(
-					"UPDATE $events_table SET category_id = %d WHERE category_id = %d",
+					'UPDATE %i SET category_id = %d WHERE category_id = %d',
+					$events_table,
 					$reassign_id,
 					$category_id
 				)
@@ -141,15 +143,18 @@ function task_table_admin_categories_handle_action() {
 			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $subscriber_categories_table ) ) === $subscriber_categories_table ) {
 				$wpdb->query(
 					$wpdb->prepare(
-						"INSERT IGNORE INTO $subscriber_categories_table (subscriber_id, category_id)
-                     SELECT subscriber_id, %d FROM $subscriber_categories_table WHERE category_id = %d",
+						'INSERT IGNORE INTO %i (subscriber_id, category_id)
+                     SELECT subscriber_id, %d FROM %i WHERE category_id = %d',
+						$subscriber_categories_table,
 						$reassign_id,
+						$subscriber_categories_table,
 						$category_id
 					)
 				);
 				$wpdb->query(
 					$wpdb->prepare(
-						"DELETE FROM $subscriber_categories_table WHERE category_id = %d",
+						'DELETE FROM %i WHERE category_id = %d',
+						$subscriber_categories_table,
 						$category_id
 					)
 				);
@@ -182,10 +187,10 @@ function task_table_admin_categories_get_view_data( $result ) {
 	$subscriber_categories_table = $wpdb->prefix . 'task_table_subscriber_categories';
 
 	$categories            = task_table_get_categories();
-	$event_counts_raw      = $wpdb->get_results( "SELECT category_id, COUNT(*) AS total FROM $events_table GROUP BY category_id", OBJECT_K );
+	$event_counts_raw      = $wpdb->get_results( $wpdb->prepare( 'SELECT category_id, COUNT(*) AS total FROM %i GROUP BY category_id', $events_table ), OBJECT_K );
 	$subscriber_counts_raw = array();
 	if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $subscriber_categories_table ) ) === $subscriber_categories_table ) {
-		$subscriber_counts_raw = $wpdb->get_results( "SELECT category_id, COUNT(*) AS total FROM $subscriber_categories_table GROUP BY category_id", OBJECT_K );
+		$subscriber_counts_raw = $wpdb->get_results( $wpdb->prepare( 'SELECT category_id, COUNT(*) AS total FROM %i GROUP BY category_id', $subscriber_categories_table ), OBJECT_K );
 	}
 
 	$editing_category = null;

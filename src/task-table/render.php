@@ -18,29 +18,31 @@ if ( $category_id ) {
 
 // Only show non-archived events on the public frontend. If the archived column
 // does not exist yet (e.g. race condition before upgrade hook), fall back to all.
-$has_archived_col = $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM {$events_table} LIKE %s", 'archived' ) );
+$has_archived_col = $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $events_table, 'archived' ) );
 if ( $has_archived_col ) {
 	if ( $category_id ) {
 		$events = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM $events_table WHERE archived = 0 AND category_id = %d ORDER BY created_at DESC",
+				'SELECT * FROM %i WHERE archived = 0 AND category_id = %d ORDER BY created_at DESC',
+				$events_table,
 				$category_id
 			),
 			ARRAY_A
 		);
 	} else {
-		$events = $wpdb->get_results( "SELECT * FROM $events_table WHERE archived = 0 ORDER BY created_at DESC", ARRAY_A );
+		$events = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i WHERE archived = 0 ORDER BY created_at DESC', $events_table ), ARRAY_A );
 	}
 } elseif ( $category_id ) {
 		$events = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM $events_table WHERE category_id = %d ORDER BY created_at DESC",
+				'SELECT * FROM %i WHERE category_id = %d ORDER BY created_at DESC',
+				$events_table,
 				$category_id
 			),
 			ARRAY_A
 		);
 } else {
-	$events = $wpdb->get_results( "SELECT * FROM $events_table ORDER BY created_at DESC", ARRAY_A );
+	$events = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY created_at DESC', $events_table ), ARRAY_A );
 }
 
 echo '<div ' . get_block_wrapper_attributes() . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- core escapes the attributes.
@@ -102,7 +104,8 @@ if ( ! empty( $events ) ) {
 		$signups_table = $wpdb->prefix . 'task_table_signups';
 		$signups       = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM $signups_table WHERE event_id = %d AND status = 'approved'",
+				"SELECT * FROM %i WHERE event_id = %d AND status = 'approved'",
+				$signups_table,
 				$event['id']
 			)
 		);

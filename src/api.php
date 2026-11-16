@@ -217,7 +217,8 @@ function task_table_handle_signup_submission( WP_REST_Request $request ) {
 	$events_table = $wpdb->prefix . 'task_table_events';
 	$event_exists = $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT COUNT(*) FROM $events_table WHERE id = %d AND archived = 0",
+			'SELECT COUNT(*) FROM %i WHERE id = %d AND archived = 0',
+			$events_table,
 			$event_id
 		)
 	);
@@ -499,7 +500,8 @@ function task_table_update_event( WP_REST_Request $request ) {
 	// Get existing event data first
 	$existing_event = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $table_name WHERE id = %d",
+			'SELECT * FROM %i WHERE id = %d',
+			$table_name,
 			$event_id
 		),
 		ARRAY_A
@@ -594,7 +596,8 @@ function task_table_update_event( WP_REST_Request $request ) {
 	// Get the complete updated row
 	$updated_event = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $table_name WHERE id = %d",
+			'SELECT * FROM %i WHERE id = %d',
+			$table_name,
 			$event_id
 		),
 		ARRAY_A
@@ -696,7 +699,8 @@ function task_table_add_subscriber( WP_REST_Request $request ) {
 
 	$subscriber = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $table_name WHERE email = %s",
+			'SELECT * FROM %i WHERE email = %s',
+			$table_name,
 			$email
 		)
 	);
@@ -773,7 +777,8 @@ function task_table_confirm_subscription_token( $email, $token ) {
 
 	$row = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT id, confirmed, confirmation_token, created_at, updated_at FROM $table_name WHERE email = %s",
+			'SELECT id, confirmed, confirmation_token, created_at, updated_at FROM %i WHERE email = %s',
+			$table_name,
 			$email
 		)
 	);
@@ -844,7 +849,8 @@ function task_table_get_event_signups( $event_id, $status = 'approved' ) {
 
 	$signups = $wpdb->get_results(
 		$wpdb->prepare(
-			"SELECT * FROM $table_name WHERE event_id = %d AND status = %s",
+			'SELECT * FROM %i WHERE event_id = %d AND status = %s',
+			$table_name,
 			$event_id,
 			$status
 		),
@@ -863,7 +869,8 @@ function task_table_get_event( $event_id ) {
 
 	$event = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $table_name WHERE id = %d",
+			'SELECT * FROM %i WHERE id = %d',
+			$table_name,
 			$event_id
 		),
 		ARRAY_A
@@ -936,7 +943,7 @@ function task_table_send_pending_event_notifications( $post_id, $post, $update )
 		if ( task_table_was_event_notified( $event_id ) ) {
 			continue;
 		}
-		$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $events_table WHERE id = %d", (int) $event_id ), ARRAY_A );
+		$event = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $events_table, (int) $event_id ), ARRAY_A );
 		if ( $event && task_table_event_is_complete( $event ) ) {
 			task_table_send_new_event_notification( $event );
 			task_table_mark_event_notified( $event_id );
@@ -966,7 +973,7 @@ function task_table_archive_event( WP_REST_Request $request ) {
 	$event_id     = (int) $request['id'];
 	$body         = $request->get_json_params();
 	$archive      = isset( $body['archived'] ) ? (int) $body['archived'] : 1; // default archive
-	$exists       = $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM $events_table WHERE id = %d", $event_id ) );
+	$exists       = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE id = %d', $events_table, $event_id ) );
 	if ( ! $exists ) {
 		return new WP_REST_Response(
 			array(
@@ -993,7 +1000,7 @@ function task_table_archive_event( WP_REST_Request $request ) {
 			500
 		);
 	}
-	$event = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM $events_table WHERE id = %d", $event_id ), ARRAY_A );
+	$event = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $events_table, $event_id ), ARRAY_A );
 	return new WP_REST_Response(
 		array(
 			'success' => true,

@@ -36,13 +36,9 @@
 	</rule>
 
 	<!--
-	Interpolation into SQL is limited to "{$wpdb->prefix}task_table_*" table names and placeholder
-	lists built from array_fill('%d'). Every value goes through $wpdb->prepare(). The sniff can't
-	tell table names from values, so it's limited to warnings here; review any new occurrence.
+	Table names go through $wpdb->prepare() as %i identifiers (WordPress 6.2+), so interpolated
+	SQL stays an error. The few dynamic WHERE builders carry a phpcs:ignore with the reason.
 	-->
-	<rule ref="WordPress.DB.PreparedSQL.InterpolatedNotPrepared">
-		<type>warning</type>
-	</rule>
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>

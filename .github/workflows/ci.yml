@@ -49,25 +49,8 @@ jobs:
           tools: composer:v2, cs2pr
       - run: composer install --no-interaction --no-progress --prefer-dist
       - name: Run PHPCS
-        # Errors fail the build. Warnings (interpolated table names, see phpcs.xml.dist) are shown as annotations.
-        run: vendor/bin/phpcs -q --report=checkstyle --runtime-set ignore_warnings_on_exit 1 | cs2pr --graceful-warnings
-
-  phpunit:
-    name: PHPUnit (PHP ${{ matrix.php }})
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['7.4', '8.4']   # minimum supported and the version production runs
-    steps:
-      - uses: actions/checkout@v7
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          coverage: none
-          tools: composer:v2
-      - run: composer install --no-interaction --no-progress --prefer-dist
-      - run: composer test
+        # Errors and warnings both fail the build.
+        run: vendor/bin/phpcs -q --report=checkstyle | cs2pr
 
   phpunit:
     name: PHPUnit (PHP ${{ matrix.php }})
@@ -149,10 +132,6 @@ jobs:
         run: dev/tests/upgrade.sh
       - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)
         run: dev/tests/upgrade.sh v1.1.0
-      - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)
-        run: dev/tests/upgrade.sh v1.1.0
-      - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)
-        run: dev/tests/upgrade.sh v1.1.0
       - name: Logs on failure
         if: failure()
         run: |
@@ -162,7 +141,7 @@ jobs:
   plugin-zip:
     name: Plugin zip
     runs-on: ubuntu-24.04
-    needs: [php-lint, phpcs, phpunit, js-css-lint, integration]
+    needs: [php-lint, phpcs, phpunit, phpstan, js-css-lint, integration]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7

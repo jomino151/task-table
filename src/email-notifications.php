@@ -153,7 +153,8 @@ function task_table_get_event_details( $event_id ) {
 
 	$event = $wpdb->get_row(
 		$wpdb->prepare(
-			"SELECT * FROM $events_table WHERE id = %d",
+			'SELECT * FROM %i WHERE id = %d',
+			$events_table,
 			$event_id
 		),
 		ARRAY_A
@@ -536,7 +537,8 @@ function task_table_get_signup_notification_event_category_id( $signup_data ) {
 	$events_table = $wpdb->prefix . 'task_table_events';
 	$category_id  = (int) $wpdb->get_var(
 		$wpdb->prepare(
-			"SELECT category_id FROM $events_table WHERE id = %d",
+			'SELECT category_id FROM %i WHERE id = %d',
+			$events_table,
 			$event_id
 		)
 	);
@@ -641,7 +643,8 @@ function task_table_send_new_event_notification( $event_data ) {
 	if ( ! $event_category_id && ! empty( $normalized_event['id'] ) ) {
 		$event_category_id = (int) $wpdb->get_var(
 			$wpdb->prepare(
-				"SELECT category_id FROM $events_table WHERE id = %d",
+				'SELECT category_id FROM %i WHERE id = %d',
+				$events_table,
 				(int) $normalized_event['id']
 			)
 		);
@@ -656,9 +659,11 @@ function task_table_send_new_event_notification( $event_data ) {
 
 		if ( $event_category_id && $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $subscriber_categories_table ) ) === $subscriber_categories_table ) {
 			$recipient_query = $wpdb->prepare(
-				"SELECT s.id, s.email FROM $subscribers_table s
-                 INNER JOIN $subscriber_categories_table sc ON sc.subscriber_id = s.id
+				"SELECT s.id, s.email FROM %i s
+                 INNER JOIN %i sc ON sc.subscriber_id = s.id
                  WHERE s.confirmed = 1 AND sc.category_id = %d AND s.email <> ''",
+				$subscribers_table,
+				$subscriber_categories_table,
 				$event_category_id
 			);
 		}

@@ -39,7 +39,8 @@ function task_table_admin_signups_handle_action() {
 		if ( wp_verify_nonce( $nonce, 'task_table_signup_' . $action . '_' . $signup_id ) ) {
 			$signup = $wpdb->get_row(
 				$wpdb->prepare(
-					"SELECT * FROM $signups_table WHERE id = %d",
+					'SELECT * FROM %i WHERE id = %d',
+					$signups_table,
 					$signup_id
 				)
 			);
@@ -146,7 +147,7 @@ function task_table_admin_signups_get_view_data() {
 
 	$signups = ! empty( $params ) ? $wpdb->get_results( $wpdb->prepare( $sql, $params ) ) : $wpdb->get_results( $sql ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
-	$status_counts_raw = $wpdb->get_results( "SELECT status, COUNT(*) AS total FROM $signups_table GROUP BY status", OBJECT_K );
+	$status_counts_raw = $wpdb->get_results( $wpdb->prepare( 'SELECT status, COUNT(*) AS total FROM %i GROUP BY status', $signups_table ), OBJECT_K );
 	$status_totals     = array(
 		'pending'  => isset( $status_counts_raw['pending'] ) ? (int) $status_counts_raw['pending']->total : 0,
 		'approved' => isset( $status_counts_raw['approved'] ) ? (int) $status_counts_raw['approved']->total : 0,

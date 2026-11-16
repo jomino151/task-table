@@ -104,11 +104,11 @@ function task_table_admin_events_get_view_data() {
 	$events = $wpdb->get_results( $wpdb->prepare( $sql, $params ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- WHERE is built from constant fragments with placeholders; values are bound via prepare().
 
 	// Aggregate stats
-	$pending_signups = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $signups_table WHERE status = 'pending'" );
-	$active_total    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $events_table WHERE archived = 0" );
-	$archived_total  = (int) $wpdb->get_var( "SELECT COUNT(*) FROM $events_table WHERE archived = 1" );
+	$pending_signups = (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM %i WHERE status = 'pending'", $signups_table ) );
+	$active_total    = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE archived = 0', $events_table ) );
+	$archived_total  = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM %i WHERE archived = 1', $events_table ) );
 
-	$latest_event_date = $wpdb->get_var( "SELECT created_at FROM $events_table ORDER BY created_at DESC LIMIT 1" );
+	$latest_event_date = $wpdb->get_var( $wpdb->prepare( 'SELECT created_at FROM %i ORDER BY created_at DESC LIMIT 1', $events_table ) );
 	$latest_event_meta = '';
 	if ( $latest_event_date ) {
 		$latest_ts = strtotime( $latest_event_date );
