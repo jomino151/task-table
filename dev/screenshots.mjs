@@ -72,7 +72,11 @@ await page.setViewport( {
 	isMobile: true,
 	hasTouch: true,
 } );
-await shot( '/task-table/', 'frontend-mobile.png', null, blocksClip );
+// Only the heading and the first card, so the image sits next to the desktop one in the README.
+await shot( '/task-table/', 'frontend-mobile.png', null, async () => {
+	const clip = await blocksClip();
+	return { ...clip, height: Math.min( clip.height, 560 ) };
+} );
 await page.setViewport( { width: 1280, height: 860, deviceScaleFactor: 1 } );
 
 await page.goto( BASE + '/wp-login.php', { waitUntil: 'networkidle0' } );

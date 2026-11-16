@@ -32,10 +32,16 @@ panels) with volunteer speakers, and it runs in production there.
 - **Admin screens**: events, signups, subscribers, categories, editable email templates and Excel export.
 - **Translatable**: English by default, with a German translation included (`de_DE`, `de_DE_formal`). Every string uses the `task-table` text domain.
 
-| Task table and subscribe form | On a phone |
+<table>
+<tr><th>Task table and subscribe form</th><th>On a phone</th></tr>
+<tr>
+<td><img src="docs/screenshots/frontend-table.png" alt="Task table and subscribe form on the front end" width="580"></td>
+<td><img src="docs/screenshots/frontend-mobile.png" alt="Task table on a 375px screen, each row shown as a card" width="220"></td>
+</tr>
+</table>
+
+| Signup dialog | Events admin |
 |---|---|
-| ![Task table on the front end](docs/screenshots/frontend-table.png) | ![Task table on a 375px screen, rows shown as cards](docs/screenshots/frontend-mobile.png) |
-| **Signup dialog** | **Events admin** |
 | ![Signup dialog](docs/screenshots/frontend-signup-modal.png) | ![Events admin](docs/screenshots/admin-events.png) |
 | **Signup moderation** | **Email templates** |
 | ![Signups admin](docs/screenshots/admin-signups.png) | ![Email settings](docs/screenshots/admin-email-settings.png) |

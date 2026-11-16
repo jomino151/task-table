@@ -107,39 +107,31 @@ tag before it publishes the zip.
 
 ## Post-mortem: missing authorization on the export endpoint (CWE-862)
 
-**What was wrong.** `GET /wp-json/task-table/v1/events/export` was registered with
-`'permission_callback' => function() { return is_user_logged_in(); }`, and the callback
-`task_table_export_events_excel()` repeated the same check. Every other `/events` route, and the
-admin screen's export through `admin-post.php`, require the `manage_task_table` capability. So
-any logged-in account could download every event, archived ones included, with the internal
-fields and the names of approved volunteers. That includes the Subscriber role, which WordPress
-hands out automatically when registration is open. Signup and subscriber email addresses were
-not in the export, and the endpoint could not change data. Versions up to and including 1.1.0
-are affected.
+| | |
+|---|---|
+| Affected | `<= 1.1.0` |
+| Fixed | `1.2.0`, commit `f6c10e3` |
+| Impact | Any logged-in user could download all events |
 
-**How it was found.** By the maintainer, in a review of the REST routes in `src/api.php`: the
-export was the only non-public route that did not check the plugin capability. Before the fix,
-a reproduction was written against a local stack: commit `2b38526`
-adds the podman dev stack (`dev/up.sh`, with open registration and a `subscriber` account) and
-`dev/repro-export-authz.sh`, which logs in as that Subscriber, calls the endpoint and exits
-non-zero while it returns `200`.
+**Impact.** `GET /wp-json/task-table/v1/events/export` returned every event, archived ones
+included, with the internal fields and the names of approved volunteers. Any logged-in account
+could call it, including the Subscriber role that WordPress gives out when registration is open.
+The export did not contain signup or subscriber email addresses, and the endpoint could not
+change data.
 
-**The fix.** Commit `f6c10e3` changes the `permission_callback` to
-`current_user_can( 'manage_task_table' )` and keeps the same check inside the callback as a
-second layer. The same commit fixed two bugs that made the endpoint unusable even for
-administrators: the REST server JSON-encoded the file body (now served raw through the
-`rest_pre_serve_request` filter, `task_table_serve_raw_export()`), and the default XLSX format
-failed with a fatal error because `wp_tempnam()` is not loaded on REST requests. Released in
-1.2.0.
+**Root cause.** The route's `permission_callback` was `is_user_logged_in()`, and the callback
+`task_table_export_events_excel()` repeated that check. Being logged in is not a permission. All
+other `/events` routes, and the export button on the admin screen (`admin-post.php`), check the
+`manage_task_table` capability; the REST export did not.
 
-**Regression tests.**
+**Detection.** Found in the plugin's own code, not reported from outside. Commit `2b38526` added a
+local stack and `dev/repro-export-authz.sh`, which logs in as a Subscriber, calls the endpoint and
+fails while it answers `200`. The fix followed in the next commit.
 
-- `dev/repro-export-authz.sh`: the original reproduction, kept as a standalone check.
-- `dev/tests/run.sh`, section "Export authorization (CWE-862)": anonymous gets `401`,
-  Subscriber and Editor get `403`, an administrator gets `200` with a valid XLSX (a real zip,
-  not JSON) and valid XML.
-- `dev/tests/upgrade.sh` repeats the Subscriber and Editor `403` checks after upgrading from the
-  previous release, so the check also covers the upgrade path.
+**Fix.** `f6c10e3` requires `current_user_can( 'manage_task_table' )` in the `permission_callback`
+and again in the callback.
 
-**What changed afterwards.** The authorization checks run in CI on every pull request, and
-[SECURITY.md](../SECURITY.md) describes how to report problems privately.
+**Regression tests.** `dev/tests/run.sh` (section "Export authorization (CWE-862)") expects `401`
+for anonymous requests, `403` for Subscriber and Editor, and `200` with a valid file for an
+administrator. `dev/tests/upgrade.sh` repeats the `403` checks after upgrading from the previous
+release. Both run in CI on every pull request.
