@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Fixed
+- Exports (xlsx and XML) no longer become unreadable when event text contains
+  control characters, e.g. a volunteer name with a pasted soft line break that
+  was copied into the event on approval.
+
 ## [1.3.0] - 2026-11-16
 
 ### Added
