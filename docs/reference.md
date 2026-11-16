@@ -34,6 +34,23 @@ Email subjects and bodies are editable under **Task Table → Email Settings**. 
 the placeholders `{site_name}`, `{event_title}`, `{event_details}`, `{event_id}`, `{user_name}`,
 `{user_email}`, `{confirmation_link}` and `{manage_link}`.
 
+## Field names
+
+The plugin was first built for a German site, so the event columns and API fields kept their
+German names. Renaming them would mean a schema migration on live data and new keys for the
+`task_table_column_labels` filter, so they stay. The labels users see are English and
+translated.
+
+| Column (REST `PUT`, export, filter key) | Editor/`POST` field | Label |
+|---|---|---|
+| `was_angefragt` | `wasAngefragt` | What is requested? |
+| `kontext` | `kontext` | Context |
+| `name_hochschule` | `nameHochschule` | University name |
+| `tn_anzahl` | `tnAnzahl` | Participants |
+| `zeitpunkt` | `zeitpunkt` | Planned date |
+| `auftragdetails` | `auftragdetails` | Request details |
+| `wer_macht` | `werMacht` | Who's doing it? / Sign up |
+
 ## Data and uninstall
 
 Activation creates five tables (`*_task_table_events`, `_signups`, `_subscribers`,
