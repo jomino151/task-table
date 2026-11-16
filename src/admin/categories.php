@@ -252,7 +252,7 @@ function task_table_admin_categories_render( $view ) {
 		<div class="tt-card-grid">
 			<div class="tt-card">
 				<h3><?php esc_html_e( 'Categories', 'task-table' ); ?></h3>
-				<div class="tt-card-value"><?php echo esc_html( count( $categories ) ); ?></div>
+				<div class="tt-card-value"><?php echo esc_html( (string) count( $categories ) ); ?></div>
 				<div class="tt-card-meta"><?php esc_html_e( 'Ready to organize your workload', 'task-table' ); ?></div>
 			</div>
 			<div class="tt-card">
@@ -351,8 +351,8 @@ function task_table_admin_categories_render( $view ) {
 								</td>
 								<td><?php echo esc_html( $category['slug'] ); ?></td>
 								<td><?php echo esc_html( $category['sort_order'] ); ?></td>
-								<td><?php echo esc_html( $event_total ); ?></td>
-								<td><?php echo esc_html( $subscriber_total ); ?></td>
+								<td><?php echo esc_html( (string) $event_total ); ?></td>
+								<td><?php echo esc_html( (string) $subscriber_total ); ?></td>
 								<td class="tt-actions">
 									<a href="<?php echo esc_url( add_query_arg( array( 'edit' => $category['id'] ) ) ); ?>" class="button button-secondary">
 										<span class="dashicons dashicons-edit"></span>
@@ -371,7 +371,7 @@ function task_table_admin_categories_render( $view ) {
 										<form method="post" action="" class="tt-inline-form">
 											<?php wp_nonce_field( 'task_table_delete_category', 'task_table_delete_category_nonce' ); ?>
 											<input type="hidden" name="category_id" value="<?php echo esc_attr( $category['id'] ); ?>">
-											<input type="hidden" name="reassign_category_id" value="<?php echo esc_attr( $reassign_category_id ); ?>">
+											<input type="hidden" name="reassign_category_id" value="<?php echo esc_attr( (string) $reassign_category_id ); ?>">
 											<button type="submit" class="button is-destructive" data-tt-confirm="<?php echo esc_attr( __( 'Delete this category? Associated items will be reassigned automatically.', 'task-table' ) ); ?>">
 												<span class="dashicons dashicons-trash"></span>
 												<?php esc_html_e( 'Delete', 'task-table' ); ?>

@@ -69,6 +69,36 @@ jobs:
       - run: composer install --no-interaction --no-progress --prefer-dist
       - run: composer test
 
+  phpunit:
+    name: PHPUnit (PHP ${{ matrix.php }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['7.4', '8.4']   # minimum supported and the version production runs
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer test
+
+  phpstan:
+    name: PHPStan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer:v2
+      - run: composer install --no-interaction --no-progress --prefer-dist
+      - run: composer phpstan -- --error-format=github
+
   js-css-lint:
     name: JS and SCSS lint (wp-scripts)
     runs-on: ubuntu-24.04
@@ -117,6 +147,8 @@ jobs:
         run: dev/tests/run.sh
       - name: Upgrade test from the previous release
         run: dev/tests/upgrade.sh
+      - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)
+        run: dev/tests/upgrade.sh v1.1.0
       - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)
         run: dev/tests/upgrade.sh v1.1.0
       - name: Upgrade test from v1.1.0 (runs the DB 1.7 template migration)

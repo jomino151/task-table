@@ -194,7 +194,7 @@ function task_table_handle_signup_submission( WP_REST_Request $request ) {
 	}
 
 	$data       = $request->get_json_params();
-	$data       = is_array( $data ) ? $data : array();
+	$data       = is_array( $data ) ? $data : array(); // @phpstan-ignore function.alreadyNarrowedType (null when the body is not JSON; the stub says array)
 	$event_id   = isset( $data['event_id'] ) ? absint( $data['event_id'] ) : 0;
 	$user_name  = isset( $data['user_name'] ) && is_scalar( $data['user_name'] ) ? sanitize_text_field( (string) $data['user_name'] ) : '';
 	$user_email = isset( $data['user_email'] ) && is_scalar( $data['user_email'] ) ? sanitize_email( (string) $data['user_email'] ) : '';
@@ -667,7 +667,7 @@ function task_table_add_subscriber( WP_REST_Request $request ) {
 	}
 
 	$data                 = $request->get_json_params();
-	$data                 = is_array( $data ) ? $data : array();
+	$data                 = is_array( $data ) ? $data : array(); // @phpstan-ignore function.alreadyNarrowedType (null when the body is not JSON; the stub says array)
 	$email                = isset( $data['email'] ) && is_scalar( $data['email'] ) ? sanitize_email( (string) $data['email'] ) : '';
 	$requested_categories = isset( $data['categories'] ) ? (array) $data['categories'] : array();
 

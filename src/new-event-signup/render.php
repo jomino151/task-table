@@ -37,7 +37,7 @@ ob_start();
 					$input_id      = 'subscription-category-' . $category_id;
 					?>
 					<label for="<?php echo esc_attr( $input_id ); ?>" class="subscription-category">
-						<input type="checkbox" class="subscriber-category" id="<?php echo esc_attr( $input_id ); ?>" value="<?php echo esc_attr( $category_id ); ?>">
+						<input type="checkbox" class="subscriber-category" id="<?php echo esc_attr( $input_id ); ?>" value="<?php echo esc_attr( (string) $category_id ); ?>">
 						<span><?php echo esc_html( $category_name ); ?></span>
 					</label>
 				<?php endforeach; ?>

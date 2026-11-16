@@ -40,14 +40,13 @@ function task_table_admin_subscribers_handle_action() {
 	$subscriber_added            = false;
 
 	if ( isset( $_POST['task_table_update_subscriber_categories'] ) && isset( $_POST['_wpnonce'] ) ) {
-		if ( check_admin_referer( 'task_table_update_subscriber_categories' ) ) {
-			$subscriber_id       = isset( $_POST['subscriber_id'] ) ? (int) $_POST['subscriber_id'] : 0;
-			$selected_categories = isset( $_POST['subscriber_categories'] ) ? (array) wp_unslash( $_POST['subscriber_categories'] ) : array();
+		check_admin_referer( 'task_table_update_subscriber_categories' ); // Dies on a bad nonce.
+		$subscriber_id       = isset( $_POST['subscriber_id'] ) ? (int) $_POST['subscriber_id'] : 0;
+		$selected_categories = isset( $_POST['subscriber_categories'] ) ? (array) wp_unslash( $_POST['subscriber_categories'] ) : array();
 
-			if ( $subscriber_id > 0 ) {
-				task_table_sync_subscriber_categories( $subscriber_id, $selected_categories );
-				$category_update_notice = __( 'Subscriber categories updated.', 'task-table' );
-			}
+		if ( $subscriber_id > 0 ) {
+			task_table_sync_subscriber_categories( $subscriber_id, $selected_categories );
+			$category_update_notice = __( 'Subscriber categories updated.', 'task-table' );
 		}
 	}
 
@@ -287,7 +286,7 @@ function task_table_admin_subscribers_render( $view ) {
 			</div>
 			<div class="tt-card">
 				<h3><?php esc_html_e( 'Categories', 'task-table' ); ?></h3>
-				<div class="tt-card-value"><?php echo esc_html( count( $categories ) ); ?></div>
+				<div class="tt-card-value"><?php echo esc_html( (string) count( $categories ) ); ?></div>
 				<div class="tt-card-meta"><?php esc_html_e( 'Ways to segment your audience', 'task-table' ); ?></div>
 			</div>
 		</div>

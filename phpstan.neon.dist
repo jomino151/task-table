@@ -1,0 +1,10 @@
+# Level 6 and up mostly report missing type declarations on the untyped legacy functions
+# (147 at level 6); raise the level as signatures get types.
+parameters:
+	level: 5
+	paths:
+		- task-table.php
+		- uninstall.php
+		- src
+	bootstrapFiles:
+		- tests/phpstan-bootstrap.php

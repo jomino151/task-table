@@ -46,7 +46,7 @@ function task_table_get_email_templates() {
  *
  * @param string $template_key The template key
  * @param array $data Data to replace placeholders
- * @return array The processed email template
+ * @return array|false Subject and message, or false for an unknown template key.
  */
 function task_table_get_email_content( $template_key, $data = array() ) {
 	$templates = task_table_get_email_templates();
@@ -179,10 +179,7 @@ function task_table_get_event_details( $event_id ) {
 }
 
 /**
- * Format event details for email
- *
- * @param array $event_data The event data
- * @return string Formatted event details
+ * Column label for plain-text emails, e.g. "Context: ".
  */
 function task_table_email_label( $column ) {
 	$labels = task_table_get_column_labels();
@@ -190,6 +187,12 @@ function task_table_email_label( $column ) {
 	return rtrim( wp_strip_all_tags( $label ), ' ?:' ) . ': ';
 }
 
+/**
+ * Format event details for email
+ *
+ * @param array $event_data The event data
+ * @return string Formatted event details
+ */
 function task_table_format_event_details( $event_data ) {
 	if ( ! $event_data ) {
 		return __( 'Event details not available', 'task-table' );
