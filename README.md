@@ -10,12 +10,8 @@
 
 ![A volunteer signs up, a moderator approves the signup in wp-admin, and the volunteer receives the approval email](docs/screenshots/signup-flow.gif)
 
-<!--
-  "Try it" link: works only once the repository and the v1.3.0 release are public.
-  Uncomment it then (the blueprint is docs/playground/blueprint.json).
 [**Try it in WordPress Playground**](https://playground.wordpress.net/?blueprint-url=https://raw.githubusercontent.com/jomino151/task-table/main/docs/playground/blueprint.json)
 (runs in your browser; email is not sent there).
--->
 
 ## Overview
 
